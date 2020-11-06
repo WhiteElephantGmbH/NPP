@@ -1,0 +1,41 @@
+
+project Hello is
+
+   package Naming is
+      for Casing use "mixedcase";
+   end Naming;
+
+   for Library_Name use "Hello";
+   for Shared_Library_Prefix use "";
+
+   for Source_Dirs use ("..\..\Npp\Hello", "..\..\Npp");
+
+   for Library_Interface use ("Hello_Interface");
+
+   for Object_Dir use "..\..\Npp\Hello\Objects";
+
+   for Library_Options use ("resources.o");
+   for Library_Dir use "..\..\Npp\Hello\Product";
+   for Library_Kind use "dynamic";
+   for Shared_Library_Prefix use "";
+   for Library_Standalone use "encapsulated";
+
+   package Pretty_Printer is
+      for Default_Switches ("ada") use ("-i2", "-M0", "-aL", "-A1", "-A4");
+   end Pretty_Printer;
+
+   package Builder is
+      for Default_Switches ("ada") use ("-s", "-g");
+   end Builder;
+
+   package Compiler is
+      for Default_Switches ("ada") use
+         ("-O1", "-gnatQ", "-gnata", "-gnato", "-g", "-gnat12",
+          "-gnatwceGhijkmopruvz.c.n.p.t.w.x", "-gnatykmpM120");
+   end Compiler;
+
+   package Binder is
+      for Default_Switches ("ada") use ("-E");
+   end Binder;
+
+end Hello;

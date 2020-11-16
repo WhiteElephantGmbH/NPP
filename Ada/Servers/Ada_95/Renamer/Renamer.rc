@@ -1,0 +1,30 @@
+1 VERSIONINFO
+  FILEVERSION 45,0,0,3
+  FILEFLAGSMASK 0X3FL
+  FILEFLAGS 0X0L
+  FILEOS 0X4L
+  FILETYPE 0X1L
+  FILESUBTYPE 0X0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "LegalCopyright", "Copyright \251 White Elephant GmbH 2020\0"
+      VALUE "FileDescription", "Ada Renamer\0"
+      VALUE "OriginalFilename", "Renamer.exe\0"
+      VALUE "InternalName", "Renamer\0"
+      VALUE "ProductName", "GPL 2019\0"
+      VALUE "ProductVersion", "8.3.1\0"
+      VALUE "Libraries", "\0"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
+
+
+
+

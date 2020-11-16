@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -220,6 +220,7 @@ package body Ada_95.Lexer is
           The_Index := The_Index + 1;
           exit when Name_Continuation (Line(The_Index)) = Separator;
         end loop;
+        Name.Clear;
       end Handle_Name;
 
       procedure Handle_Number is

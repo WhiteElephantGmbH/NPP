@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -349,6 +349,12 @@ package body Ada_95.Name is
     Id.Add (The_Item(1 .. The_Word_Index));
     The_Word_Index := 0;
   end Complete_Compound;
+
+
+  procedure Clear is
+  begin
+    The_Word_Index := 0;
+  end Clear;
 
 
   procedure Complete is

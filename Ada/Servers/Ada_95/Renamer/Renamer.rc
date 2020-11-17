@@ -1,5 +1,5 @@
 1 VERSIONINFO
-  FILEVERSION 45,0,0,3
+  FILEVERSION 45,0,0,4
   FILEFLAGSMASK 0X3FL
   FILEFLAGS 0X0L
   FILEOS 0X4L
@@ -14,8 +14,8 @@ BEGIN
       VALUE "FileDescription", "Ada Renamer\0"
       VALUE "OriginalFilename", "Renamer.exe\0"
       VALUE "InternalName", "Renamer\0"
-      VALUE "ProductName", "GPL 2019\0"
-      VALUE "ProductVersion", "8.3.1\0"
+      VALUE "ProductName", "GPL 2020\0"
+      VALUE "ProductVersion", "9.3.1\0"
       VALUE "Libraries", "\0"
     END
   END

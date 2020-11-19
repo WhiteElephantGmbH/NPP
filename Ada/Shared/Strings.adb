@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -826,27 +826,12 @@ package body Strings is
 
 
   function Creator_From (List : Item) return Item is
-    The_Length : Natural := 0;
+    The_Strings : String_List.Item;
   begin
-    for Index in 1 .. List.Count loop
-      The_Length := The_Length + Mapped_String_Of (List(Index))'length;
+    for The_String of List loop
+      The_Strings.Append (Mapped_String_Of (The_String));
     end loop;
-    declare
-      The_Strings  : Item(Count  => List.Count,
-                          Length => The_Length);
-      The_Position : Position := First_Index;
-    begin
-      for Index in 1 .. List.Count loop
-        declare
-          Data : constant String := Mapped_String_Of (List(Index));
-        begin
-          The_Strings.Data(Natural(The_Position) .. Natural(The_Position) + Data'length - 1) := Data;
-          The_Strings.Positions(Index) := The_Position;
-          The_Position := The_Position + Data'length;
-        end;
-      end loop;
-      return The_Strings;
-    end;
+    return Item_Of (The_Strings);
   end Creator_From;
 
 end Strings;

@@ -1,8 +1,9 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
+pragma Warnings ("H"); -- !!! workaround for GNAT 2020
 
 with Ada.Iterator_Interfaces;
 with Memory;

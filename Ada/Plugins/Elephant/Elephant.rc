@@ -7,7 +7,7 @@ ShowUsageBmp     BITMAP ShowUsage.Bmp
 ShowUnusedBmp    BITMAP ShowUnused.Bmp
 
 1 VERSIONINFO
-  FILEVERSION 45,0,0,3
+  FILEVERSION 45,0,0,5
   FILEFLAGSMASK 0x3FL
   FILEFLAGS 0x0L
   FILEOS 0x4L
@@ -22,8 +22,8 @@ BEGIN
       VALUE "FileDescription", "Elephant Nodepad++ Plugin\0"
       VALUE "OriginalFilename", "Elephant.dll\0"
       VALUE "InternalName", "Elephant\0"
-      VALUE "ProductName", "GPL 2019\0"
-      VALUE "ProductVersion", "8.3.1\0"
+      VALUE "ProductName", "GPL 2020\0"
+      VALUE "ProductVersion", "9.3.1\0"
       VALUE "Libraries", "\0"
     END
   END

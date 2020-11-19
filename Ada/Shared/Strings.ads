@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -255,7 +255,6 @@ package Strings is
      with function Mapped_String_Of (Data : String) return String;
   function Creator_From (List : Item) return Item;
   -- Create a new string for each string in items.
-  -- Mapped_String_Of is called twice for each string.
 
 
 private

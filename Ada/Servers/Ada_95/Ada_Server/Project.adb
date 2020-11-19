@@ -834,7 +834,7 @@ package body Project is
       Put ("      for Default_Switches (""ada"") use");
       Put ("         (""-O1"", ""-gnatQ"", ""-gnata"", ""-gnato"", ""-g"", ""-gnat12"",");
       if The_Compiler_Year = 2020 then
-        Put ("          ""-gnatwceGHijkmopruvz.c.N.p.t.w.x"", ""-gnatykmpM120"");");
+        Put ("          ""-gnatwceGhijkmopruvz.c.N.p.t.w.x"", ""-gnatykmpM120"");");
       else
         Put ("          ""-gnatwceGhijkmopruvz.c.n.p.t.w.x"", ""-gnatykmpM120"");");
       end if;

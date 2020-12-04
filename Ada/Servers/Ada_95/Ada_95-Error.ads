@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -43,6 +43,7 @@ package Ada_95.Error is
 
      Goto_Not_Allowed, -- Incorrect_Style'first
      Incorrect_Identifier,
+     Missing_Exception_Handler,
      Restricted_Function_Expression,
      Suspicious_Form_Of_Entry_Call, --Incorrect_Style'last
 

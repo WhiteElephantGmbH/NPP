@@ -5,6 +5,7 @@
 pragma Style_White_Elephant;
 
 with Ada.Directories;
+with Ada.IO_Exceptions;
 with Ada_95.File;
 with Ada_95.Lexical;
 with Ada_95.Name;
@@ -155,7 +156,10 @@ package body Ada_95.Rename is
       end if;
       Display.Rename (File.Name_And_Extension_Of (Name), New_Name_With_Extension);
     exception
-    when others =>
+    when Ada.IO_Exceptions.Use_Error =>
+      Display.Error ("Rename failed for " & Name & " - new name " & New_Name & " already exists");
+    when Occurrence: others =>
+      Log.Write (Occurrence);
       Display.Error ("Rename failed from " & Name & " to " & New_Name);
     end Rename_Unit;
 

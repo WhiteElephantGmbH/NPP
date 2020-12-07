@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -191,8 +191,8 @@ package System.Interrupts is
    --  with it (types to be used are New_Handler_Item and New_Handler_Array).
    --  On finalization, we need to restore the handlers that were installed
    --  before the elaboration of the PO, so we need to store these previous
-   --  handlers. This is also done by Install_Handlers, the room for these
-   --  informations is provided by adding a discriminant which is the number
+   --  handlers. This is also done by Install_Handlers, the room for this
+   --  information is provided by adding a discriminant which is the number
    --  of Attach_Handler pragmas and an array of this size in the protection
    --  type, Static_Interrupt_Protection.
 

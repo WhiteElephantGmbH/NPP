@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2009-2013, Free Software Foundation, Inc.         --
+--          Copyright (C) 2009-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -32,10 +32,8 @@
 --  This package implements a simple, minimal overhead reader for object files
 --  composed of sections of untyped heterogeneous binary data.
 
-with Interfaces.C_Streams;
 with Interfaces;
-
-with System;
+with System.Mmap;
 
 package System.Object_Reader is
 
@@ -44,14 +42,6 @@ package System.Object_Reader is
    --------------
 
    BUFFER_SIZE : constant := 8 * 1024;
-
-   ------------------
-   -- Object files --
-   ------------------
-
-   type Object_File is abstract tagged private;
-
-   type Object_File_Access is access Object_File'Class;
 
    ---------------------
    -- Object sections --
@@ -72,10 +62,7 @@ package System.Object_Reader is
    ------------------------
 
    type Object_Format is
-     (Unknown,
-      --  Object format has not yet been determined
-
-      ELF32,
+     (ELF32,
       --  Object format is 32-bit ELF
 
       ELF64,
@@ -92,6 +79,14 @@ package System.Object_Reader is
 
    --  PECOFF | PECOFF_PLUS appears so often as a case choice, would
    --  seem a good idea to have a subtype name covering these two choices ???
+
+   ------------------
+   -- Object files --
+   ------------------
+
+   type Object_File (Format : Object_Format) is private;
+
+   type Object_File_Access is access Object_File;
 
    ------------------------------
    -- Object architecture type --
@@ -143,12 +138,24 @@ package System.Object_Reader is
 
    type Buffer is array (0 .. BUFFER_SIZE - 1) of uint8;
 
+   type String_Ptr_Len is record
+      Ptr : Mmap.Str_Access;
+      Len : Natural;
+   end record;
+   --  A string made from a pointer and a length. Not all strings for name
+   --  are C strings: COFF inlined symbol names have a max length of 8.
+
    -------------------------------------------
    -- Operations on buffers of untyped data --
    -------------------------------------------
 
    function To_String (Buf : Buffer) return String;
    --  Construct string from C style null-terminated string stored in a buffer
+
+   function To_String_Ptr_Len
+     (Ptr : Mmap.Str_Access;
+      Max_Len : Natural := Natural'Last) return String_Ptr_Len;
+   --  Convert PTR to a String_Ptr_Len.
 
    function Strlen (Buf : Buffer) return int32;
    --  Return the length of a C style null-terminated string
@@ -171,86 +178,120 @@ package System.Object_Reader is
    -- Sequential access --
    -----------------------
 
-   procedure Read
-     (Obj   : Object_File'Class;
+   type Mapped_Stream is private;
+   --  Provide an abstraction of a stream on a memory mapped file
+
+   function Create_Stream (Mf : System.Mmap.Mapped_File;
+                           File_Offset : System.Mmap.File_Size;
+                           File_Length : System.Mmap.File_Size)
+                          return Mapped_Stream;
+   --  Create a stream from Mf
+
+   procedure Close (S : in out Mapped_Stream);
+   --  Close the stream (deallocate memory)
+
+   procedure Read_Raw
+     (S   : in out Mapped_Stream;
       Addr  : Address;
       Size  : uint32);
+   pragma Inline (Read_Raw);
    --  Read a number of fixed sized records
 
-   function Read (Obj : Object_File'Class) return uint8;
-   function Read (Obj : Object_File'Class) return uint16;
-   function Read (Obj : Object_File'Class) return uint32;
-   function Read (Obj : Object_File'Class) return uint64;
-   function Read (Obj : Object_File'Class) return int8;
-   function Read (Obj : Object_File'Class) return int16;
-   function Read (Obj : Object_File'Class) return int32;
-   function Read (Obj : Object_File'Class) return int64;
+   procedure Seek (S : in out Mapped_Stream; Off : Offset);
+   --  Seek to an absolute offset in bytes
+
+   procedure Tell (Obj : in out Mapped_Stream; Off : out Offset)
+     with Inline;
+   function Tell (Obj : Mapped_Stream) return Offset
+     with Inline;
+   --  Fetch the current offset
+
+   function Length (Obj : Mapped_Stream) return Offset
+     with Inline;
+   --  Length of the stream
+
+   function Read (S : in out Mapped_Stream) return Mmap.Str_Access;
+   --  Provide a pointer in memory at the current offset
+
+   function Read (S : in out Mapped_Stream) return String_Ptr_Len;
+   --  Provide a pointer in memory at the current offset
+
+   function Read (S : in out Mapped_Stream) return uint8;
+   function Read (S : in out Mapped_Stream) return uint16;
+   function Read (S : in out Mapped_Stream) return uint32;
+   function Read (S : in out Mapped_Stream) return uint64;
+   function Read (S : in out Mapped_Stream) return int8;
+   function Read (S : in out Mapped_Stream) return int16;
+   function Read (S : in out Mapped_Stream) return int32;
+   function Read (S : in out Mapped_Stream) return int64;
    --  Read a scalar
 
-   function Read_Address (Obj : Object_File'Class) return uint64;
+   function Read_Address
+     (Obj : Object_File; S : in out Mapped_Stream) return uint64;
    --  Read either a 64 or 32 bit address from the file stream depending on the
    --  address size of the target architecture and promote it to a 64 bit type.
 
-   function Read_LEB128 (Obj : Object_File'Class) return uint32;
-   function Read_LEB128 (Obj : Object_File'Class) return int32;
+   function Read_LEB128 (S : in out Mapped_Stream) return uint32;
+   function Read_LEB128 (S : in out Mapped_Stream) return int32;
    --  Read a value encoding in Little-Endian Base 128 format
 
-   procedure Read_C_String (Obj : Object_File'Class; B : out Buffer);
-   --  Read a C style NULL terminated string at an offset
+   procedure Read_C_String (S : in out Mapped_Stream; B : out Buffer);
+   function Read_C_String (S : in out Mapped_Stream) return Mmap.Str_Access;
+   --  Read a C style NULL terminated string
 
    function Offset_To_String
-     (Obj : Object_File'Class;
+     (S : in out Mapped_Stream;
       Off : Offset) return String;
    --  Construct a string from a C style NULL terminated string located at an
    --  offset into the object file.
-
-   -------------------
-   -- Random access --
-   -------------------
-
-   procedure Seek (Obj : Object_File'Class; Off : Offset);
-   --  Seek to an absolute offset in bytes
-
-   procedure Tell (Obj : Object_File'Class; Off : out Offset);
-   --  Fetch the current offset
 
    ------------------------
    -- Object information --
    ------------------------
 
-   function Arch (Obj : Object_File'Class) return Object_Arch;
+   function Arch (Obj : Object_File) return Object_Arch;
    --  Return the object architecture
 
-   function Format (Obj : Object_File'Class) return Object_Format;
+   function Format (Obj : Object_File) return Object_Format;
    --  Return the object file format
 
    function Get_Load_Address (Obj : Object_File) return uint64;
    --  Return the load address defined in Obj. May raise Format_Error if not
    --  implemented
 
-   function Num_Sections (Obj : Object_File'Class) return uint32;
+   function Num_Sections (Obj : Object_File) return uint32;
    --  Return the number of sections composing the object file
 
    function Get_Section
-     (Obj   : Object_File;
-      Shnum : uint32) return Object_Section is abstract;
+     (Obj   : in out Object_File;
+      Shnum : uint32) return Object_Section;
    --  Return the Nth section (numbered from zero)
 
    function Get_Section
-     (Obj      : Object_File'Class;
+     (Obj      : in out Object_File;
       Sec_Name : String) return Object_Section;
    --  Return a section by name
+
+   function Create_Stream
+     (Obj : Object_File;
+      Sec : Object_Section) return Mapped_Stream;
+   --  Create a stream for section Sec
+
+   procedure Get_Xcode_Bounds
+     (Obj   : in out Object_File;
+      Low, High : out uint64);
+   --  Return the low and high addresses of the code for the object file. Can
+   --  be used to check if an address in within this object file. This
+   --  procedure is not efficient and the result should be saved to avoid
+   --  recomputation.
 
    -------------------------
    -- Section information --
    -------------------------
 
-   procedure Seek (Obj : Object_File'Class; Sec : Object_Section);
-   --  Seek to a section
-
    function Name
-     (Obj : Object_File;
-      Sec : Object_Section) return String is abstract;
+     (Obj : in out Object_File;
+      Sec : Object_Section) return String;
    --  Return the name of a section as a string
 
    function Size (Sec : Object_Section) return uint64;
@@ -269,29 +310,36 @@ package System.Object_Reader is
    Null_Symbol : constant Object_Symbol;
    --  An empty symbol table entry.
 
-   function Num_Symbols (Obj : Object_File'Class) return uint64;
-   --  The number of symbols in the symbol table
-
-   function First_Symbol (Obj : in out Object_File) return Object_Symbol
-      is abstract;
+   function First_Symbol (Obj : in out Object_File) return Object_Symbol;
    --  Return the first element in the symbol table or Null_Symbol if the
    --  symbol table is empty.
 
    function Next_Symbol
      (Obj  : in out Object_File;
-      Prev : Object_Symbol) return Object_Symbol is abstract;
+      Prev : Object_Symbol) return Object_Symbol;
    --  Return the element following Prev in the symbol table, or Null_Symbol if
    --  Prev is the last symbol in the table.
 
+   function Read_Symbol
+     (Obj : in out Object_File;
+      Off : Offset) return Object_Symbol;
+   --  Read symbol at Off
+
    function Name
-     (Obj : Object_File;
-      Sym : Object_Symbol) return String is abstract;
+     (Obj : in out Object_File;
+      Sym : Object_Symbol) return String_Ptr_Len;
    --  Return the name of the symbol
 
    function Decoded_Ada_Name
-     (Obj : Object_File'Class;
-      Sym : Object_Symbol) return String;
-   --  Return the the decoded name of a symbol encoded as per exp_dbug.ads
+     (Obj : in out Object_File;
+      Sym : String_Ptr_Len) return String;
+   --  Return the decoded name of a symbol encoded as per exp_dbug.ads
+
+   function Strip_Leading_Char
+     (Obj : in out Object_File;
+      Sym : String_Ptr_Len) return Positive;
+   --  Return the index of the first character to decode the name. This can
+   --  strip one character for ABI with a prefix (like x86 for PECOFF).
 
    function Value (Sym : Object_Symbol) return uint64;
    --  Return the name of the symbol
@@ -302,6 +350,9 @@ package System.Object_Reader is
    function Spans (Sym : Object_Symbol; Addr : uint64) return Boolean;
    --  Determine whether a particular address corresponds to the range
    --  referenced by this symbol.
+
+   function Off (Sym : Object_Symbol) return Offset;
+   --  Return the offset of the symbol.
 
    ----------------
    -- Exceptions --
@@ -314,37 +365,87 @@ package System.Object_Reader is
    --  Encountered a problem parsing the object
 
 private
+   type Mapped_Stream is record
+      Region : System.Mmap.Mapped_Region;
+      Off    : Offset;
+      Len    : Offset;
+   end record;
 
-   package ICS renames Interfaces.C_Streams;
+   subtype ELF is Object_Format range ELF32 .. ELF64;
+   subtype Any_PECOFF is Object_Format range PECOFF .. PECOFF_PLUS;
 
-   type Object_File is abstract tagged record
-      fp           : ICS.FILEs := ICS.NULL_Stream;
+   type Object_File (Format : Object_Format) is record
+      Mf           : System.Mmap.Mapped_File :=
+                        System.Mmap.Invalid_Mapped_File;
       Arch         : Object_Arch := Unknown;
-      Format       : Object_Format := Unknown;
 
       Num_Sections : uint32 := 0;
-      Num_Symbols  : uint64 := 0;
+      --  Number of sections
+
+      Symtab_Last : Offset;       --  Last offset of symbol table
 
       In_Exception : Boolean := False;
       --  True if the parsing is done as part of an exception handler
+
+      Sectab_Stream : Mapped_Stream;
+      --  Section table
+
+      Symtab_Stream : Mapped_Stream;
+      --  Symbol table
+
+      Symstr_Stream : Mapped_Stream;
+      --  Symbol strings
+
+      case Format is
+         when ELF =>
+            Secstr_Stream : Mapped_Stream;
+            --  Section strings
+         when Any_PECOFF =>
+            ImageBase   : uint64;       --  ImageBase value from header
+
+            --  Cache for latest result of Get_Section_Virtual_Address
+
+            GSVA_Sec  : uint32 := uint32'Last;
+            GSVA_Addr : uint64;
+         when XCOFF32 =>
+            null;
+      end case;
    end record;
+
+   subtype ELF_Object_File is Object_File; -- with
+   --  Predicate => ELF_Object_File.Format in ELF;
+   subtype PECOFF_Object_File is Object_File; -- with
+   --  Predicate => PECOFF_Object_File.Format in Any_PECOFF;
+   subtype XCOFF32_Object_File is Object_File; -- with
+   --  Predicate => XCOFF32_Object_File.Format in XCOFF32;
+   --  ???Above predicates cause the compiler to crash when instantiating
+   --  ELF64_Ops (see package body).
 
    type Object_Section is record
-      Num  : uint32 := 0;  --  Index of this section in the section table
-      Off  : Offset := 0;  --  First byte of the section
-      Size : uint64 := 0;  --  Length of the section in bytes
+      Num        : uint32 := 0;
+      --  Section index in the section table
+
+      Off        : Offset := 0;
+      --  First byte of the section in the object file
+
+      Addr       : uint64 := 0;
+      --  Load address of the section. Valid only when Flag_Alloc is true.
+
+      Size       : uint64 := 0;
+      --  Length of the section in bytes
+
+      Flag_Xcode : Boolean := False;
+      --  True if the section is advertised to contain executable code
    end record;
 
-   Null_Section : constant Object_Section := (0, 0, 0);
+   Null_Section : constant Object_Section := (0, 0, 0, 0, False);
 
    type Object_Symbol is record
-      Num   : uint64 := 0;  --  Index of this symbol in the symbol table
       Off   : Offset := 0;  --  Offset of underlying symbol on disk
       Next  : Offset := 0;  --  Offset of the following symbol
       Value : uint64 := 0;  --  Value associated with this symbol
       Size  : uint64 := 0;  --  Size of the referenced entity
    end record;
 
-   Null_Symbol : constant Object_Symbol := (0, 0, 0, 0, 0);
-
+   Null_Symbol : constant Object_Symbol := (0, 0, 0, 0);
 end System.Object_Reader;

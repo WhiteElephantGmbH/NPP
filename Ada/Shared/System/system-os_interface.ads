@@ -6,8 +6,8 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---             Copyright (C) 1991-1994, Florida State University            --
---          Copyright (C) 1995-2010, Free Software Foundation, Inc.         --
+--             Copyright (C) 1991-2017, Florida State University            --
+--          Copyright (C) 1995-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,14 +16,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -52,6 +52,8 @@ package System.OS_Interface is
 
    subtype int  is Interfaces.C.int;
    subtype long is Interfaces.C.long;
+
+   subtype LARGE_INTEGER is System.Win32.LARGE_INTEGER;
 
    -------------------
    -- General Types --
@@ -103,6 +105,18 @@ package System.OS_Interface is
 
    procedure kill (sig : Signal);
    pragma Import (C, kill, "raise");
+
+   ------------
+   -- Clock  --
+   ------------
+
+   procedure QueryPerformanceFrequency
+     (lpPerformanceFreq : access LARGE_INTEGER);
+   pragma Import
+     (Stdcall, QueryPerformanceFrequency, "QueryPerformanceFrequency");
+
+   --  According to the spec, on XP and later than function cannot fail,
+   --  so we ignore the return value and import it as a procedure.
 
    -------------
    -- Threads --
@@ -355,7 +369,7 @@ private
       --  section for the resource.
 
       LockSemaphore : Win32.HANDLE;
-      SpinCount     : Win32.DWORD;
+      SpinCount     : Interfaces.C.size_t;
    end record;
 
 end System.OS_Interface;

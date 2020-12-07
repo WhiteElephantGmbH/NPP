@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---           Copyright (C) 2009-2014, Free Software Foundation, Inc.        --
+--           Copyright (C) 2009-2020, Free Software Foundation, Inc.        --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -34,15 +34,19 @@
 --  conversions from PC addresses to human readable source locations.
 --
 --  Objects must be built with debugging information, however only the
---  .debug_line section of the object file is referenced. In cases
---  where object size is a consideration it's possible to strip all
---  other .debug sections, which will decrease the size of the object
---  significantly.
+--  .debug_line section of the object file is referenced. In cases where object
+--  size is a consideration it's possible to strip all other .debug sections,
+--  which will decrease the size of the object significantly.
+
+pragma Polling (Off);
+--  We must turn polling off for this unit, because otherwise we can get
+--  elaboration circularities when polling is turned on
 
 with Ada.Exceptions.Traceback;
 
 with System.Object_Reader;
 with System.Storage_Elements;
+with System.Bounded_Strings;
 
 package System.Dwarf_Lines is
 
@@ -51,12 +55,15 @@ package System.Dwarf_Lines is
 
    type Dwarf_Context (In_Exception : Boolean := False) is private;
    --  Type encapsulation the state of the Dwarf reader. When In_Exception
-   --  is True we are parsing as part of a exception handler decorator, we
-   --  do not want an exception to be raised, the parsing is done safely
-   --  skipping DWARF file that cannot be read or with stripped debug section
-   --  for example.
+   --  is True we are parsing as part of a exception handler decorator, we do
+   --  not want an exception to be raised, the parsing is done safely skipping
+   --  DWARF file that cannot be read or with stripped debug section for
+   --  example.
 
-   procedure Open (File_Name : String; C : in out Dwarf_Context);
+   procedure Open
+     (File_Name :     String;
+      C         : out Dwarf_Context;
+      Success   : out Boolean);
    procedure Close (C : in out Dwarf_Context);
    --  Open and close files
 
@@ -64,19 +71,33 @@ package System.Dwarf_Lines is
    --  Set the load address of a file. This is used to rebase PIE (Position
    --  Independant Executable) binaries.
 
-   function Is_Open (C : Dwarf_Context) return Boolean;
-   --  Returns True if the context is opened, this is required for non
-   --  exception mode.
+   function Is_Inside (C : Dwarf_Context; Addr : Address) return Boolean;
+   pragma Inline (Is_Inside);
+   --  Return true iff a run-time address Addr is within the module
+
+   function Low_Address (C : Dwarf_Context)
+      return System.Address;
+   pragma Inline (Low_Address);
+   --  Return the lowest address of C, accounting for the module load address
 
    procedure Dump (C : in out Dwarf_Context);
    --  Dump each row found in the object's .debug_lines section to standard out
 
-   function Symbolic_Traceback
-     (Cin          : Dwarf_Context;
-      Traceback    : AET.Tracebacks_Array;
-      Suppress_Hex : Boolean := False) return String;
+   procedure Dump_Cache (C : Dwarf_Context);
+   --  Dump the cache (if present)
+
+   procedure Enable_Cache (C : in out Dwarf_Context);
+   --  Read symbols information to speed up Symbolic_Traceback.
+
+   procedure Symbolic_Traceback
+     (Cin          :        Dwarf_Context;
+      Traceback    :        AET.Tracebacks_Array;
+      Suppress_Hex :        Boolean;
+      Symbol_Found :    out Boolean;
+      Res          : in out System.Bounded_Strings.Bounded_String);
    --  Generate a string for a traceback suitable for displaying to the user.
-   --  If Suppress_Hex is True, then hex addresses are not included.
+   --  If one or more symbols are found, Symbol_Found is set to True. This
+   --  allows the caller to fall back to hexadecimal addresses.
 
    Dwarf_Error : exception;
    --  Raised if a problem is encountered parsing DWARF information. Can be a
@@ -109,8 +130,8 @@ private
 
    MAX_OPCODE_LENGTHS : constant := 256;
 
-   type Opcodes_Lengths_Array is array
-     (SOR.uint32 range 1 .. MAX_OPCODE_LENGTHS) of SOR.uint8;
+   type Opcodes_Lengths_Array is
+     array (SOR.uint32 range 1 .. MAX_OPCODE_LENGTHS) of SOR.uint8;
 
    type Line_Info_Prologue is record
       Unit_Length       : SOR.uint32;
@@ -126,16 +147,48 @@ private
       File_Names_Offset : SOR.Offset;
    end record;
 
-   type Dwarf_Context (In_Exception : Boolean := False) is record
-      Valid : Boolean := False;
-      --  True if DWARF context is properly initialized
+   type Search_Entry is record
+      First : SOR.uint32;
+      Size  : SOR.uint32;
+      --  Function bounds as offset to the base address.
 
-      Load_Slide     : System.Storage_Elements.Integer_Address := 0;
-      Obj            : SOR.Object_File_Access;
-      Prologue       : Line_Info_Prologue;
-      Registers      : Line_Info_Registers;
-      Next_Prologue  : SOR.Offset;
-      End_Of_Section : SOR.Offset;
+      Sym : SOR.uint32;
+      --  Symbol offset to get the name.
+
+      Line : SOR.uint32;
+      --  Dwarf line offset.
+   end record;
+
+   type Search_Array is array (Natural range <>) of Search_Entry;
+
+   type Search_Array_Access is access Search_Array;
+
+   type Dwarf_Context (In_Exception : Boolean := False) is record
+      Low, High  : System.Storage_Elements.Storage_Offset;
+      --  Bounds of the module, per the module object file
+
+      Obj : SOR.Object_File_Access;
+      --  The object file containing dwarf sections
+
+      Load_Address : System.Address := System.Null_Address;
+      --  The address at which the object file was loaded at run time
+
+      Has_Debug : Boolean;
+      --  True if all debug sections are available
+
+      Cache : Search_Array_Access;
+      --  Quick access to symbol and debug info (when present).
+
+      Lines   : SOR.Mapped_Stream;
+      Aranges : SOR.Mapped_Stream;
+      Info    : SOR.Mapped_Stream;
+      Abbrev  : SOR.Mapped_Stream;
+      --  Dwarf line, aranges, info and abbrev sections
+
+      Prologue      : Line_Info_Prologue;
+      Registers     : Line_Info_Registers;
+      Next_Prologue : SOR.Offset;
+      --  State for lines
    end record;
 
 end System.Dwarf_Lines;

@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1995-2010, AdaCore                     --
+--                     Copyright (C) 1995-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -39,7 +39,7 @@ package GNAT.Lock_Files is
    --  Exception raised if file cannot be locked
 
    subtype Path_Name is String;
-   --  Pathname is used by all services provided in this unit to specified
+   --  Pathname is used by all services provided in this unit to specify
    --  directory name and file name. On DOS based systems both directory
    --  separators are handled (i.e. slash and backslash).
 

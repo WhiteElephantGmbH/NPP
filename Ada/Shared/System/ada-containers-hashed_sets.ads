@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
@@ -34,6 +34,7 @@
 with Ada.Iterator_Interfaces;
 
 private with Ada.Containers.Hash_Tables;
+with Ada.Containers.Helpers;
 private with Ada.Finalization;
 private with Ada.Streams;
 
@@ -48,6 +49,7 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
 package Ada.Containers.Hashed_Sets is
+   pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate;
    pragma Remote_Types;
 
@@ -451,17 +453,16 @@ package Ada.Containers.Hashed_Sets is
       --  in that case the check that buckets have not changed is performed
       --  at the time of the update, not when the reference is finalized.
 
+      package Impl is new Helpers.Generic_Implementation;
+
       type Reference_Control_Type is
-         new Ada.Finalization.Controlled with
+         new Impl.Reference_Control_Type with
       record
          Container : Set_Access;
          Index     : Hash_Type;
          Old_Pos   : Cursor;
          Old_Hash  : Hash_Type;
       end record;
-
-      overriding procedure Adjust (Control : in out Reference_Control_Type);
-      pragma Inline (Adjust);
 
       overriding procedure Finalize (Control : in out Reference_Control_Type);
       pragma Inline (Finalize);
@@ -505,7 +506,7 @@ private
 
    overriding procedure Finalize (Container : in out Set);
 
-   use HT_Types;
+   use HT_Types, HT_Types.Implementation;
    use Ada.Finalization;
    use Ada.Streams;
 
@@ -527,10 +528,7 @@ private
    type Cursor is record
       Container : Set_Access;
       Node      : Node_Access;
-   end record;
-
-   type Reference_Control_Type is new Ada.Finalization.Controlled with record
-      Container : Set_Access;
+      Position  : Hash_Type := Hash_Type'Last;
    end record;
 
    procedure Write
@@ -545,16 +543,17 @@ private
 
    for Cursor'Read use Read;
 
-   overriding procedure Adjust (Control : in out Reference_Control_Type);
-   pragma Inline (Adjust);
-
-   overriding procedure Finalize (Control : in out Reference_Control_Type);
-   pragma Inline (Finalize);
+   subtype Reference_Control_Type is Implementation.Reference_Control_Type;
+   --  It is necessary to rename this here, so that the compiler can find it
 
    type Constant_Reference_Type
      (Element : not null access constant Element_Type) is
       record
-         Control : Reference_Control_Type;
+         Control : Reference_Control_Type :=
+           raise Program_Error with "uninitialized reference";
+         --  The RM says, "The default initialization of an object of
+         --  type Constant_Reference_Type or Reference_Type propagates
+         --  Program_Error."
       end record;
 
    procedure Read
@@ -569,15 +568,36 @@ private
 
    for Constant_Reference_Type'Write use Write;
 
-   Empty_Set : constant Set := (Controlled with HT => (null, 0, 0, 0));
+   --  Three operations are used to optimize in the expansion of "for ... of"
+   --  loops: the Next(Cursor) procedure in the visible part, and the following
+   --  Pseudo_Reference and Get_Element_Access functions. See Sem_Ch5 for
+   --  details.
 
-   No_Element : constant Cursor := (Container => null, Node => null);
+   function Pseudo_Reference
+     (Container : aliased Set'Class) return Reference_Control_Type;
+   pragma Inline (Pseudo_Reference);
+   --  Creates an object of type Reference_Control_Type pointing to the
+   --  container, and increments the Lock. Finalization of this object will
+   --  decrement the Lock.
 
-   type Iterator is new Limited_Controlled
-     and Set_Iterator_Interfaces.Forward_Iterator with
+   type Element_Access is access all Element_Type with
+     Storage_Size => 0;
+
+   function Get_Element_Access
+     (Position : Cursor) return not null Element_Access;
+   --  Returns a pointer to the element designated by Position.
+
+   Empty_Set : constant Set := (Controlled with others => <>);
+
+   No_Element : constant Cursor :=
+     (Container => null, Node => null, Position => Hash_Type'Last);
+
+   type Iterator is new Limited_Controlled and
+     Set_Iterator_Interfaces.Forward_Iterator with
    record
       Container : Set_Access;
-   end record;
+   end record
+     with Disable_Controlled => not T_Check;
 
    overriding function First (Object : Iterator) return Cursor;
 

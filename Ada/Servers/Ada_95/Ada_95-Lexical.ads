@@ -110,6 +110,7 @@ package Ada_95.Lexical is
     Unconstrained,
     Start_Label,
     End_Label,
+    Target_Name,
     Special_Id, -- only allowed in Standard
 
     Aspect,
@@ -193,7 +194,7 @@ package Ada_95.Lexical is
     Is_Old,
     Is_Result,
 
-    -- single attributes shared with aspects
+    -- single attributes shared with aspects (must match Aspect_Id enumeration)
 
     Is_Address,
     Is_Alignment,
@@ -272,7 +273,7 @@ package Ada_95.Lexical is
     Is_Wide_Wide_Image,
     Is_Wide_Wide_Value,
 
-    -- compound attributes shared with aspects
+    -- compound attributes shared with aspects (must match Aspect_Id enumeration)
 
     Is_Bit_Order,
     Is_Component_Size,
@@ -292,7 +293,7 @@ package Ada_95.Lexical is
 
   type Aspect_Id is (
 
-    -- single aspects shared with attributes
+    -- single aspects shared with attributes (must match Attribute_Id enumeration)
 
     Is_Address,
     Is_Alignment,
@@ -324,7 +325,7 @@ package Ada_95.Lexical is
     Is_Synchronization,
     Is_Unmodified,
 
-    -- single aspects shared with pragmas
+    -- single aspects shared with pragmas (must match Pragma_Id enumeration)
 
     Is_Annotate,
     Is_Cpu,
@@ -345,7 +346,7 @@ package Ada_95.Lexical is
     Is_Priority,
     Is_Shared, -- used as Single_Aspect'last
 
-    -- compound aspects shared with attributes
+    -- compound aspects shared with attributes (must match Attribute_Id enumeration)
 
     Is_Bit_Order,
     Is_Component_Size,
@@ -378,6 +379,7 @@ package Ada_95.Lexical is
     Is_External_Name,
     Is_Implicit_Dereference,
     Is_Initial_Condition,
+    Is_Integer_Literal,
     Is_Iterator_Element,
     Is_Link_Name,
     Is_Linker_Section,
@@ -386,6 +388,8 @@ package Ada_95.Lexical is
     Is_Part_Of,
     Is_Persistent_Bss,
     Is_Predicate_Failure,
+    Is_Put_Image,
+    Is_Real_Literal,
     Is_Refined_Depends,
     Is_Refined_Global,
     Is_Refined_Post,
@@ -395,6 +399,7 @@ package Ada_95.Lexical is
     Is_Simple_Storage_Pool,
     Is_Simple_Storage_Pool_Type,
     Is_Static_Predicate,
+    Is_String_Literal,
     Is_Suppress_Debug_Info,
     Is_Test_Case,
     Is_Thread_Local_Storage,
@@ -405,7 +410,7 @@ package Ada_95.Lexical is
     Is_Volatile_Full_Access,
     Is_Volatile_Function,
 
-    -- compound aspects shared with pragmas
+    -- compound aspects shared with pragmas (must match Pragma_Id enumeration)
 
     Is_All_Calls_Remote,
     Is_Default_Storage_Pool,
@@ -441,7 +446,7 @@ package Ada_95.Lexical is
 
   type Pragma_Id is (
 
-    -- single pragma shared with aspects
+    -- single pragma shared with aspects (must match Aspect_Id enumeration)
 
     Is_Annotate,
     Is_Cpu,
@@ -481,7 +486,7 @@ package Ada_95.Lexical is
     Is_Undefined, -- GNAT
     Is_Unsuppress, -- used as Single_Pragma'last
 
-    -- compound pragma shared with aspects
+    -- compound pragma shared with aspects (must match Aspect_Id enumeration)
 
     Is_All_Calls_Remote,
     Is_Default_Storage_Pool,
@@ -512,12 +517,19 @@ package Ada_95.Lexical is
     -- compound pragma
 
     Is_Ada_05, -- GNAT used as Compound_Pragma'first
+    Is_Ada_12, -- GNAT
+    Is_Ada_20, -- GNAT
     Is_Ada_2005, -- GNAT
     Is_Ada_2012, -- GNAT
+    Is_Ada_2020, -- GNAT
     Is_Assertion_Policy,
+    Is_Compile_Time_Error, -- GNAT
     Is_Compile_Time_Warning, -- GNAT
     Is_Compiler_Unit_Warning,
+    Is_Complete_Representation, -- GNAT
+    Is_Complex_Representation, -- GNAT
     Is_Console_Application, -- WE
+    Is_Convention_Identifier, -- GNAT
     Is_Detect_Blocking,
     Is_Elaborate_All,
     Is_Export_Procedure, -- GNAT
@@ -527,11 +539,14 @@ package Ada_95.Lexical is
     Is_Linker_Options,
     Is_Locking_Policy,
     Is_Loop_Invariant, -- GNAT
+    Is_Machine_Attribute, -- GNAT
     Is_Memory_Size,
+    Is_No_Component_Reordering, -- GNAT
     Is_No_Strict_Aliasing, -- GNAT
     Is_Normalize_Scalars,
     Is_Partition_Elaboration_Policy,
     Is_Priority_Specific_Dispatching,
+    Is_Provide_Shift_Operators, -- GNAT
     Is_Queueing_Policy,
     Is_Stream_Convert, -- GNAT
     Is_Style_Checks, -- GNAT
@@ -541,6 +556,7 @@ package Ada_95.Lexical is
     Is_Style_White_Elephant, -- use as last in Style_Pragma
     Is_System_Name,
     Is_Task_Dispatching_Policy,
+    Is_Unevaluated_Use_Of_Old, -- GNAT
     Is_Unimplemented_Unit, -- GNAT
     Is_Weak_External); -- GNAT
 

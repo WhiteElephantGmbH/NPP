@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2013-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2013-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -74,24 +74,6 @@ package System.Exceptions.Machine is
       URC_CONTINUE_UNWIND);
 
    pragma Convention (C, Unwind_Reason_Code);
-
-   --  Phase identifiers
-
-   type Unwind_Action is new Integer;
-   pragma Convention (C, Unwind_Action);
-
-   UA_SEARCH_PHASE  : constant Unwind_Action := 1;
-   UA_CLEANUP_PHASE : constant Unwind_Action := 2;
-   UA_HANDLER_FRAME : constant Unwind_Action := 4;
-   UA_FORCE_UNWIND  : constant Unwind_Action := 8;
-   UA_END_OF_STACK  : constant Unwind_Action := 16;  --  GCC extension
-
-   pragma Unreferenced
-     (UA_SEARCH_PHASE,
-      UA_CLEANUP_PHASE,
-      UA_HANDLER_FRAME,
-      UA_FORCE_UNWIND,
-      UA_END_OF_STACK);
 
    --  Mandatory common header for any exception object handled by the
    --  GCC unwinding runtime.
@@ -179,12 +161,7 @@ package System.Exceptions.Machine is
      Ada.Unchecked_Conversion
        (GCC_Exception_Access, GNAT_GCC_Exception_Access);
 
-   function New_Occurrence return GNAT_GCC_Exception_Access is
-      (new GNAT_GCC_Exception'
-        (Header     => (Class   => GNAT_Exception_Class,
-                        Cleanup => Null_Address,
-                        others  => 0),
-         Occurrence => <>));
+   function New_Occurrence return GNAT_GCC_Exception_Access;
    --  Allocate and initialize a machine occurrence
 
 end System.Exceptions.Machine;

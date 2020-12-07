@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,27 +19,22 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
 
---  This version of Ada.Exceptions fully supports both Ada 95 and Ada 2005.
---  It is used in all situations except for the build of the compiler and
---  other basic tools. For these latter builds, we use an Ada 95-only version.
-
---  The reason for this splitting off of a separate version is that bootstrap
---  compilers often will be used that do not support Ada 2005 features, and
---  Ada.Exceptions is part of the compiler sources.
+--  This is the default version of this package. We also have cert and zfp
+--  versions.
 
 pragma Polling (Off);
 --  We must turn polling off for this unit, because otherwise we get
@@ -176,18 +171,6 @@ private
    -- Private Subprograms --
    -------------------------
 
-   function Current_Target_Exception return Exception_Occurrence;
-   pragma Export
-     (Ada, Current_Target_Exception,
-      "__gnat_current_target_exception");
-   --  This routine should return the current raised exception on targets which
-   --  have built-in exception handling such as the Java Virtual Machine. For
-   --  other targets this routine is simply ignored. Currently, only JGNAT
-   --  uses this. See 4jexcept.ads for details. The pragma Export allows this
-   --  routine to be accessed elsewhere in the run-time, even though it is in
-   --  the private part of this package (it is not allowed to be in the visible
-   --  part, since this is set by the reference manual).
-
    function Exception_Name_Simple (X : Exception_Occurrence) return String;
    --  Like Exception_Name, but returns the simple non-qualified name of the
    --  exception. This is used to implement the Exception_Name function in
@@ -295,7 +278,7 @@ private
    --  Traceback array stored in exception occurrence
 
    type Exception_Occurrence is record
-      Id : Exception_Id;
+      Id : Exception_Id := Null_Id;
       --  Exception_Identity for this exception occurrence
 
       Machine_Occurrence : System.Address;
@@ -347,14 +330,6 @@ private
    pragma Stream_Convert (Exception_Occurrence, String_To_EO, EO_To_String);
    --  Functions for implementing Exception_Occurrence stream attributes
 
-   Null_Occurrence : constant Exception_Occurrence := (
-     Id                 => null,
-     Machine_Occurrence => System.Null_Address,
-     Msg_Length         => 0,
-     Msg                => (others => ' '),
-     Exception_Raised   => False,
-     Pid                => 0,
-     Num_Tracebacks     => 0,
-     Tracebacks         => (others => TBE.Null_TB_Entry));
+   Null_Occurrence : constant Exception_Occurrence := (others => <>);
 
 end Ada.Exceptions;

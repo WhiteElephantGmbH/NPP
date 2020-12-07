@@ -6,7 +6,7 @@
 --                     M U L T I P R O C E S S O R S                        --
 --                                S p e c                                   --
 --                                                                          --
---                       Copyright (C) 2010, AdaCore                        --
+--                     Copyright (C) 2010-2020, AdaCore                     --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -32,10 +32,12 @@
 package System.Tasking.Protected_Objects.Multiprocessors is
 
    procedure Served (Entry_Call : Entry_Call_Link);
-   --  Signal the served Entry_Call to the caller CPU
+   --  This procedure is called at the end of a call to an entry or to a
+   --  protected procedure. It adds Entry_Call to a per-CPU list, and pokes
+   --  the CPU (the one from the task waiting on the entry).
 
    procedure Wakeup_Served_Entry;
-   --  Wake up all tasks corresponding to the Entry_Call calls in the
-   --  Pending_Entry_Call list (for the current CPU).
+   --  Called when the CPU is poked to awake all the tasks of the current CPU
+   --  waiting on entries.
 
 end System.Tasking.Protected_Objects.Multiprocessors;

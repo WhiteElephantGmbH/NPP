@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---         Copyright (C) 1992-2014, Free Software Foundation, Inc.          --
+--         Copyright (C) 1992-2020, Free Software Foundation, Inc.          --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -54,9 +54,9 @@ package System.Tasking.Utilities is
    --
    --  This is a dangerous operation, and should never be used on nested tasks
    --  or tasks that depend on any objects that might be finalized earlier than
-   --  the termination of the environment task. It is for internal use by the
-   --  GNARL, to prevent such internal server tasks from preventing a partition
-   --  from terminating.
+   --  the termination of the environment task. It is primarily for internal
+   --  use by the GNARL, to prevent such internal server tasks from preventing
+   --  a partition from terminating.
    --
    --  Also note that the run time assumes that the parent of an independent
    --  task is the environment task. If this is not the case, Make_Independent
@@ -102,7 +102,7 @@ package System.Tasking.Utilities is
 
    procedure Cancel_Queued_Entry_Calls (T : Task_Id);
    --  Cancel any entry calls queued on target task.
-   --  Call this while holding T's lock (or RTS_Lock in Single_Lock mode).
+   --  Call this while holding T's lock.
 
    procedure Exit_One_ATC_Level (Self_ID : Task_Id);
    pragma Inline (Exit_One_ATC_Level);
@@ -111,7 +111,8 @@ package System.Tasking.Utilities is
    --  The effect is to exit one level of ATC nesting.
 
    procedure Abort_One_Task (Self_ID : Task_Id; T : Task_Id);
-   --  Similar to Locked_Abort_To_Level (Self_ID, T, 0), but:
+   --  Similar to Locked_Abort_To_Level (Self_ID, T, Level_Completed_Task),
+   --  but:
    --    (1) caller should be holding no locks
    --    (2) may be called for tasks that have not yet been activated
    --    (3) always aborts whole task
@@ -123,7 +124,6 @@ package System.Tasking.Utilities is
    procedure Make_Passive (Self_ID : Task_Id; Task_Completed : Boolean);
    --  Update counts to indicate current task is either terminated or
    --  accepting on a terminate alternative. Call holding no locks except
-   --  Global_Task_Lock when calling from Terminate_Task, and RTS_Lock when
-   --  Single_Lock is True.
+   --  Global_Task_Lock when calling from Terminate_Task.
 
 end System.Tasking.Utilities;

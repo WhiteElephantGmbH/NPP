@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2013, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,21 +19,19 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
-
-pragma Compiler_Unit_Warning;
 
 package Ada.Command_Line is
    pragma Preelaborate;
@@ -45,7 +43,14 @@ package Ada.Command_Line is
    --
    --  In GNAT: Corresponds to (argc - 1) in C.
 
-   function Argument (Number : Positive) return String;
+   pragma Assertion_Policy (Pre => Ignore);
+   --  We need to ignore the precondition of Argument, below, so that we don't
+   --  raise Assertion_Error. The body raises Constraint_Error. It would be
+   --  cleaner to add "or else raise Constraint_Error" to the precondition, but
+   --  SPARK does not yet support raise expressions.
+
+   function Argument (Number : Positive) return String with
+      Pre => Number <= Argument_Count;
    --  If the external execution environment supports passing arguments to
    --  a program, then Argument returns an implementation-defined value
    --  corresponding to the argument at relative position Number. If Number

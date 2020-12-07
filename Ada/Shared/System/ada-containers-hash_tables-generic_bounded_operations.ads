@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
@@ -36,7 +36,7 @@ generic
    with package HT_Types is
      new Generic_Bounded_Hash_Table_Types (<>);
 
-   use HT_Types;
+   use HT_Types, HT_Types.Implementation;
 
    with function Hash_Node (Node : Node_Type) return Hash_Type;
 
@@ -81,7 +81,7 @@ package Ada.Containers.Hash_Tables.Generic_Bounded_Operations is
 
    procedure Clear (HT : in out Hash_Table_Type'Class);
    --  Deallocates each node in hash table HT. (Note that it only deallocates
-   --  the nodes, not the buckets array.)  Program_Error is raised if the hash
+   --  the nodes, not the buckets array.) Program_Error is raised if the hash
    --  table is busy.
 
    procedure Delete_Node_At_Index

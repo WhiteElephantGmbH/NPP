@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2011-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2011-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -42,12 +42,14 @@ package System.Storage_Pools.Subpools is
 
    type Root_Storage_Pool_With_Subpools is abstract
      new Root_Storage_Pool with private;
+   pragma Preelaborable_Initialization (Root_Storage_Pool_With_Subpools);
    --  The base for all implementations of Storage_Pool_With_Subpools. This
    --  type is Limited_Controlled by derivation. To use subpools, an access
    --  type must be associated with an implementation descending from type
    --  Root_Storage_Pool_With_Subpools.
 
    type Root_Subpool is abstract tagged limited private;
+   pragma Preelaborable_Initialization (Root_Subpool);
    --  The base for all implementations of Subpool. Objects of this type are
    --  managed by the pool_with_subpools.
 
@@ -106,7 +108,7 @@ package System.Storage_Pools.Subpools is
      (Pool : in out Root_Storage_Pool_With_Subpools)
       return not null Subpool_Handle;
    --  Return a common subpool which is used for object allocations without a
-   --  Subpool_Handle_name in the allocator. The default implementation of this
+   --  Subpool_Handle_Name in the allocator. The default implementation of this
    --  routine raises Program_Error.
 
    function Pool_Of_Subpool

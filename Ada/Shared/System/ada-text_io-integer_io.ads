@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -51,32 +51,55 @@ package Ada.Text_IO.Integer_IO is
    procedure Get
      (File  : File_Type;
       Item  : out Num;
-      Width : Field := 0);
+      Width : Field := 0)
+   with
+     Pre    => Is_Open (File) and then Mode (File) = In_File,
+     Global => (In_Out => File_System);
 
    procedure Get
      (Item  : out Num;
-      Width : Field := 0);
+      Width : Field := 0)
+   with
+     Post   =>
+       Line_Length'Old = Line_Length
+       and Page_Length'Old = Page_Length,
+     Global => (In_Out => File_System);
 
    procedure Put
      (File  : File_Type;
       Item  : Num;
       Width : Field := Default_Width;
-      Base  : Number_Base := Default_Base);
+      Base  : Number_Base := Default_Base)
+   with
+     Pre    => Is_Open (File) and then Mode (File) /= In_File,
+     Post   =>
+       Line_Length (File)'Old = Line_Length (File)
+       and Page_Length (File)'Old = Page_Length (File),
+     Global => (In_Out => File_System);
 
    procedure Put
      (Item  : Num;
       Width : Field := Default_Width;
-      Base  : Number_Base := Default_Base);
+      Base  : Number_Base := Default_Base)
+   with
+     Post   =>
+       Line_Length'Old = Line_Length
+       and Page_Length'Old = Page_Length,
+     Global => (In_Out => File_System);
 
    procedure Get
      (From : String;
       Item : out Num;
-      Last : out Positive);
+      Last : out Positive)
+   with
+     Global => null;
 
    procedure Put
      (To   : out String;
       Item : Num;
-      Base : Number_Base := Default_Base);
+      Base : Number_Base := Default_Base)
+   with
+     Global => null;
 
 private
    pragma Inline (Get);

@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -89,6 +89,7 @@ package System.Rident is
       --  does not violate the restriction.
 
      (Simple_Barriers,                           -- Ada 2012 (D.7 (10.9/3))
+      Pure_Barriers,                             -- GNAT
       No_Abort_Statements,                       -- (RM D.7(5), H.4(3))
       No_Access_Parameter_Allocators,            -- Ada 2012 (RM H.4 (8.3/3))
       No_Access_Subprograms,                     -- (RM H.4(17))
@@ -119,7 +120,8 @@ package System.Rident is
       No_Implicit_Conditionals,                  -- GNAT
       No_Implicit_Dynamic_Code,                  -- GNAT
       No_Implicit_Heap_Allocations,              -- (RM D.8(8), H.4(3))
-      No_Implicit_Loops,                         -- GNAT
+      No_Implicit_Task_Allocations,              -- GNAT
+      No_Implicit_Protected_Object_Allocations,  -- GNAT
       No_Initialize_Scalars,                     -- GNAT
       No_Local_Allocators,                       -- (RM H.4(8))
       No_Local_Timing_Events,                    -- (RM D.7(10.2/2))
@@ -142,6 +144,7 @@ package System.Rident is
       No_Streams,                                -- GNAT
       No_Task_Allocators,                        -- (RM D.7(7))
       No_Task_Attributes_Package,                -- GNAT
+      No_Task_At_Interrupt_Priority,             -- GNAT
       No_Task_Hierarchy,                         -- (RM D.7(3), H.4(3))
       No_Task_Termination,                       -- GNAT (Ravenscar)
       No_Tasking,                                -- GNAT
@@ -168,6 +171,7 @@ package System.Rident is
       --  units, it applies to all units in this extended main source.
 
       Immediate_Reclamation,                     -- (RM H.4(10))
+      No_Dynamic_Sized_Objects,                  -- GNAT
       No_Implementation_Aspect_Specifications,   -- Ada 2012 AI-241
       No_Implementation_Attributes,              -- Ada 2005 AI-257
       No_Implementation_Identifiers,             -- Ada 2012 AI-246
@@ -175,9 +179,11 @@ package System.Rident is
       No_Implementation_Restrictions,            -- GNAT
       No_Implementation_Units,                   -- Ada 2012 AI-242
       No_Implicit_Aliasing,                      -- GNAT
+      No_Implicit_Loops,                         -- GNAT
       No_Elaboration_Code,                       -- GNAT
       No_Obsolescent_Features,                   -- Ada 2005 AI-368
       No_Wide_Characters,                        -- GNAT
+      Static_Dispatch_Tables,                    -- GNAT
       SPARK_05,                                  -- GNAT
 
       --  The following cases require a parameter value
@@ -226,7 +232,6 @@ package System.Rident is
    No_Dynamic_Interrupts  : Restriction_Id renames No_Dynamic_Attachment;
    No_Requeue             : Restriction_Id renames No_Requeue_Statements;
    No_Task_Attributes     : Restriction_Id renames No_Task_Attributes_Package;
-   SPARK                  : Restriction_Id renames SPARK_05;
 
    subtype All_Restrictions is Restriction_Id range
      Simple_Barriers .. Max_Storage_At_Blocking;
@@ -254,6 +259,11 @@ package System.Rident is
      Restriction_Id range
        No_Specification_Of_Aspect .. Max_Storage_At_Blocking;
    --  All restrictions that take a parameter
+
+   subtype Integer_Parameter_Restrictions is
+     Restriction_Id range
+       Max_Protected_Entries .. Max_Storage_At_Blocking;
+   --  All restrictions taking an integer parameter
 
    subtype Checked_Parameter_Restrictions is
      All_Parameter_Restrictions range
@@ -368,14 +378,21 @@ package System.Rident is
    type Profile_Name is
      (No_Profile,
       No_Implementation_Extensions,
+      Restricted_Tasking,
+      Restricted,
       Ravenscar,
-      Restricted);
+      Jorvik,
+      GNAT_Extended_Ravenscar,
+      GNAT_Ravenscar_EDF);
    --  Names of recognized profiles. No_Profile is used to indicate that a
    --  restriction came from pragma Restrictions[_Warning], as opposed to
-   --  pragma Profile[_Warning].
+   --  pragma Profile[_Warning]. Restricted_Tasking is a non-user profile that
+   --  contaings the minimal set of restrictions to trigger the user of the
+   --  restricted tasking runtime. Restricted is the corresponding user profile
+   --  that also restrict protected types.
 
    subtype Profile_Name_Actual is Profile_Name
-     range No_Implementation_Extensions .. Restricted;
+     range No_Implementation_Extensions .. Profile_Name'Last;
    --  Actual used profile names
 
    type Profile_Data is record
@@ -410,6 +427,37 @@ package System.Rident is
 
                         Value =>
                           (others                          => 0)),
+
+                     --  Restricted_Tasking Profile
+
+                     Restricted_Tasking =>
+
+                        --  Restrictions for Restricted_Tasking profile
+
+                       (Set   =>
+                          (No_Abort_Statements             => True,
+                           No_Asynchronous_Control         => True,
+                           No_Dynamic_Attachment           => True,
+                           No_Dynamic_Priorities           => True,
+                           No_Local_Protected_Objects      => True,
+                           No_Protected_Type_Allocators    => True,
+                           No_Requeue_Statements           => True,
+                           No_Task_Allocators              => True,
+                           No_Task_Attributes_Package      => True,
+                           No_Task_Hierarchy               => True,
+                           No_Terminate_Alternatives       => True,
+                           Max_Asynchronous_Select_Nesting => True,
+                           Max_Select_Alternatives         => True,
+                           Max_Task_Entries                => True,
+                           others                          => False),
+
+                        --  Value settings for Restricted_Tasking profile
+
+                        Value =>
+                          (Max_Asynchronous_Select_Nesting => 0,
+                           Max_Select_Alternatives         => 0,
+                           Max_Task_Entries                => 0,
+                           others                          => 0)),
 
                      --  Restricted Profile
 
@@ -453,9 +501,164 @@ package System.Rident is
 
                      --    pragma Dispatching_Policy (FIFO_Within_Priorities);
                      --    pragma Locking_Policy (Ceiling_Locking);
-                     --    pragma Detect_Blocking
+                     --    pragma Detect_Blocking;
 
                      Ravenscar  =>
+
+                     --  Restrictions for Ravenscar = Restricted profile ..
+
+                       (Set   =>
+                          (No_Abort_Statements             => True,
+                           No_Asynchronous_Control         => True,
+                           No_Dynamic_Attachment           => True,
+                           No_Dynamic_Priorities           => True,
+                           No_Entry_Queue                  => True,
+                           No_Local_Protected_Objects      => True,
+                           No_Protected_Type_Allocators    => True,
+                           No_Requeue_Statements           => True,
+                           No_Task_Allocators              => True,
+                           No_Task_Attributes_Package      => True,
+                           No_Task_Hierarchy               => True,
+                           No_Terminate_Alternatives       => True,
+                           Max_Asynchronous_Select_Nesting => True,
+                           Max_Protected_Entries           => True,
+                           Max_Select_Alternatives         => True,
+                           Max_Task_Entries                => True,
+
+                           --  plus these additional restrictions:
+
+                           No_Calendar                      => True,
+                           No_Implicit_Heap_Allocations     => True,
+                           No_Local_Timing_Events           => True,
+                           No_Relative_Delay                => True,
+                           No_Select_Statements             => True,
+                           No_Specific_Termination_Handlers => True,
+                           No_Task_Termination              => True,
+                           Simple_Barriers                  => True,
+                           others                           => False),
+
+                        --  Value settings for Ravenscar (same as Restricted)
+
+                        Value =>
+                          (Max_Asynchronous_Select_Nesting => 0,
+                           Max_Protected_Entries           => 1,
+                           Max_Select_Alternatives         => 0,
+                           Max_Task_Entries                => 0,
+                           others                          => 0)),
+
+                     Jorvik  =>
+
+                     --  Restrictions for Jorvik profile ..
+
+                     --  Note: the table entries here only represent the
+                     --  required restriction profile for Jorvik. The
+                     --  full Jorvik profile also requires:
+
+                     --    pragma Dispatching_Policy (FIFO_Within_Priorities);
+                     --    pragma Locking_Policy (Ceiling_Locking);
+                     --    pragma Detect_Blocking;
+
+                     --  The differences between Ravenscar and Jorvik are
+                     --  as follows:
+                     --     1) Ravenscar includes restriction Simple_Barriers;
+                     --        Jorvik includes Pure_Barriers instead.
+                     --     2) The following 6 restrictions are included in
+                     --        Ravenscar but not in Jorvik:
+                     --          No_Implicit_Heap_Allocations
+                     --          No_Relative_Delay
+                     --          Max_Entry_Queue_Length => 1
+                     --          Max_Protected_Entries => 1
+                     --          No_Dependence => Ada.Calendar
+                     --          No_Dependence => Ada.Synchronous_Barriers
+                     --
+                     --  The last of those 7 (i.e., No_Dep => Ada.Synch_Bars)
+                     --  is not reflected here (see sem_prag.adb).
+
+                       (Set   =>
+                          (No_Abort_Statements             => True,
+                           No_Asynchronous_Control         => True,
+                           No_Dynamic_Attachment           => True,
+                           No_Dynamic_Priorities           => True,
+                           No_Local_Protected_Objects      => True,
+                           No_Protected_Type_Allocators    => True,
+                           No_Requeue_Statements           => True,
+                           No_Task_Allocators              => True,
+                           No_Task_Attributes_Package      => True,
+                           No_Task_Hierarchy               => True,
+                           No_Terminate_Alternatives       => True,
+                           Max_Asynchronous_Select_Nesting => True,
+                           Max_Select_Alternatives         => True,
+                           Max_Task_Entries                => True,
+
+                           --  plus these additional restrictions:
+
+                           No_Local_Timing_Events           => True,
+                           No_Select_Statements             => True,
+                           No_Specific_Termination_Handlers => True,
+                           No_Task_Termination              => True,
+                           Pure_Barriers                    => True,
+                           others                           => False),
+
+                        --  Value settings for Ravenscar (same as Restricted)
+
+                        Value =>
+                          (Max_Asynchronous_Select_Nesting => 0,
+                           Max_Select_Alternatives         => 0,
+                           Max_Task_Entries                => 0,
+                           others                          => 0)),
+
+                     GNAT_Extended_Ravenscar  =>
+
+                     --  Restrictions for GNAT_Extended_Ravenscar =
+                     --    Restricted profile ..
+
+                       (Set   =>
+                          (No_Abort_Statements             => True,
+                           No_Asynchronous_Control         => True,
+                           No_Dynamic_Attachment           => True,
+                           No_Dynamic_Priorities           => True,
+                           No_Local_Protected_Objects      => True,
+                           No_Protected_Type_Allocators    => True,
+                           No_Requeue_Statements           => True,
+                           No_Task_Allocators              => True,
+                           No_Task_Attributes_Package      => True,
+                           No_Task_Hierarchy               => True,
+                           No_Terminate_Alternatives       => True,
+                           Max_Asynchronous_Select_Nesting => True,
+                           Max_Select_Alternatives         => True,
+                           Max_Task_Entries                => True,
+
+                           --  plus these additional restrictions:
+
+                           No_Implicit_Task_Allocations     => True,
+                           No_Implicit_Protected_Object_Allocations
+                                                            => True,
+                           No_Local_Timing_Events           => True,
+                           No_Select_Statements             => True,
+                           No_Specific_Termination_Handlers => True,
+                           No_Task_Termination              => True,
+                           Pure_Barriers                    => True,
+                           others                           => False),
+
+                        --  Value settings for Ravenscar (same as Restricted)
+
+                        Value =>
+                          (Max_Asynchronous_Select_Nesting => 0,
+                           Max_Select_Alternatives         => 0,
+                           Max_Task_Entries                => 0,
+                           others                          => 0)),
+
+                     --  GNAT_Ravenscar_EDF Profile
+
+                     --  Note: the table entries here only represent the
+                     --  required restriction profile for GNAT_Ravenscar_EDF.
+                     --  The full GNAT_Ravenscar_EDF profile also requires:
+
+                     --    pragma Dispatching_Policy (EDF_Across_Priorities);
+                     --    pragma Locking_Policy (Ceiling_Locking);
+                     --    pragma Detect_Blocking;
+
+                     GNAT_Ravenscar_EDF  =>
 
                      --  Restrictions for Ravenscar = Restricted profile ..
 

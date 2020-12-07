@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2013-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2013-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
 --  This is an optimized version of Indefinite_Holders using copy-on-write.
@@ -42,6 +42,7 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
 package Ada.Containers.Indefinite_Holders is
+   pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate (Indefinite_Holders);
    pragma Remote_Types (Indefinite_Holders);
 
@@ -95,6 +96,8 @@ package Ada.Containers.Indefinite_Holders is
 
    procedure Move (Target : in out Holder; Source : in out Holder);
 
+   procedure Swap (Left, Right : in out Holder);
+
 private
 
    use Ada.Finalization;
@@ -145,10 +148,14 @@ private
    pragma Inline (Finalize);
 
    type Constant_Reference_Type
-      (Element : not null access constant Element_Type) is
-   record
-      Control : Reference_Control_Type;
-   end record;
+     (Element : not null access constant Element_Type) is
+      record
+         Control : Reference_Control_Type :=
+           raise Program_Error with "uninitialized reference";
+         --  The RM says, "The default initialization of an object of
+         --  type Constant_Reference_Type or Reference_Type propagates
+         --  Program_Error."
+      end record;
 
    procedure Write
      (Stream : not null access Root_Stream_Type'Class;
@@ -163,7 +170,11 @@ private
    for Constant_Reference_Type'Read use Read;
 
    type Reference_Type (Element : not null access Element_Type) is record
-      Control : Reference_Control_Type;
+      Control : Reference_Control_Type :=
+        raise Program_Error with "uninitialized reference";
+      --  The RM says, "The default initialization of an object of
+      --  type Constant_Reference_Type or Reference_Type propagates
+      --  Program_Error."
    end record;
 
    procedure Write

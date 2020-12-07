@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1999-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1999-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -77,19 +77,6 @@ package System.Traceback is
    --  On return, the Traceback array is filled in, and Len indicates the
    --  number of stored entries. The first entry is the most recent call,
    --  and the last entry is the highest level call.
-
-   procedure Call_Chain
-     (Traceback   : System.Address;
-      Max_Len     : Natural;
-      Len         : out Natural;
-      Exclude_Min : System.Address := System.Null_Address;
-      Exclude_Max : System.Address := System.Null_Address;
-      Skip_Frames : Natural := 1);
-   --  Same as the previous version, but takes Traceback as an Address. The
-   --  previous version is preferred. ???This version should be removed from
-   --  this spec, and calls replaced with calls to the previous version. This
-   --  declaration can be moved to the bodies (s-traceb.adb, s-traceb-hpux.adb,
-   --  and s-traceb-mastop.adb), but it should not be visible to clients.
 
    function C_Call_Chain
      (Traceback : System.Address;

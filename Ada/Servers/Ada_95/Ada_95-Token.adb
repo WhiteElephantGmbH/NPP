@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -899,19 +899,20 @@ package body Ada_95.Token is
 
   Max_Comment_List_Length : constant := Counter'last;
 
-  Has_Tokens          : Boolean;
-  Is_In_Unit          : Boolean;
-  Aspect_Enabled      : Boolean;
-  Aspect_Allowed      : Boolean;
-  Last_Was_Apostrophe : Boolean;
-  Next_Is_Identifier  : Boolean;
-  In_Pragma_Call      : Boolean;
-  The_Last_String     : String_Handle;
-  The_Position        : Column_Position;
-  Last_Position       : Column_Position;
-  The_Line_Count      : Counter;
-  The_Comment_Count   : Counter;
-  The_Comment_List    : Comment_List (1 .. Max_Comment_List_Length);
+  Has_Tokens             : Boolean;
+  Is_In_Unit             : Boolean;
+  Is_Generic_Formal_Type : Boolean;
+  Aspect_Enabled         : Boolean;
+  Aspect_Allowed         : Boolean;
+  Last_Was_Apostrophe    : Boolean;
+  Next_Is_Identifier     : Boolean;
+  In_Pragma_Call         : Boolean;
+  The_Last_String        : String_Handle;
+  The_Position           : Column_Position;
+  Last_Position          : Column_Position;
+  The_Line_Count         : Counter;
+  The_Comment_Count      : Counter;
+  The_Comment_List       : Comment_List (1 .. Max_Comment_List_Length);
 
   The_Parenthesis_Nesting_Level : Integer;
 
@@ -992,6 +993,7 @@ package body Ada_95.Token is
                                                       Previous => null);
   begin
     Is_In_Unit := False;
+    Is_Generic_Formal_Type := False;
     Has_Tokens := False;
     Last_Was_Apostrophe := False;
     Aspect_Allowed := False;
@@ -1138,6 +1140,8 @@ package body Ada_95.Token is
           Is_In_Unit := False;
         when Lexical.Is_Package =>
           Is_In_Unit := not Aspect_Allowed;
+        when Lexical.Is_Type =>
+          Is_Generic_Formal_Type := not Is_In_Unit;
         when Lexical.Is_Function | Lexical.Is_Procedure =>
           Next_Is_Identifier := True;
           Is_In_Unit := not Aspect_Allowed;
@@ -1146,7 +1150,7 @@ package body Ada_95.Token is
         when Lexical.Is_Pragma =>
           In_Pragma_Call := True;
         when Lexical.Is_With =>
-          if Is_In_Unit and The_Parenthesis_Nesting_Level = 0 then
+          if (Is_In_Unit or Is_Generic_Formal_Type) and The_Parenthesis_Nesting_Level = 0 then
             Aspect_Allowed := True;
             Aspect_Enabled := True;
           end if;
@@ -1312,6 +1316,10 @@ package body Ada_95.Token is
     when Lexical.Semicolon =>
       Aspect_Enabled := False;
       In_Pragma_Call := False;
+      if Is_Generic_Formal_Type then
+        Is_Generic_Formal_Type := False;
+        Aspect_Allowed := False;
+      end if;
     when Lexical.Period =>
       Next_Is_Identifier := True;
     when others =>

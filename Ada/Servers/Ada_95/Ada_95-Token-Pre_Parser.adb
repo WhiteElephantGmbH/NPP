@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -331,7 +331,8 @@ package body Ada_95.Token.Pre_Parser is
           end if;
           Get_Next_Token;
           if Element_Is (Lexical.Is_New) then
-            Not_Implemented ("Library_Subprogram (new)");
+            Check_Unit_Specification (Id);
+            The_Library_Unit := Data.New_Library_Subprogram_Instantiation (Id, Resource);
           else
             Check_Unit_Implementation (Id);
             The_Library_Unit := Data.New_Library_Subprogram_Body (Id, Resource);
@@ -344,7 +345,11 @@ package body Ada_95.Token.Pre_Parser is
             exit;
           end if;
         when Lexical.Is_Renames =>
-          Not_Implemented ("Library_Subprogram (renames)");
+          if The_Count = 0 then
+            Check_Unit_Specification (Id);
+            The_Library_Unit := Data.New_Library_Subprogram_Renaming (Id, Resource);
+            exit;
+          end if;
         when others =>
           null;
         end case;

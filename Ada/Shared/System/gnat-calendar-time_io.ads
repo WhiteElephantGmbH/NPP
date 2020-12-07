@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1999-2013, AdaCore                     --
+--                     Copyright (C) 1999-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -141,6 +141,18 @@ package GNAT.Calendar.Time_IO is
    --     mmm dd, yyyy         - month spelled out
    --     dd mmm yyyy          - month spelled out
    --
+   --  The following ISO-8861 format expressed as a regular expression is also
+   --  supported:
+   --
+   --    (yyyymmdd | yyyy'-'mm'-'dd)'T'(hhmmss | hh':'mm':'ss)
+   --      [ ('Z' | ('.' | ',') s{s} | ('+'|'-')hh':'mm) ]
+   --
+   --  Examples:
+   --
+   --    2017-04-14T14:47:06      20170414T14:47:06       20170414T144706
+   --    2017-04-14T14:47:06,1234 20170414T14:47:06.1234
+   --    2017-04-14T19:47:06+05   20170414T09:00:06-05:47
+
    --  Constraint_Error is raised if the input string is malformed (does not
    --  conform to one of the above dates, or has an invalid time string), or
    --  the resulting time is not valid.

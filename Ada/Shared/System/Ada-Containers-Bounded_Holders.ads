@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---            Copyright (C) 2014, Free Software Foundation, Inc.            --
+--            Copyright (C) 2015-2020, Free Software Foundation, Inc.       --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 ------------------------------------------------------------------------------
 
 private with System;
@@ -38,6 +38,8 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
 package Ada.Containers.Bounded_Holders is
+   pragma Annotate (CodePeer, Skip_Analysis);
+
    --  This package is patterned after Ada.Containers.Indefinite_Holders. It is
    --  used to treat indefinite subtypes as definite, but without using heap
    --  allocation. For example, you might like to say:
@@ -51,9 +53,14 @@ package Ada.Containers.Bounded_Holders is
    --
    --  Each object of type Holder is allocated Max_Size_In_Storage_Elements
    --  bytes. If you try to create a holder from an object of type Element_Type
-   --  that is too big, an exception is raised. This applies to To_Holder and
-   --  Replace_Element. If you pass an Element_Type object that is smaller than
-   --  Max_Size_In_Storage_Elements, it works fine, but some space is wasted.
+   --  that is too big, an exception is raised (assuming assertions are
+   --  enabled). This applies to To_Holder and Set. If you pass an Element_Type
+   --  object that is smaller than Max_Size_In_Storage_Elements, it works fine,
+   --  but some space is wasted.
+   --
+   --  NOTE: If assertions are disabled, and you try to use an Element that is
+   --  too big, execution is erroneous, and anything can happen, such as
+   --  overwriting arbitrary memory locations.
    --
    --  Element_Type must not be an unconstrained array type. It can be a
    --  class-wide type or a type with non-defaulted discriminants.
@@ -81,7 +88,7 @@ private
    pragma Assert (Element_Type'Alignment <= Standard'Maximum_Alignment);
    --  This prevents elements with a user-specified Alignment that is too big
 
-   type Storage_Element is mod System.Storage_Unit;
+   type Storage_Element is mod 2 ** System.Storage_Unit;
    type Storage_Array is array (Positive range <>) of Storage_Element;
    type Holder is record
       Data : Storage_Array (1 .. Max_Size_In_Storage_Elements);

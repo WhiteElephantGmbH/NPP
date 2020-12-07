@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2012, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,21 +19,25 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
 
-package Ada.Calendar is
+package Ada.Calendar with
+  SPARK_Mode,
+  Abstract_State => (Clock_Time with Synchronous),
+  Initializes    => Clock_Time
+is
 
    type Time is private;
 
@@ -49,7 +53,9 @@ package Ada.Calendar is
 
    subtype Day_Duration is Duration range 0.0 .. 86_400.0;
 
-   function Clock return Time;
+   function Clock return Time with
+     Volatile_Function,
+     Global => Clock_Time;
    --  The returned time value is the number of nanoseconds since the start
    --  of Ada time (1901-01-01 00:00:00.0 UTC). If leap seconds are enabled,
    --  the result will contain all elapsed leap seconds since the start of
@@ -59,6 +65,9 @@ package Ada.Calendar is
    function Month   (Date : Time) return Month_Number;
    function Day     (Date : Time) return Day_Number;
    function Seconds (Date : Time) return Day_Duration;
+   --  SPARK Note: These routines, just like Split and Time_Of below, might use
+   --  the OS-specific timezone database that is typically stored in a file.
+   --  This side effect needs to be modeled, so there is no Global => null.
 
    procedure Split
      (Date    : Time;
@@ -91,23 +100,36 @@ package Ada.Calendar is
    --  Seconds may be 14340.0 (3:59:00) instead of 10740.0 (2:59:00 being
    --  a time that not exist).
 
-   function "+" (Left : Time;     Right : Duration) return Time;
-   function "+" (Left : Duration; Right : Time)     return Time;
-   function "-" (Left : Time;     Right : Duration) return Time;
-   function "-" (Left : Time;     Right : Time)     return Duration;
+   function "+" (Left : Time;     Right : Duration) return Time
+   with
+     Global => null;
+   function "+" (Left : Duration; Right : Time)     return Time
+   with
+     Global => null;
+   function "-" (Left : Time;     Right : Duration) return Time
+   with
+     Global => null;
+   function "-" (Left : Time;     Right : Time)     return Duration
+   with
+     Global => null;
    --  The first three functions will raise Time_Error if the resulting time
    --  value is less than the start of Ada time in UTC or greater than the
    --  end of Ada time in UTC. The last function will raise Time_Error if the
    --  resulting difference cannot fit into a duration value.
 
-   function "<"  (Left, Right : Time) return Boolean;
-   function "<=" (Left, Right : Time) return Boolean;
-   function ">"  (Left, Right : Time) return Boolean;
-   function ">=" (Left, Right : Time) return Boolean;
+   function "<"  (Left, Right : Time) return Boolean with Global => null;
+   function "<=" (Left, Right : Time) return Boolean with Global => null;
+   function ">"  (Left, Right : Time) return Boolean with Global => null;
+   function ">=" (Left, Right : Time) return Boolean with Global => null;
 
    Time_Error : exception;
 
 private
+   --  Mark the private part as SPARK_Mode Off to avoid accounting for variable
+   --  Invalid_Time_Zone_Offset in abstract state.
+
+   pragma SPARK_Mode (Off);
+
    pragma Inline (Clock);
 
    pragma Inline (Year);
@@ -197,11 +219,23 @@ private
    -- Local Declarations --
    ------------------------
 
-   type Time_Rep is range -2 ** 63 .. +2 ** 63 - 1;
+   type Time_Rep is new Long_Long_Integer;
    type Time is new Time_Rep;
    --  The underlying type of Time has been chosen to be a 64 bit signed
-   --  integer number since it allows for easier processing of sub seconds
-   --  and arithmetic.
+   --  integer number since it allows for easier processing of sub-seconds
+   --  and arithmetic. We use Long_Long_Integer to allow this unit to compile
+   --  when using custom target configuration files where the max integer is
+   --  32 bits. This is useful for static analysis tools such as SPARK or
+   --  CodePeer.
+   --
+   --  Note: the reason we have two separate types here is to avoid problems
+   --  with overloading ambiguities in the body if we tried to use Time as an
+   --  internal computational type.
+
+   function Epoch_Offset return Time_Rep;
+   pragma Inline (Epoch_Offset);
+   --  Return the difference between 2150-1-1 UTC and 1970-1-1 UTC expressed in
+   --  nanoseconds. Note that year 2100 is non-leap.
 
    Days_In_Month : constant array (Month_Number) of Day_Number :=
                      (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);

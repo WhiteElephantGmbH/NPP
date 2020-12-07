@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -37,12 +37,12 @@
 with Ada.Exceptions;
 with Ada.Unchecked_Conversion;
 
-with System.Parameters;
-with System.Task_Info;
-with System.Soft_Links;
-with System.Task_Primitives;
-with System.Stack_Usage;
 with System.Multiprocessors;
+with System.Parameters;
+with System.Soft_Links;
+with System.Stack_Usage;
+with System.Task_Info;
+with System.Task_Primitives;
 
 package System.Tasking is
    pragma Preelaborate;
@@ -254,11 +254,6 @@ package System.Tasking is
 
    type String_Access is access all String;
 
-   type Task_Entry_Names_Array is
-     array (Entry_Index range <>) of String_Access;
-
-   type Task_Entry_Names_Access is access all Task_Entry_Names_Array;
-
    ----------------------------------
    -- Entry_Call_Record definition --
    ----------------------------------
@@ -372,6 +367,14 @@ package System.Tasking is
       X     : Ada.Exceptions.Exception_Occurrence);
    --  Used to represent protected procedures to be executed when task
    --  terminates.
+
+   type Initialization_Handler is access procedure;
+   pragma Favor_Top_Level (Initialization_Handler);
+   --  Use to represent procedures to be executed at task initialization.
+
+   Global_Initialization_Handler : Initialization_Handler := null;
+   pragma Atomic (Global_Initialization_Handler);
+   --  Global handler called when each task initializes.
 
    ------------------------------------
    -- Dispatching domain definitions --
@@ -504,7 +507,7 @@ package System.Tasking is
 
    --  Section used by all GNARL implementations (regular and restricted)
 
-   type Common_ATCB is record
+   type Common_ATCB is limited record
       State : Task_States;
       pragma Atomic (State);
       --  Encodes some basic information about the state of a task,
@@ -570,7 +573,8 @@ package System.Tasking is
       --
       --  Protection: Self.L. Self will modify this field when Self.Accepting
       --  is False, and will not need the mutex to do so. Once a task sets
-      --  Pending_ATC_Level = 0, no other task can access this field.
+      --  Pending_ATC_Level = Level_Completed_Task, no other task can access
+      --  this field.
 
       LL : aliased Task_Primitives.Private_Data;
       --  Control block used by the underlying low-level tasking service
@@ -670,8 +674,8 @@ package System.Tasking is
       --  System-specific attributes of the task as specified by the
       --  Task_Info pragma.
 
-      Analyzer  : System.Stack_Usage.Stack_Analyzer;
-      --  For storing informations used to measure the stack usage
+      Analyzer : System.Stack_Usage.Stack_Analyzer;
+      --  For storing information used to measure the stack usage
 
       Global_Task_Lock_Nesting : Natural;
       --  This is the current nesting level of calls to
@@ -721,7 +725,7 @@ package System.Tasking is
    --  present in the Restricted_Ada_Task_Control_Block structure.
 
    type Restricted_Ada_Task_Control_Block (Entry_Num : Task_Entry_Index) is
-   record
+   limited record
       Common : Common_ATCB;
       --  The common part between various tasking implementations
 
@@ -819,14 +823,32 @@ package System.Tasking is
    -----------------------------------
 
    Max_ATC_Nesting : constant Natural := 20;
+   --  The maximum number of nested asynchronous select statements supported
+   --  by the runtime.
 
-   subtype ATC_Level_Base is Integer range 0 .. Max_ATC_Nesting;
+   subtype ATC_Level_Base is Integer range -1 .. Max_ATC_Nesting;
+   --  Indicates the number of nested asynchronous task control statements
+   --  or entries a task is in.
 
-   ATC_Level_Infinity : constant ATC_Level_Base := ATC_Level_Base'Last;
+   Level_Completed_Task : constant ATC_Level_Base := -1;
+   --  ATC_Level of a task that has "completed". A task reaches the completed
+   --  state after an abort, exception propagation, or normal exit.
 
-   subtype ATC_Level is ATC_Level_Base range 0 .. ATC_Level_Base'Last - 1;
+   Level_No_ATC_Occurring : constant ATC_Level_Base := 0;
+   --  ATC_Level of a task not executing a entry call or an asynchronous
+   --  select statement.
 
-   subtype ATC_Level_Index is ATC_Level range 1 .. ATC_Level'Last;
+   Level_No_Pending_Abort : constant ATC_Level_Base := ATC_Level_Base'Last;
+   --  ATC_Level when there is no pending abort
+
+   subtype ATC_Level is ATC_Level_Base range
+     Level_No_ATC_Occurring .. Level_No_Pending_Abort - 1;
+   --  Nested ATC_Levels valid during the execution of a task
+
+   subtype ATC_Level_Index is ATC_Level range
+     Level_No_ATC_Occurring + 1 .. ATC_Level'Last;
+   --  ATC_Levels valid when a task is executing an entry call or asynchronous
+   --  task control statements.
 
    ----------------------------------
    -- Entry_Call_Record definition --
@@ -946,10 +968,15 @@ package System.Tasking is
    --  converted to a task attribute if it fits, or to a pointer to a record
    --  by Ada.Task_Attributes.
 
-   type Task_Serial_Number is mod 2 ** 64;
-   --  Used to give each task a unique serial number
+   type Task_Serial_Number is mod 2 ** Long_Long_Integer'Size;
+   --  Used to give each task a unique serial number. We want 64-bits for this
+   --  type to get as much uniqueness as possible (2**64 is operationally
+   --  infinite in this context, but 2**32 perhaps could recycle). We use
+   --  Long_Long_Integer (which in the normal case is always 64-bits) rather
+   --  than 64-bits explicitly to allow codepeer to analyze this unit when
+   --  a target configuration file forces the maximum integer size to 32.
 
-   type Ada_Task_Control_Block (Entry_Num : Task_Entry_Index) is record
+   type Ada_Task_Control_Block (Entry_Num : Task_Entry_Index) is limited record
       Common : Common_ATCB;
       --  The common part between various tasking implementations
 
@@ -959,14 +986,6 @@ package System.Tasking is
       --  Protection: The elements of this array are on entry call queues
       --  associated with protected objects or task entries, and are protected
       --  by the protected object lock or Acceptor.L, respectively.
-
-      Entry_Names : Task_Entry_Names_Access := null;
-      --  An array of string names which denotes entry [family member] names.
-      --  The structure is indexed by task entry index and contains Entry_Num
-      --  components.
-      --
-      --  Protection: The array is populated during task initialization, before
-      --  the task has been activated. No protection is required in this case.
 
       New_Base_Priority : System.Any_Priority;
       --  New value for Base_Priority (for dynamic priorities package)
@@ -990,7 +1009,7 @@ package System.Tasking is
       --  updated it itself using information from a suspended Caller, or
       --  after Caller has updated it and awakened Self.
 
-      Master_of_Task : Master_Level;
+      Master_Of_Task : Master_Level;
       --  The task executing the master of this task, and the ID of this task's
       --  master (unique only among masters currently active within Parent).
       --
@@ -1090,7 +1109,7 @@ package System.Tasking is
 
       --  Beginning of counts
 
-      ATC_Nesting_Level : ATC_Level := 1;
+      ATC_Nesting_Level : ATC_Level := Level_No_ATC_Occurring;
       --  The dynamic level of ATC nesting (currently executing nested
       --  asynchronous select statements) in this task.
 
@@ -1110,13 +1129,17 @@ package System.Tasking is
 
       --  Protection: Only updated by Self; access assumed to be atomic
 
-      Pending_ATC_Level : ATC_Level_Base := ATC_Level_Infinity;
-      --  The ATC level to which this task is currently being aborted. If the
-      --  value is zero, the entire task has "completed". That may be via
-      --  abort, exception propagation, or normal exit. If the value is
-      --  ATC_Level_Infinity, the task is not being aborted to any level. If
-      --  the value is positive, the task has not completed. This should ONLY
-      --  be modified by Abort_To_Level and Exit_One_ATC_Level.
+      Pending_ATC_Level : ATC_Level_Base := Level_No_Pending_Abort;
+      --  Indicates the ATC level to which this task is currently being
+      --  aborted. Two special values exist:
+      --
+      --    * Level_Completed_Task: the task has completed.
+      --
+      --    * Level_No_Pending_Abort: the task is not being aborted to any
+      --                              level.
+      --
+      --  All other values indicate the task has not completed. This should
+      --  ONLY be modified by Abort_To_Level and Exit_One_ATC_Level.
       --
       --  Protection: Self.L
 
@@ -1130,20 +1153,23 @@ package System.Tasking is
       --  User-writeable location, for use in debugging tasks; also provides a
       --  simple task specific data.
 
+      Free_On_Termination : Boolean := False;
+      --  Deallocate the ATCB when the task terminates. This flag is normally
+      --  False, and is set True when Unchecked_Deallocation is called on a
+      --  non-terminated task so that the associated storage is automatically
+      --  reclaimed when the task terminates.
+
       Attributes : Attribute_Array := (others => 0);
       --  Task attributes
+
+      --  IMPORTANT Note: the Entry_Queues field is last for efficiency of
+      --  access to other fields, do not put new fields after this one.
 
       Entry_Queues : Task_Entry_Queue_Array (1 .. Entry_Num);
       --  An array of task entry queues
       --
       --  Protection: Self.L. Once a task has set Self.Stage to Completing, it
       --  has exclusive access to this field.
-
-      Free_On_Termination : Boolean := False;
-      --  Deallocate the ATCB when the task terminates. This flag is normally
-      --  False, and is set True when Unchecked_Deallocation is called on a
-      --  non-terminated task so that the associated storage is automatically
-      --  reclaimed when the task terminates.
    end record;
 
    --------------------
@@ -1161,21 +1187,22 @@ package System.Tasking is
    --  System.Tasking.Initialization being present, as was done before.
 
    procedure Initialize_ATCB
-     (Self_ID          : Task_Id;
-      Task_Entry_Point : Task_Procedure_Access;
-      Task_Arg         : System.Address;
-      Parent           : Task_Id;
-      Elaborated       : Access_Boolean;
-      Base_Priority    : System.Any_Priority;
-      Base_CPU         : System.Multiprocessors.CPU_Range;
-      Domain           : Dispatching_Domain_Access;
-      Task_Info        : System.Task_Info.Task_Info_Type;
-      Stack_Size       : System.Parameters.Size_Type;
-      T                : Task_Id;
-      Success          : out Boolean);
-   --  Initialize fields of a TCB and link into global TCB structures Call
-   --  this only with abort deferred and holding RTS_Lock. Need more
-   --  documentation, mention T, and describe Success ???
+     (Self_ID              : Task_Id;
+      Task_Entry_Point     : Task_Procedure_Access;
+      Task_Arg             : System.Address;
+      Parent               : Task_Id;
+      Elaborated           : Access_Boolean;
+      Base_Priority        : System.Any_Priority;
+      Base_CPU             : System.Multiprocessors.CPU_Range;
+      Domain               : Dispatching_Domain_Access;
+      Task_Info            : System.Task_Info.Task_Info_Type;
+      Stack_Size           : System.Parameters.Size_Type;
+      T                    : Task_Id;
+      Success              : out Boolean);
+   --  Initialize fields of the TCB for task T, and link into global TCB
+   --  structures. Call this only with abort deferred and holding RTS_Lock.
+   --  Self_ID is the calling task (normally the activator of T). Success is
+   --  set to indicate whether the TCB was successfully initialized.
 
 private
 
@@ -1193,10 +1220,4 @@ private
 
    function Number_Of_Entries (Self_Id : Task_Id) return Entry_Index;
    --  Given a task, return the number of entries it contains
-
-   procedure Set_Entry_Names
-     (Self_Id : Task_Id;
-      Names   : Task_Entry_Names_Access);
-   --  Associate an array of strings denotinge entry [family] names with a task
-
 end System.Tasking;

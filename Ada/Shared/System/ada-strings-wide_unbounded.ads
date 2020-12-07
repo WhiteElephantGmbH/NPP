@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -415,7 +415,7 @@ private
       Last : Natural := 0;
       Data : Wide_String (1 .. Max_Length);
       --  Last is the index of last significant element of the Data. All
-      --  elements with larger indices are just an extra room.
+      --  elements with larger indexes are just extra room for expansion.
    end record;
 
    type Shared_Wide_String_Access is access all Shared_Wide_String;
@@ -485,6 +485,7 @@ private
    overriding procedure Initialize (Object : in out Unbounded_Wide_String);
    overriding procedure Adjust     (Object : in out Unbounded_Wide_String);
    overriding procedure Finalize   (Object : in out Unbounded_Wide_String);
+   pragma Inline (Initialize, Adjust);
 
    Null_Unbounded_Wide_String : constant Unbounded_Wide_String :=
                                   (AF.Controlled with

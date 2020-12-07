@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -40,10 +40,14 @@
 pragma Compiler_Unit_Warning;
 
 with Ada.Exceptions;
+with System.Parameters;
+with System.Secondary_Stack;
 with System.Stack_Checking;
 
 package System.Soft_Links is
    pragma Preelaborate;
+
+   package SST renames System.Secondary_Stack;
 
    subtype EOA is Ada.Exceptions.Exception_Occurrence_Access;
    subtype EO is Ada.Exceptions.Exception_Occurrence;
@@ -89,6 +93,11 @@ package System.Soft_Links is
    type Set_EO_Call       is access procedure (Excep : EO);
    pragma Favor_Top_Level (Set_EO_Call);
 
+   type Get_Stack_Call    is access function return SST.SS_Stack_Ptr;
+   pragma Favor_Top_Level (Get_Stack_Call);
+   type Set_Stack_Call    is access procedure (Stack : SST.SS_Stack_Ptr);
+   pragma Favor_Top_Level (Set_Stack_Call);
+
    type Special_EO_Call   is access
      procedure (Excep : EO := Current_Target_Exception);
    pragma Favor_Top_Level (Special_EO_Call);
@@ -118,6 +127,8 @@ package System.Soft_Links is
    pragma Suppress (Access_Check, Set_Integer_Call);
    pragma Suppress (Access_Check, Get_EOA_Call);
    pragma Suppress (Access_Check, Set_EOA_Call);
+   pragma Suppress (Access_Check, Get_Stack_Call);
+   pragma Suppress (Access_Check, Set_Stack_Call);
    pragma Suppress (Access_Check, Timed_Delay_Call);
    pragma Suppress (Access_Check, Get_Stack_Access_Call);
    pragma Suppress (Access_Check, Task_Name_Call);
@@ -142,12 +153,6 @@ package System.Soft_Links is
    procedure Abort_Handler_NT;
    --  Handle task abort (non-tasking case, does nothing). Currently, no port
    --  makes use of this, but we retain the interface for possible future use.
-
-   procedure Update_Exception_NT (X : EO := Current_Target_Exception);
-   --  Handle exception setting. This routine is provided for targets that
-   --  have built-in exception handling such as the Java Virtual Machine.
-   --  Currently, only JGNAT uses this. See 4jexcept.ads for an explanation on
-   --  how this routine is used.
 
    function Check_Abort_Status_NT return Integer;
    --  Returns Boolean'Pos (True) iff abort signal should raise
@@ -176,9 +181,6 @@ package System.Soft_Links is
 
    Abort_Handler : No_Param_Proc := Abort_Handler_NT'Access;
    --  Handle task abort (task/non-task case as appropriate)
-
-   Update_Exception : Special_EO_Call := Update_Exception_NT'Access;
-   --  Handle exception setting and tasking polling when appropriate
 
    Check_Abort_Status : Get_Integer_Call := Check_Abort_Status_NT'Access;
    --  Called when Abort_Signal is delivered to the process.  Checks to
@@ -237,11 +239,11 @@ package System.Soft_Links is
    Get_Jmpbuf_Address : Get_Address_Call := Get_Jmpbuf_Address_NT'Access;
    Set_Jmpbuf_Address : Set_Address_Call := Set_Jmpbuf_Address_NT'Access;
 
-   function  Get_Sec_Stack_Addr_NT return  Address;
-   procedure Set_Sec_Stack_Addr_NT (Addr : Address);
+   function  Get_Sec_Stack_NT return  SST.SS_Stack_Ptr;
+   procedure Set_Sec_Stack_NT (Stack : SST.SS_Stack_Ptr);
 
-   Get_Sec_Stack_Addr : Get_Address_Call := Get_Sec_Stack_Addr_NT'Access;
-   Set_Sec_Stack_Addr : Set_Address_Call := Set_Sec_Stack_Addr_NT'Access;
+   Get_Sec_Stack : Get_Stack_Call := Get_Sec_Stack_NT'Access;
+   Set_Sec_Stack : Set_Stack_Call := Set_Sec_Stack_NT'Access;
 
    function Get_Current_Excep_NT return EOA;
 
@@ -263,9 +265,9 @@ package System.Soft_Links is
    procedure Enter_Master_NT;
    procedure Complete_Master_NT;
 
-   Current_Master  : Get_Integer_Call :=  Current_Master_NT'Access;
-   Enter_Master    : No_Param_Proc    :=  Enter_Master_NT'Access;
-   Complete_Master : No_Param_Proc    :=  Complete_Master_NT'Access;
+   Current_Master  : Get_Integer_Call := Current_Master_NT'Access;
+   Enter_Master    : No_Param_Proc    := Enter_Master_NT'Access;
+   Complete_Master : No_Param_Proc    := Complete_Master_NT'Access;
 
    ----------------------
    -- Delay Soft-Links --
@@ -300,15 +302,16 @@ package System.Soft_Links is
    --  Wrapper to the possible user specified traceback decorator to be
    --  called during automatic output of exception data.
 
-   --  The null value of this wrapper correspond sto the null value of the
+   --  The null value of this wrapper corresponds to the null value of the
    --  current actual decorator. This is ensured first by the null initial
    --  value of the corresponding variables, and then by Set_Trace_Decorator
    --  in g-exctra.adb.
 
    pragma Atomic (Traceback_Decorator_Wrapper);
    --  Since concurrent read/write operations may occur on this variable.
-   --  See the body of Tailored_Exception_Traceback in Ada.Exceptions for
-   --  a more detailed description of the potential problems.
+   --  See the body of Tailored_Exception_Traceback in
+   --  Ada.Exceptions.Exception_Data for a more detailed description of the
+   --  potential problems.
 
    procedure Save_Library_Occurrence (E : EOA);
    --  When invoked, this routine saves an exception occurrence into a hidden
@@ -329,19 +332,14 @@ package System.Soft_Links is
       --  must be initialized to the tasks requested stack size before the task
       --  can do its first stack check.
 
-      pragma Warnings (Off);
-      --  Needed because we are giving a non-static default to an object in
-      --  a preelaborated unit, which is formally not permitted, but OK here.
-
-      Jmpbuf_Address : System.Address := System.Null_Address;
+      Jmpbuf_Address : System.Address;
       --  Address of jump buffer used to store the address of the current
       --  longjmp/setjmp buffer for exception management. These buffers are
       --  threaded into a stack, and the address here is the top of the stack.
       --  A null address means that no exception handler is currently active.
 
-      Sec_Stack_Addr : System.Address := System.Null_Address;
-      pragma Warnings (On);
-      --  Address of currently allocated secondary stack
+      Sec_Stack_Ptr : SST.SS_Stack_Ptr;
+      --  Pointer of the allocated secondary stack
 
       Current_Excep : aliased EO;
       --  Exception occurrence that contains the information for the current
@@ -353,7 +351,10 @@ package System.Soft_Links is
       --  exception mechanism, organized as a stack with the most recent first.
    end record;
 
-   procedure Create_TSD (New_TSD : in out TSD);
+   procedure Create_TSD
+     (New_TSD        : in out TSD;
+      Sec_Stack      : SST.SS_Stack_Ptr;
+      Sec_Stack_Size : System.Parameters.Size_Type);
    pragma Inline (Create_TSD);
    --  Called from s-tassta when a new thread is created to perform
    --  any required initialization of the TSD.
@@ -379,10 +380,10 @@ package System.Soft_Links is
    pragma Inline (Get_Jmpbuf_Address_Soft);
    pragma Inline (Set_Jmpbuf_Address_Soft);
 
-   function  Get_Sec_Stack_Addr_Soft return  Address;
-   procedure Set_Sec_Stack_Addr_Soft (Addr : Address);
-   pragma Inline (Get_Sec_Stack_Addr_Soft);
-   pragma Inline (Set_Sec_Stack_Addr_Soft);
+   function  Get_Sec_Stack_Soft return  SST.SS_Stack_Ptr;
+   procedure Set_Sec_Stack_Soft (Stack : SST.SS_Stack_Ptr);
+   pragma Inline (Get_Sec_Stack_Soft);
+   pragma Inline (Set_Sec_Stack_Soft);
 
    --  The following is a dummy record designed to mimic Communication_Block as
    --  defined in s-tpobop.ads:
@@ -405,4 +406,11 @@ package System.Soft_Links is
       Comp_3 : Boolean;
    end record;
 
+private
+   NT_TSD : TSD;
+   --  The task specific data for the main task when the Ada tasking run-time
+   --  is not used. It relies on the default initialization of NT_TSD. It is
+   --  placed here and not the body to ensure the default initialization does
+   --  not clobber the secondary stack initialization that occurs as part of
+   --  System.Soft_Links.Initialization.
 end System.Soft_Links;

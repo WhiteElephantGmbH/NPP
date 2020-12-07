@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1998-2010, AdaCore                     --
+--                     Copyright (C) 1998-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -77,19 +77,25 @@ package System.Regexp is
    --  See also regexp(1) man page on Unix systems for further details
 
    --  A second kind of regular expressions is provided. This one is more
-   --  like the wild card patterns used in file names by the Unix shell (or
+   --  like the wildcard patterns used in file names by the Unix shell (or
    --  DOS prompt) command lines. The grammar is the following:
 
    --     regexp ::= term
 
    --     term   ::= elmt
+   --     term   ::= seq
+   --     term   ::= {seq, seq, ...}   -- alternation (matches any of seq)
 
-   --     term   ::= elmt elmt ...     -- concatenation (elmt then elmt)
-   --     term   ::= *                 -- any string of 0 or more characters
-   --     term   ::= ?                 -- matches any character
-   --     term   ::= [char char ...]   -- matches any character listed
-   --     term   ::= [char - char]     -- matches any character in given range
-   --     term   ::= {elmt, elmt, ...} -- alternation (matches any of elmt)
+   --     seq    ::= elmt elmt ...     -- concatenation (sequence of elmts)
+
+   --     elmt   ::= *                 -- any string of 0 or more characters
+   --     elmt   ::= ?                 -- matches any character
+   --     elmt   ::= char
+   --     elmt   ::= [^ char char ...] -- matches any character not listed
+   --     elmt   ::= [char char ...]   -- matches any character listed
+   --     elmt   ::= [char - char]     -- matches any character in given range
+
+   --     \char is also supported by this grammar.
 
    --  Important note : This package was mainly intended to match regular
    --  expressions against file names. The whole string has to match the

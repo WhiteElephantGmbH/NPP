@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 2001-2013, AdaCore                     --
+--                     Copyright (C) 2001-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -47,8 +47,6 @@ package GNAT.Sockets.Thin is
    use Thin_Common;
 
    package C renames Interfaces.C;
-
-   use type System.CRTL.ssize_t;
 
    function Socket_Errno return Integer;
    --  Returns last socket error number
@@ -178,6 +176,17 @@ package GNAT.Sockets.Thin is
      (Domain   : C.int;
       Typ      : C.int;
       Protocol : C.int) return C.int;
+
+   Default_Socket_Pair_Family : constant := SOSC.AF_INET;
+   --  Windows has not socketpair system call, and C_Socketpair below is
+   --  implemented on loopback connected network sockets.
+
+   function C_Socketpair
+     (Domain   : C.int;
+      Typ      : C.int;
+      Protocol : C.int;
+      Fds      : not null access Fd_Pair) return C.int;
+   --  Creates pair of connected sockets
 
    function C_System
      (Command : System.Address) return C.int;

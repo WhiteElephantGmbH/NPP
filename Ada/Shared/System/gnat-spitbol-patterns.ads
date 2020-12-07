@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1997-2013, AdaCore                     --
+--                     Copyright (C) 1997-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -48,7 +48,7 @@
 --       matching with the restriction that it matches entire strings. It
 --       is particularly useful for file name matching, and in particular
 --       it provides "globbing patterns" that are useful in implementing
---       unix or DOS style wild card matching for file names.
+--       unix or DOS style wildcard matching for file names.
 
 --     GNAT.Regpat (files g-regpat.ads/g-regpat.adb)
 --       This is a more complete implementation of Unix-style regular
@@ -899,7 +899,7 @@ package GNAT.Spitbol.Patterns is
    function Span   (Str : VString_Func)                     return Pattern;
    --  Constructs a pattern that matches the longest possible string
    --  consisting entirely of characters from the given argument. The
-   --  string cannot be empty , so the pattern fails if the current
+   --  string cannot be empty, so the pattern fails if the current
    --  character is not one of the characters in Str.
 
    function Succeed                                         return Pattern;

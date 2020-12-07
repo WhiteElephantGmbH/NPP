@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---             Copyright (C) 2014, Free Software Foundation, Inc.           --
+--           Copyright (C) 2014-2020, Free Software Foundation, Inc.        --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,21 +19,22 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
 
 with Ada.Iterator_Interfaces;
+
+with Ada.Containers.Helpers;
 private with Ada.Streams;
-private with Ada.Finalization;
 
 generic
    type Element_Type is private;
@@ -41,6 +42,7 @@ generic
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
 package Ada.Containers.Bounded_Multiway_Trees is
+   pragma Annotate (CodePeer, Skip_Analysis);
    pragma Pure;
    pragma Remote_Types;
 
@@ -270,8 +272,12 @@ package Ada.Containers.Bounded_Multiway_Trees is
       Process : not null access procedure (Position : Cursor));
 
 private
+
+   use Ada.Containers.Helpers;
+   package Implementation is new Generic_Implementation;
+   use Implementation;
+
    use Ada.Streams;
-   use Ada.Finalization;
 
    No_Node : constant Count_Type'Base := -1;
    --  Need to document all global declarations such as this ???
@@ -297,8 +303,7 @@ private
       Nodes    : Tree_Node_Array (0 .. Capacity) := (others => <>);
       Elements : Element_Array (1 .. Capacity) := (others => <>);
       Free     : Count_Type'Base := No_Node;
-      Busy     : Integer := 0;
-      Lock     : Integer := 0;
+      TC       : aliased Tamper_Counts;
       Count    : Count_Type := 0;
    end record;
 
@@ -332,21 +337,17 @@ private
       Position : Cursor);
    for Cursor'Write use Write;
 
-   type Reference_Control_Type is
-      new Controlled with record
-         Container : Tree_Access;
-      end record;
-
-   overriding procedure Adjust (Control : in out Reference_Control_Type);
-   pragma Inline (Adjust);
-
-   overriding procedure Finalize (Control : in out Reference_Control_Type);
-   pragma Inline (Finalize);
+   subtype Reference_Control_Type is Implementation.Reference_Control_Type;
+   --  It is necessary to rename this here, so that the compiler can find it
 
    type Constant_Reference_Type
      (Element : not null access constant Element_Type) is
       record
-         Control : Reference_Control_Type;
+         Control : Reference_Control_Type :=
+           raise Program_Error with "uninitialized reference";
+         --  The RM says, "The default initialization of an object of
+         --  type Constant_Reference_Type or Reference_Type propagates
+         --  Program_Error."
       end record;
 
    procedure Write
@@ -362,7 +363,11 @@ private
    type Reference_Type
      (Element : not null access Element_Type) is
       record
-         Control : Reference_Control_Type;
+         Control : Reference_Control_Type :=
+           raise Program_Error with "uninitialized reference";
+         --  The RM says, "The default initialization of an object of
+         --  type Constant_Reference_Type or Reference_Type propagates
+         --  Program_Error."
       end record;
 
    procedure Write
@@ -374,6 +379,25 @@ private
      (Stream : not null access Root_Stream_Type'Class;
       Item   : out Reference_Type);
    for Reference_Type'Read use Read;
+
+   --  Three operations are used to optimize in the expansion of "for ... of"
+   --  loops: the Next(Cursor) procedure in the visible part, and the following
+   --  Pseudo_Reference and Get_Element_Access functions. See Exp_Ch5 for
+   --  details.
+
+   function Pseudo_Reference
+     (Container : aliased Tree'Class) return Reference_Control_Type;
+   pragma Inline (Pseudo_Reference);
+   --  Creates an object of type Reference_Control_Type pointing to the
+   --  container, and increments the Lock. Finalization of this object will
+   --  decrement the Lock.
+
+   type Element_Access is access all Element_Type with
+     Storage_Size => 0;
+
+   function Get_Element_Access
+     (Position : Cursor) return not null Element_Access;
+   --  Returns a pointer to the element designated by Position.
 
    Empty_Tree : constant Tree := (Capacity => 0, others => <>);
 

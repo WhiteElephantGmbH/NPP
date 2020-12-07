@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -44,6 +44,7 @@ package body Ada_95.Symbol is
     when Lexical.Unconstrained     => return "<>";
     when Lexical.Start_Label       => return "<<";
     when Lexical.End_Label         => return ">>";
+    when Lexical.Target_Name       => return "@";
     when Lexical.Special_Id        => return "~";
     end case;
   end Image_Of;

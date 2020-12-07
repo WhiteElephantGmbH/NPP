@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -55,28 +55,17 @@ package System.Parameters is
    -- Task And Stack Allocation Control --
    ---------------------------------------
 
-   type Task_Storage_Size is new Integer;
-   --  Type used in tasking units for task storage size
-
-   type Size_Type is new Task_Storage_Size;
-   --  Type used to provide task storage size to runtime
+   type Size_Type is range
+     -(2 ** (Integer'(Standard'Address_Size) - 1)) ..
+     +(2 ** (Integer'(Standard'Address_Size) - 1)) - 1;
+   --  Type used to provide task stack sizes to the runtime. Sized to permit
+   --  stack sizes of up to half the total addressable memory space. This may
+   --  seem excessively large (even for 32-bit systems), however there are many
+   --  instances of users requiring large stack sizes (for example string
+   --  processing).
 
    Unspecified_Size : constant Size_Type := Size_Type'First;
    --  Value used to indicate that no size type is set
-
-   subtype Percentage is Size_Type range -1 .. 100;
-   Dynamic : constant Size_Type := -1;
-   --  The secondary stack ratio is a constant between 0 and 100 which
-   --  determines the percentage of the allocated task stack that is
-   --  used by the secondary stack (the rest being the primary stack).
-   --  The special value of minus one indicates that the secondary
-   --  stack is to be allocated from the heap instead.
-
-   Sec_Stack_Percentage : constant Percentage := Dynamic;
-   --  This constant defines the handling of the secondary stack
-
-   Sec_Stack_Dynamic : constant Boolean := Sec_Stack_Percentage = Dynamic;
-   --  Convenient Boolean for testing for dynamic secondary stack
 
    function Default_Stack_Size return Size_Type;
    --  Default task stack size used if none is specified
@@ -94,14 +83,22 @@ package System.Parameters is
    --    otherwise return given Size
 
    Default_Env_Stack_Size : constant Size_Type := 8_192_000;
-   --  Assumed size of the environment task, if no other information
-   --  is available. This value is used when stack checking is
-   --  enabled and no GNAT_STACK_LIMIT environment variable is set.
+   --  Assumed size of the environment task, if no other information is
+   --  available. This value is used when stack checking is enabled and
+   --  no GNAT_STACK_LIMIT environment variable is set.
 
    Stack_Grows_Down  : constant Boolean := True;
    --  This constant indicates whether the stack grows up (False) or
    --  down (True) in memory as functions are called. It is used for
    --  proper implementation of the stack overflow check.
+
+   Runtime_Default_Sec_Stack_Size : constant Size_Type := 10 * 1024;
+   --  The run-time chosen default size for secondary stacks that may be
+   --  overridden by the user with the use of binder -D switch.
+
+   Sec_Stack_Dynamic : constant Boolean := True;
+   --  Indicates if secondary stacks can grow and shrink at run-time. If False,
+   --  the size of a secondary stack is fixed at the point of its creation.
 
    ----------------------------------------------
    -- Characteristics of types in Interfaces.C --
@@ -150,19 +147,6 @@ package System.Parameters is
    --  allow some optimizations and fine tuning within the tasking run time
    --  based on restrictions on the tasking features.
 
-   ----------------------
-   -- Locking Strategy --
-   ----------------------
-
-   Single_Lock : constant Boolean := False;
-   --  Indicates whether a single lock should be used within the tasking
-   --  run-time to protect internal structures. If True, a single lock
-   --  will be used, meaning less locking/unlocking operations, but also
-   --  more global contention. In general, Single_Lock should be set to
-   --  True on single processor machines, and to False to multi-processor
-   --  systems, but this can vary from application to application and also
-   --  depends on the scheduling policy.
-
    -------------------
    -- Task Abortion --
    -------------------
@@ -182,15 +166,6 @@ package System.Parameters is
 
    Max_Attribute_Count : constant := 32;
    --  Number of task attributes stored in the task control block
-
-   --------------------
-   -- Runtime Traces --
-   --------------------
-
-   Runtime_Traces : constant Boolean := False;
-   --  This constant indicates whether the runtime outputs traces to a
-   --  predefined output or not (True means that traces are output).
-   --  See System.Traces for more details.
 
    -----------------------
    -- Task Image Length --

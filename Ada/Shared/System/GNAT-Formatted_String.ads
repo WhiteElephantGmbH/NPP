@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---             Copyright (C) 2014, Free Software Foundation, Inc.           --
+--           Copyright (C) 2014-2020, Free Software Foundation, Inc.        --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,24 +15,36 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
 
---  This package add support for formatted string as supported by C printf().
+--  This package add support for formatted string as supported by C printf()
 
 --  A simple usage is:
-
+--
+--     Put_Line (-(+"%s" & "a string"));
+--
+--  or with a constant for the format:
+--
+--     declare
+--       Format : constant Formatted_String := +"%s";
+--     begin
+--       Put_Line (-(Format & "a string"));
+--     end;
+--
+--  Finally a more complex example:
+--
 --     declare
 --        F : Formatted_String := +"['%c' ; %10d]";
 --        C : Character := 'v';
@@ -132,7 +144,12 @@ package GNAT.Formatted_String is
    use Ada;
 
    type Formatted_String (<>) is private;
-   --  A format string as defined for printf routine
+   --  A format string as defined for printf routine. This string is the
+   --  actual format for all the parameters added with the "&" routines below.
+   --  Note that a Formatted_String object can't be reused as it serves as
+   --  recipient for the final result. That is, each use of "&" will build
+   --  incrementally the final result string which can be retrieved with
+   --  the "-" routine below.
 
    Format_Error : exception;
    --  Raised for every mismatch between the parameter and the expected format
@@ -270,12 +287,12 @@ private
 
    type Data (Size : Natural) is record
       Ref_Count    : Natural := 1;
-      Format       : String (1 .. Size); -- the format string
       Index        : Positive := 1;      -- format index for next value
       Result       : Unbounded_String;   -- current value
       Current      : Natural;            -- the current format number
       Stored_Value : Natural := 0;       -- number of stored values in Stack
       Stack        : I_Vars;
+      Format       : String (1 .. Size); -- the format string
    end record;
 
    type Data_Access is access Data;

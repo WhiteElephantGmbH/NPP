@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                    Copyright (C) 2000-2011, AdaCore                      --
+--                    Copyright (C) 2000-2020, AdaCore                      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -64,7 +64,13 @@ package GNAT.Expect.TTY is
    --  GNAT.TTY.Close_TTY.
 
    procedure Interrupt (Pid : Integer);
-   --  Interrupt a process given its pid
+   --  Interrupt a process given its pid.
+   --  This is equivalent to sending a ctrl-c event, or kill -SIGINT.
+
+   procedure Terminate_Process (Pid : Integer);
+   --  Terminate abruptly a process given its pid.
+   --  This is equivalent to kill -SIGKILL under unix, or TerminateProcess
+   --  under Windows.
 
    overriding procedure Send
      (Descriptor   : in out TTY_Process_Descriptor;
@@ -86,6 +92,11 @@ package GNAT.Expect.TTY is
       Columns    : Natural);
    --  Sets up the size of the terminal as reported to the spawned process
 
+   function Is_Process_Running
+      (Descriptor : in out TTY_Process_Descriptor)
+      return Boolean;
+   --  Returns True if the process is still alive
+
 private
 
    --  All declarations in the private part must be fully commented ???
@@ -105,9 +116,9 @@ private
    procedure Set_Up_Communications
      (Pid        : in out TTY_Process_Descriptor;
       Err_To_Out : Boolean;
-      Pipe1      : access Pipe_Type;
-      Pipe2      : access Pipe_Type;
-      Pipe3      : access Pipe_Type);
+      Pipe1      : not null access Pipe_Type;
+      Pipe2      : not null access Pipe_Type;
+      Pipe3      : not null access Pipe_Type);
 
    procedure Set_Up_Parent_Communications
      (Pid   : in out TTY_Process_Descriptor;
@@ -123,9 +134,16 @@ private
       Cmd   : String;
       Args  : System.Address);
 
+   procedure Close_Input (Descriptor : in out TTY_Process_Descriptor);
+
+   Still_Active : constant Integer := -1;
+
    type TTY_Process_Descriptor is new Process_Descriptor with record
-      Process   : System.Address;  --  Underlying structure used in C
-      Use_Pipes : Boolean := True;
+      Process     : System.Address := System.Null_Address;
+      --  Underlying structure used in C
+      Exit_Status : Integer := Still_Active;
+      --  Holds the exit status of the process
+      Use_Pipes   : Boolean := True;
    end record;
 
 end GNAT.Expect.TTY;

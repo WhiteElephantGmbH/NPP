@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1999-2014, AdaCore                     --
+--                     Copyright (C) 1999-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -58,14 +58,18 @@
 --  This capability is currently supported on the following targets:
 
 --     AiX PowerPC
---     HP-UX
 --     GNU/Linux x86
+--     GNU/Linux PowerPC
 --     LynxOS x86
+--     LynxOS 178 xcoff PowerPC
+--     LynxOS 178 elf PowerPC
 --     Solaris x86
 --     Solaris sparc
+--     VxWorks ARM
+--     VxWorks7 ARM
 --     VxWorks PowerPC
 --     VxWorks x86
---     Windows NT/XP
+--     Windows XP
 
 --  Note: see also GNAT.Traceback.Symbolic, a child unit in file g-trasym.ads
 --  providing symbolic trace back capability for a subset of the above targets.
@@ -93,5 +97,15 @@ package GNAT.Traceback is
    --  It will be equal to Traceback'Length unless the entire traceback is
    --  shorter, in which case positions in Traceback past the Len position
    --  are undefined on return.
+
+   function Call_Chain
+     (Max_Len     : Positive;
+      Skip_Frames : Natural := 1) return Tracebacks_Array;
+   --  Returns up to Max_Len tracebacks corresponding to the current call
+   --  chain. Result array order is the same as in above procedure Call_Chain
+   --  except that Skip_Frames says how many of the most recent calls should be
+   --  excluded from the result, starting with this procedure itself: 1 means
+   --  exclude the frame for this procedure, 2 means 1 + exclude the frame for
+   --  this procedure's caller, ...
 
 end GNAT.Traceback;

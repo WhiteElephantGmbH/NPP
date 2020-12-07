@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---         Copyright (C) 1992-2009, Free Software Foundation, Inc.          --
+--         Copyright (C) 1992-2020, Free Software Foundation, Inc.          --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -38,13 +38,10 @@ package System.Tasking.Queuing is
    procedure Broadcast_Program_Error
      (Self_ID      : Task_Id;
       Object       : POE.Protection_Entries_Access;
-      Pending_Call : Entry_Call_Link;
-      RTS_Locked   : Boolean := False);
+      Pending_Call : Entry_Call_Link);
    --  Raise Program_Error in all tasks calling the protected entries of Object
    --  The exception will not be raised immediately for the calling task; it
    --  will be deferred until it calls Check_Exception.
-   --  RTS_Locked indicates whether the global RTS lock is taken (only
-   --  relevant if Single_Lock is True).
 
    procedure Enqueue (E : in out Entry_Queue; Call : Entry_Call_Link);
    --  Enqueue Call at the end of entry_queue E

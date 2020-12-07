@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1998-2010, AdaCore                     --
+--                     Copyright (C) 1998-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -129,9 +129,11 @@ package GNAT.Threads is
 
    procedure Get_Thread (Id : System.Address; Thread : System.Address);
    pragma Export (C, Get_Thread, "__gnat_get_thread");
+   procedure Get_Thread
+     (Id : Ada.Task_Identification.Task_Id; Thread : System.Address);
    --  This procedure is used to retrieve the thread id of a given task.
    --  The value Id is the value that was passed to the thread code procedure
-   --  at activation time.
+   --  at activation time or a Task_Id.
    --  Thread is a pointer to a thread id that will be updated by this
    --  procedure.
    --
@@ -145,5 +147,16 @@ package GNAT.Threads is
    --  Ada interface only.
    --  Given a low level Id, as returned by Create_Thread, return a Task_Id,
    --  so that operations in Ada.Task_Identification can be used.
+
+   function Make_Independent return Boolean;
+   --  If a procedure loads a shared library containing tasks, and that
+   --  procedure is considered to be a master by the compiler (because it
+   --  contains tasks or class-wide objects that might contain tasks),
+   --  then the tasks in the shared library need to call Make_Independent
+   --  because otherwise they will depend on the procedure that loaded the
+   --  shared library.
+   --
+   --  See System.Tasking.Utilities.Make_Independent in s-tasuti.ads for
+   --  further documentation.
 
 end GNAT.Threads;

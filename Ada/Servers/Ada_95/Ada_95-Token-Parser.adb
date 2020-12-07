@@ -52,7 +52,7 @@ package body Ada_95.Token.Parser is
   Next_Simple_Expression_Data : constant Simple_Expression_Data :=
     (S_0    => (Lexical.Plus | Lexical.Minus                                       => (S_1,   Operator),
                 Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (F_111, Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_111, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_111, Is_Real_Literal),
                 Lexical.String_Literal                                             => (F_111, Is_String_Literal),
@@ -62,7 +62,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unexpected)),
 
      S_1    => (Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (F_111, Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_111, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_111, Is_Real_Literal),
                 Lexical.String_Literal                                             => (F_111, Is_String_Literal),
@@ -77,7 +77,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unknown)),
 
      F_112  => (Lexical.Left_Parenthesis                                           => (T_11,  Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (T_11,  Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (T_11,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_11,  Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (T_11,  Is_Real_Literal),
                 Lexical.String_Literal                                             => (T_11,  Is_String_Literal),
@@ -90,7 +90,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unknown)),
 
      T_12   => (Lexical.Left_Parenthesis                                           => (F_121, Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (F_121, Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (F_121, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_121, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_121, Is_Real_Literal),
                 Lexical.String_Literal                                             => (F_121, Is_String_Literal),
@@ -105,7 +105,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unknown)),
 
      S_2    => (Lexical.Left_Parenthesis                                           => (F_211, Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (F_211, Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (F_211, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_211, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_211, Is_Real_Literal),
                 Lexical.String_Literal                                             => (F_211, Is_String_Literal),
@@ -120,7 +120,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unknown)),
 
      F_212  => (Lexical.Left_Parenthesis                                           => (T_21,  Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (T_21,  Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (T_21,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_21,  Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (T_21,  Is_Real_Literal),
                 Lexical.String_Literal                                             => (T_21,  Is_String_Literal),
@@ -133,7 +133,7 @@ package body Ada_95.Token.Parser is
                 others                                                             => (S_0,   Unknown)),
 
      T_22   => (Lexical.Left_Parenthesis                                           => (F_221, Aggregate_Or_Expression),
-                Lexical.Identifier                                                 => (F_221, Is_Identifier),
+                Lexical.Identifier | Lexical.Target_Name                           => (F_221, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_221, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_221, Is_Real_Literal),
                 Lexical.String_Literal                                             => (F_221, Is_String_Literal),
@@ -295,7 +295,7 @@ package body Ada_95.Token.Parser is
     -- coded in Select_Statement
 
 
-    -- aspect_definition ::= name | expression | identifier
+    -- aspect_definition ::= name | expression | identifier | aggregate | global_aspect_definition
     --
     -- coded in Aspect_Specification
 
@@ -467,7 +467,7 @@ package body Ada_95.Token.Parser is
 
 
     -- component_definition ::=
-    --      [aliased] subtype_indication
+    --      [aliased] [not null] subtype_indication_part
     --      [aliased] [not null] access access_definition_part
     --
     function Component_Definition (Within : Data.Context) return Data_Handle;
@@ -570,6 +570,14 @@ package body Ada_95.Token.Parser is
     --
     procedure Declarative_Part (Scope    : Data.Unit_Handle;
                                 Is_Basic : Boolean := False);
+
+
+    -- declare_expression ::=
+    --      declare {declare_item} begin expression
+    --
+    --    declare_item :== object_declaration | object_renaming_declaration
+    --
+    function Declare_Expression (Within : Data.Context) return Data_Handle;
 
 
     -- default_expression ::=
@@ -1007,7 +1015,7 @@ package body Ada_95.Token.Parser is
 
 
     -- formal_subprogram_declaration ::=
-    --      with subprogram_specification [is [abstract] subprogram_default] [aspect_specification] ;
+    --      with subprogram_specification [is [abstract | [abstract] subprogram_default] [aspect_specification] ;
     --
     -- coded in Generic_Formal_Part
 
@@ -1354,6 +1362,7 @@ package body Ada_95.Token.Parser is
     --    | function_call
     --    | character_literal
     --    | qualified_expression
+    --    | target_name
     --
     function Name_Of (Within                : Data.Context;
                       Procedure_Allowed     : Boolean := False;
@@ -1372,6 +1381,10 @@ package body Ada_95.Token.Parser is
     --
     -- coded in Declarative_Part
 
+
+    -- [not null]
+    --
+    procedure Conditional_Null_Exclusion;
 
 
     -- null_statement ::=
@@ -1512,6 +1525,7 @@ package body Ada_95.Token.Parser is
     --    | (expression)
     --    | (conditional_expression)
     --    | (quantified_expression)
+    --    | (declare_expression)
     --
     -- coded in Simple_Expression
 
@@ -1944,9 +1958,15 @@ package body Ada_95.Token.Parser is
 
 
     -- subtype_indication ::=
-    --      subtype_mark [constraint]
+    --      [null_exlusion] subtype_indication_part
     --
     function Subtype_Indication (Within : Data.Context) return Data_Handle with Inline;
+
+
+    -- subtype_indication_part ::=
+    --      subtype_mark [constraint]
+    --
+    function Subtype_Indication_Part (Within : Data.Context) return Data_Handle with Inline;
 
 
     -- subtype_mark ::=
@@ -2515,7 +2535,7 @@ package body Ada_95.Token.Parser is
     -- aspect_specification ::=
     --      with aspect_mark [=> aspect_definition] {,aspect_mark [=> aspect_definition] }
     --
-    --    aspect_definition ::= name | expression | identifier
+    --    aspect_definition ::= name | expression | identifier | aggregate | global_aspect_definition
     --
     function Aspects_Elements (Within : Data.Context) return Data.Aspect_Specification is
       The_Aspects : Data.Aspect_Specification (1..16);
@@ -2536,6 +2556,7 @@ package body Ada_95.Token.Parser is
               if Convention = "arm" or
                  Convention = "c" or
                  Convention = "c_pass_by_copy" or
+                 Convention = "intrinsic" or
                  Convention = "stdcall"
               then
                 Id.Data := Data.Predefined_Name;
@@ -2544,8 +2565,10 @@ package body Ada_95.Token.Parser is
           when Lexical.Is_Abstract_State
              | Lexical.Is_Global
              | Lexical.Is_Initializes
+             | Lexical.Is_Integer_Literal
              | Lexical.Is_Post
              | Lexical.Is_Pre
+             | Lexical.Is_Put_Image
              | Lexical.Is_Spark_Mode
           =>
             declare
@@ -3009,6 +3032,7 @@ package body Ada_95.Token.Parser is
     --          | ( expression )
     --          | ( conditional_expression )
     --          | ( quantified_expression )
+    --          | ( declare_expression )
     --
     --          allocator ::=
     --               new subtype_indication
@@ -3059,7 +3083,14 @@ package body Ada_95.Token.Parser is
           end if;
           Get_Next_Token;
         when Aggregate_Or_Expression =>
-          The_Type := Aggregate (Within);
+          if Next_Element_Ahead_Is (Lexical.Is_Raise) then
+            Get_Next_Token;
+            The_Type := Raise_Expression (Within);
+            Get_Element (Lexical.Right_Parenthesis);
+            exit;
+          else
+            The_Type := Aggregate (Within);
+          end if;
         when Allocator =>
           The_Type := Allocator (Within);
         when Unknown =>
@@ -3326,7 +3357,7 @@ package body Ada_95.Token.Parser is
             end if;
           end Component;
 
-        begin
+        begin -- Array_Aggregate (inner)
           --TEST----------------------------------------------------------
           --Write_Log ("Array_Aggregate: INDEX=" & Positive'image(Index));
           ----------------------------------------------------------------
@@ -3406,7 +3437,7 @@ package body Ada_95.Token.Parser is
 
         Extra_Parenthesis_Count : Natural := 0;
 
-      begin
+      begin -- Array_Aggregate
         if The_Definition.Component_Type = null or else The_Definition.Component_Type.all in Data.Scalar_Type'class then
           while Element_Is (Lexical.Left_Parenthesis) loop
             Extra_Parenthesis_Count := Extra_Parenthesis_Count + 1;
@@ -3562,7 +3593,9 @@ package body Ada_95.Token.Parser is
             The_Result_Type := Expression (Within);
           when Lexical.Is_Others =>
             Get_Next_Element (Lexical.Association);
-            The_Result_Type := Expression (Within);
+            if not Element_Is (Lexical.Unconstrained) then
+              The_Result_Type := Expression (Within);
+            end if;
             exit;
           when Lexical.Comma
              | Lexical.Equal
@@ -3588,6 +3621,12 @@ package body Ada_95.Token.Parser is
             The_Result_Type := Quantified_Expression (Within);
             --TEST-----------------------------------
             --Write_Log ("-> quantified expression");
+            -----------------------------------------
+            exit;
+          when Lexical.Is_Declare =>
+            The_Result_Type := Declare_Expression (Within);
+            --TEST-----------------------------------
+            --Write_Log ("-> declare expression");
             -----------------------------------------
             exit;
           when others =>
@@ -3658,6 +3697,13 @@ package body Ada_95.Token.Parser is
           Get_Element (Lexical.Right_Parenthesis);
           --TEST-----------------------------------
           --Write_Log ("-> quantified expression");
+          -----------------------------------------
+          return The_Result_Type;
+        when Lexical.Is_Declare =>
+          The_Result_Type := Declare_Expression (Within);
+          Get_Element (Lexical.Right_Parenthesis);
+          --TEST-----------------------------------
+          --Write_Log ("-> declare expression");
           -----------------------------------------
           return The_Result_Type;
         when others =>
@@ -3909,17 +3955,37 @@ package body Ada_95.Token.Parser is
     procedure Digits_Constraint (Within : Data.Context) renames Delta_Constraint;
 
 
+    -- [not null]
+    --
+    procedure Conditional_Null_Exclusion is
+    begin
+      if Element_Is (Lexical.Is_Not) then
+        Get_Element (Lexical.Is_Null);
+      end if;
+    end Conditional_Null_Exclusion;
+
+
     -- subtype_indication ::=
-    --      subtype_mark [constraint]
+    --      [null_exlusion] subtype_indication_part
     --
     function Subtype_Indication (Within : Data.Context) return Data_Handle is
+    begin
+      Conditional_Null_Exclusion;
+      return Subtype_Indication_Part (Within);
+    end Subtype_Indication;
+
+
+    -- subtype_indication_part ::=
+    --      subtype_mark [constraint]
+    --
+    function Subtype_Indication_Part (Within : Data.Context) return Data_Handle is
       Type_Mark     : constant Data_Handle := Subtype_Mark (Within.Scope, Is_Subtype_Indication => True);
       Is_Class_Wide : constant Boolean := Is_Class_Wide_Type;
     begin
       Conditional_Constraint ((Within.Scope, Type_Mark));
       Is_Class_Wide_Type := Is_Class_Wide;
       return Type_Mark;
-    end Subtype_Indication;
+    end Subtype_Indication_Part;
 
 
     -- discrete_range ::=
@@ -4047,9 +4113,7 @@ package body Ada_95.Token.Parser is
         else
           Get_Conditional (Lexical.Is_Aliased);
           Mode;
-          if Element_Is (Lexical.Is_Not) then
-            Get_Element (Lexical.Is_Null);
-          end if;
+          Conditional_Null_Exclusion;
           The_Type := Subtype_Mark (Scope);
         end if;
       end if;
@@ -4654,6 +4718,7 @@ package body Ada_95.Token.Parser is
     --    | type_conversion
     --    | function_call
     --    | character_literal
+    --    | target_name
     --
     --    explicit_dereference ::=
     --         name . all
@@ -6556,37 +6621,41 @@ package body Ada_95.Token.Parser is
       --end if;
       --Increment_Log_Indent;
       ---------------------------------------------------------------------------------
-      The_Item := Actual_Identifier;
-      if The_Scope = null then
-        if not Found_In_Context then
-          The_Declaration := null; -- not found;
-        end if;
+      if Element_Is (Lexical.Target_Name) then
+        The_Declaration := null;
       else
-        if not Found_Inner_Local_Only and then
-           not Found_In_Substructure and then
-           not Found_In_Scope and then
-           not Found_In_Used_Package (The_Instantiation)
-        then
-          The_Declaration := null; -- not found;
-        end if;
-      end if;
-      if The_Declaration /= null then
-        Name_Continuation (Sub_Type, The_Instantiation);
-      end if;
-      if The_Declaration = null then
-        if Found_In_Substructure or else Found_Inherited_Call then
-          if The_Declaration /= null then
-            Name_Continuation (Sub_Type, The_Instantiation);
+        The_Item := Actual_Identifier;
+        if The_Scope = null then
+          if not Found_In_Context then
+            The_Declaration := null; -- not found;
           end if;
         else
-          if not No_Association then
-            Skip_To_End_Of_Name;
+          if not Found_Inner_Local_Only and then
+             not Found_In_Substructure and then
+             not Found_In_Scope and then
+             not Found_In_Used_Package (The_Instantiation)
+          then
+            The_Declaration := null; -- not found;
           end if;
-          The_Declaration := null;
         end if;
-      end if;
-      if Token_Element = Lexical.Period then
-        Skip_To_End_Of_Name;
+        if The_Declaration /= null then
+          Name_Continuation (Sub_Type, The_Instantiation);
+        end if;
+        if The_Declaration = null then
+          if Found_In_Substructure or else Found_Inherited_Call then
+            if The_Declaration /= null then
+              Name_Continuation (Sub_Type, The_Instantiation);
+            end if;
+          else
+            if not No_Association then
+              Skip_To_End_Of_Name;
+            end if;
+            The_Declaration := null;
+          end if;
+        end if;
+        if Token_Element = Lexical.Period then
+          Skip_To_End_Of_Name;
+        end if;
       end if;
       --TEST--------------------------------------------------------------------------------------
       --Decrement_Log_Indent;
@@ -6624,20 +6693,17 @@ package body Ada_95.Token.Parser is
 
 
     -- component_definition ::=
-    --      [aliased] subtype_indication
+    --      [aliased] [not null] Subtype_Indication_Part
     --      [aliased] [not null] access access_definition_part
     --
     function Component_Definition (Within : Data.Context) return Data_Handle is
     begin
       Get_Conditional (Lexical.Is_Aliased);
-      if Element_Is (Lexical.Is_Not) then
-        Get_Element (Lexical.Is_Null);
-        Get_Element (Lexical.Is_Access);
-        return Access_Definition_Part (Within.Scope);
-      elsif Element_Is (Lexical.Is_Access) then
+      Conditional_Null_Exclusion;
+      if Element_Is (Lexical.Is_Access) then
         return Access_Definition_Part (Within.Scope);
       else
-        return Subtype_Indication (Within);
+        return Subtype_Indication_Part (Within);
       end if;
     end Component_Definition;
 
@@ -6753,7 +6819,7 @@ package body Ada_95.Token.Parser is
       when others =>
         Syntax_Error;
       end case;
-      return Access_Type_Of (Id, Within.Scope, Subtype_Indication (Within));
+      return Access_Type_Of (Id, Within.Scope, Subtype_Indication_Part (Within));
     end Access_Type_Definition;
 
 
@@ -7099,12 +7165,12 @@ package body Ada_95.Token.Parser is
             case Next_Token.Element is
             when Lexical.Identifier =>
               Data.New_Formal_Access_Type (Id         => Defining_Identifier,
-                                           To_Type    => Subtype_Indication ((Data.Unit_Handle(Parameters), null)),
+                                           To_Type    => Subtype_Indication_Part ((Data.Unit_Handle(Parameters), null)),
                                            Parameters => Parameters);
             when Lexical.Is_All =>
               Get_Next_Token;
               Data.New_Formal_Access_Type (Id         => Defining_Identifier,
-                                           To_Type    => Subtype_Indication ((Data.Unit_Handle(Parameters), null)),
+                                           To_Type    => Subtype_Indication_Part ((Data.Unit_Handle(Parameters), null)),
                                            Parameters => Parameters);
             when others =>
               Not_Implemented ("Generic_Formal_Part (formal_access_type_definition)");
@@ -7112,9 +7178,7 @@ package body Ada_95.Token.Parser is
           when others =>
             Syntax_Error;
           end case;
-          if Element_Is (Lexical.Is_With) then
-            Not_Implemented ("Generic_Formal_Part (aspect_specification)");
-          end if;
+          Conditional_Aspect_Specification ((Scope, null));
         else
           Data.New_Formal_Incomplete_Type (Defining_Identifier, Parameters);
         end if;
@@ -7123,7 +7187,7 @@ package body Ada_95.Token.Parser is
 
 
       -- formal_subprogram_declaration ::=
-      --      with subprogram_specification [is [abstract] subprogram_default] [aspect_specification] ;
+      --      with subprogram_specification [is [abstract | [abstract] subprogram_default] [aspect_specification] ;
       --
       --    subprogram_default ::=
       --          default_name
@@ -7135,10 +7199,15 @@ package body Ada_95.Token.Parser is
         Profile : constant Data.Subprogram_Profile := Data.Used (Subprogram_Profile (Data.Unit_Handle(Parameters),
                                                                                      Is_Function));
         The_Default_Name : Identifier_Handle;
+        Skip_Default     : Boolean := False;
       begin
         if Element_Is (Lexical.Is_Is) then
-          Get_Conditional (Lexical.Is_Abstract);
-          if not Element_Is (Lexical.Unconstrained) and then not Element_Is (Lexical.Is_Null) then
+          if Element_Is (Lexical.Is_Abstract) then
+            Skip_Default := Token_Element in Lexical.Is_When | Lexical.Semicolon;
+          end if;
+          if not Skip_Default and then
+             not Element_Is (Lexical.Unconstrained) and then not Element_Is (Lexical.Is_Null)
+          then
             Dummy := Name_Of (Data.Unit_Handle(Parameters));
             The_Default_Name := The_Actual_Identifier;
           end if;
@@ -8504,7 +8573,7 @@ package body Ada_95.Token.Parser is
         begin
           Get_Next_Token;
           declare
-            Ancestor       : constant Data_Handle := Subtype_Indication ((Scope, null));
+            Ancestor       : constant Data_Handle := Subtype_Indication_Part ((Scope, null));
             The_Interfaces : Data.List.Item;
           begin
             if Element_Is (Lexical.Is_And) then
@@ -8744,7 +8813,7 @@ package body Ada_95.Token.Parser is
           Get_Element (Lexical.Semicolon);
           return;
         when others =>
-          The_Subtype := Subtype_Indication ((Scope, null));
+          The_Subtype := Subtype_Indication_Part ((Scope, null));
           Is_Class_Wide := Is_Class_Wide_Type;
         end case;
         case Token_Element is
@@ -9021,6 +9090,21 @@ package body Ada_95.Token.Parser is
         end if;
       end loop;
     end Declarative_Part;
+
+
+    -- declare_expression ::=
+    --      declare {declare_item} begin expression
+    --
+    --    declare_item :== object_declaration | object_renaming_declaration
+    --
+    function Declare_Expression (Within : Data.Context) return Data_Handle is
+      Scope : constant Data.Unit_Handle := Data.New_Block (null, Within.Scope);
+    begin
+      Get_Next_Token;
+      Declarative_Part (Scope);
+      Get_Element (Lexical.Is_Begin);
+      return Expression ((Scope, Within.Sub_Type));
+    end Declare_Expression;
 
 
     -- assignment_statement ::=
@@ -9336,7 +9420,7 @@ package body Ada_95.Token.Parser is
       case Token_Element is
       when Lexical.Is_In | Lexical.Is_Of | Lexical.Colon =>
         if Element_Is (Lexical.Colon) then
-          The_Type := Subtype_Indication ((Scope, null));
+          The_Type := Subtype_Indication_Part ((Scope, null));
         end if;
         if Token_Element = Lexical.Is_Of then
           Get_Next_Conditional (Lexical.Is_Reverse);
@@ -9479,7 +9563,7 @@ package body Ada_95.Token.Parser is
             if Element_Is (Lexical.Is_Access) then
               The_Subtype := Access_Definition_Part (Return_Block);
             else
-              The_Subtype := Subtype_Indication ((Return_Block, null));
+              The_Subtype := Subtype_Indication_Part ((Return_Block, null));
             end if;
             if Is_Constant then
               Get_Element (Lexical.Assignment);
@@ -10006,28 +10090,51 @@ package body Ada_95.Token.Parser is
 
 
       procedure Library_Subprogram (Is_Function : Boolean := False) is
-
         Unused : constant Identifiers := Next_Unit_Name;
-
-        Profile : constant Data.Subprogram_Profile := Subprogram_Profile (Unit, Is_Function);
-
       begin
-        case Token_Element is
-        when Lexical.Is_Is =>
-          if Next_Element_Ahead_Is (Lexical.Is_New) then
-            Not_Implemented ("Library_Subprogram (new)");
-          else
-            Data.Add_Library_Subprogram_Body (Unit, Profile);
-            Subprogram_Body (Unit);
-          end if;
-        when Lexical.Semicolon =>
-          Data.Add_Library_Subprogram_Declaration (Unit, Profile);
-          Get_Next_Token;
-        when Lexical.Is_Renames =>
-          Not_Implemented ("Library_Subprogram (renames)");
-        when others =>
-          Syntax_Error;
-        end case;
+        if Token_Element = Lexical.Is_Is and then Next_Element_Ahead_Is (Lexical.Is_New) then
+          declare
+            Generic_Unit : constant Data.Unit_Handle := Next_Unit_Of (Unit);
+            Actual_Part  : constant Data.List.Elements := Conditional_Generic_Actual_Part (Generic_Unit,
+                                                                                           Unit,
+                                                                                           null);
+          begin
+            if Actual_Part'length /= 0 then
+              Data.Add_Library_Subprogram_Instantiation (Unit);
+--!!! incomplete                                         Profile => Data.Actual_Profile_For
+--                                                                    (Generic_Unit => The_Unit,
+--                                                                     Subprogram   => The_Subprogram, ...)
+            end if;
+          end;
+          Get_Element (Lexical.Semicolon);
+        else
+          declare
+            Profile : Data.Subprogram_Profile := Subprogram_Profile (Unit, Is_Function);
+          begin
+            case Token_Element is
+            when Lexical.Is_Is =>
+              Data.Add_Library_Subprogram_Body (Unit, Profile);
+              Subprogram_Body (Unit);
+            when Lexical.Semicolon =>
+              Data.Add_Library_Subprogram_Declaration (Unit, Profile);
+              Get_Next_Token;
+            when Lexical.Is_Renames =>
+              declare
+                Renamed_Unit : constant Data.Unit_Handle := Next_Unit_Of (Unit);
+              begin
+                if Renamed_Unit /= null then
+                  The_Actual_Identifier.Data := Data_Handle(Renamed_Unit);
+                  Renamed_Unit.Is_Used := True;
+                  Profile := Data.Used (Profile); --!!!
+                  Data.Add_Library_Subprogram_Renaming (Unit, Renamed_Unit);
+                end if;
+              end;
+              Get_Element (Lexical.Semicolon);
+            when others =>
+              Syntax_Error;
+            end case;
+          end;
+        end if;
       end Library_Subprogram;
 
 

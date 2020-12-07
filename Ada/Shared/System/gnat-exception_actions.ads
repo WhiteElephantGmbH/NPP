@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2002-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2002-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,23 +15,25 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
 --                                                                          --
 ------------------------------------------------------------------------------
 
---  This package provides support for callbacks on exceptions
+--  This package provides support for callbacks on exceptions as well as
+--  exception-related utility subprograms of possible interest together with
+--  exception actions or more generally.
 
---  These callbacks are called immediately when either a specific exception,
+--  The callbacks are called immediately when either a specific exception,
 --  or any exception, is raised, before any other actions taken by raise, in
 --  particular before any unwinding of the stack occurs.
 
@@ -55,6 +57,7 @@ package GNAT.Exception_Actions is
 
    type Exception_Action is access
      procedure (Occurrence : Exception_Occurrence);
+   pragma Favor_Top_Level (Exception_Action);
    --  General callback type whenever an exception is raised. The callback
    --  procedure must not propagate an exception (execution of the program
    --  is erroneous if such an exception is propagated).
@@ -66,6 +69,10 @@ package GNAT.Exception_Actions is
    --
    --  Action is called before the exception is propagated to user's code.
    --  If Action is null, this will in effect cancel all exception actions.
+
+   procedure Register_Global_Unhandled_Action (Action : Exception_Action);
+   --  Similar to Register_Global_Action, called on unhandled exceptions
+   --  only.
 
    procedure Register_Id_Action
      (Id     : Exception_Id;
@@ -84,6 +91,10 @@ package GNAT.Exception_Actions is
    --
    --  Note: All non-predefined exceptions will return Null_Id for programs
    --  compiled with pragma Restriction (No_Exception_Registration)
+
+   function Is_Foreign_Exception (E : Exception_Occurrence) return Boolean;
+   --  Tell whether the exception occurrence E represents a foreign exception,
+   --  such as one raised in C++ and caught by a when others choice in Ada.
 
    function Registered_Exceptions_Count return Natural;
    --  Return the number of exceptions that have been registered so far.

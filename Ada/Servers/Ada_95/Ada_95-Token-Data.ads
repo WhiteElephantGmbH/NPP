@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                      (c) 2007 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                           *
+-- *                      (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                           *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -505,6 +505,11 @@ package Ada_95.Token.Data is
 
   overriding
   function Resource (Item : Generic_Library_Subprogram_Declaration) return Resource_Handle;
+
+
+  type Library_Subprogram_Instantiation is new Library_Subprogram_Declaration with record
+    null;
+  end record;
 
 
   type Library_Subprogram_Body is new Subprogram_Body with record
@@ -1133,6 +1138,13 @@ package Ada_95.Token.Data is
                                           Renamed_Package : Data_Handle);
 
 
+  function New_Library_Subprogram_Renaming (Id       : Identifier_List;
+                                            Resource : Resource_Handle) return Unit_Handle;
+
+  procedure Add_Library_Subprogram_Renaming (Self               : Unit_Handle;
+                                             Renamed_Subprogram : Unit_Handle);
+
+
   function New_Library_Package_Instantiation (Id       : Identifier_List;
                                               Resource : Resource_Handle) return Unit_Handle;
 
@@ -1141,6 +1153,10 @@ package Ada_95.Token.Data is
                                                Parent_Instantiation : Instantiation_Handle;
                                                Actual_Part          : List.Elements);
 
+  function New_Library_Subprogram_Instantiation (Id       : Identifier_List;
+                                                 Resource : Resource_Handle) return Unit_Handle;
+
+  procedure Add_Library_Subprogram_Instantiation (Self : Unit_Handle);
 
   function New_Generic_Library_Package_Renaming (Id       : Identifier_List;
                                                  Resource : Resource_Handle) return Unit_Handle;

@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---                     Copyright (C) 1997-2012, AdaCore                     --
+--                     Copyright (C) 1997-2020, AdaCore                     --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -126,7 +126,7 @@ package GNAT.Spitbol is
       Len : Natural;
       Pad : Character := ' ') return VString;
    --  If the length of Str is greater than or equal to Len, then Str is
-   --  returned unchanged. Otherwise, The value returned is obtained by
+   --  returned unchanged. Otherwise, the value returned is obtained by
    --  concatenating Length (Str) - Len instances of the Pad character to
    --  the left hand side.
 
@@ -155,7 +155,7 @@ package GNAT.Spitbol is
       Len : Natural;
       Pad : Character := ' ') return VString;
    --  If the length of Str is greater than or equal to Len, then Str is
-   --  returned unchanged. Otherwise, The value returned is obtained by
+   --  returned unchanged. Otherwise, the value returned is obtained by
    --  concatenating Length (Str) - Len instances of the Pad character to
    --  the right hand side.
 
@@ -379,12 +379,12 @@ package GNAT.Spitbol is
 
       pragma Finalize_Storage_Only (Table);
 
-      procedure Adjust (Object : in out Table);
+      overriding procedure Adjust (Object : in out Table);
       --  The Adjust procedure does a deep copy of the table structure
       --  so that the effect of assignment is, like other assignments
       --  in Ada, value-oriented.
 
-      procedure Finalize (Object : in out Table);
+      overriding procedure Finalize (Object : in out Table);
       --  This is the finalization routine that ensures that all storage
       --  associated with a table is properly released when a table object
       --  is abandoned and finalized.

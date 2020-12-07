@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---          Copyright (C) 1998-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1998-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNARL was developed by the GNARL team at Florida State University.       --
 -- Extensive contributions were provided by Ada Core Technologies, Inc.     --
@@ -120,8 +120,8 @@ private
       Level : ATC_Level_Base;
       --  Normally Level is the ATC nesting level of the asynchronous select
       --  statement to which this delay belongs, but after a call has been
-      --  dequeued we set it to ATC_Level_Infinity so that the Cancel operation
-      --  can detect repeated calls, and act idempotently.
+      --  dequeued we set it to Level_No_Pending_Abort so that the Cancel
+      --  operation can detect repeated calls, and act idempotently.
 
       Resume_Time : Duration;
       --  The absolute wake up time, represented as Duration
@@ -133,7 +133,7 @@ private
       --  A double linked list
    end record;
 
-   --  The above "overlaying" of Self_ID and Level to hold other data that has
+   --  The above "overlaying" of Self_Id and Level to hold other data that has
    --  a non-overlapping lifetime is an unabashed hack to save memory.
 
    procedure Time_Enqueue

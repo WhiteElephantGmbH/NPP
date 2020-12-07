@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---            Copyright (C) 2011, Free Software Foundation, Inc.            --
+--          Copyright (C) 2011-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,14 +19,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
@@ -41,25 +41,13 @@ package Ada.Containers.Synchronized_Queue_Interfaces is
 
    procedure Enqueue
      (Container : in out Queue;
-      New_Item  : Element_Type) is abstract;
-
-   --  ???
-   --  This is the official Ada 2012 syntax:
-   --  with Synchronization => By_Entry;
-
-   --  This is the temporary work-around:
-   pragma Implemented (Enqueue, By_Entry);
+      New_Item  : Element_Type) is abstract
+   with Synchronization => By_Entry;
 
    procedure Dequeue
      (Container : in out Queue;
-      Element   : out Element_Type) is abstract;
-
-   --  ???
-   --  This is the official Ada 2012 syntax:
-   --  with Synchronization => By_Entry;
-
-   --  This is the temporary work-around:
-   pragma Implemented (Dequeue, By_Entry);
+      Element   : out Element_Type) is abstract
+   with Synchronization => By_Entry;
 
    function Current_Use (Container : Queue) return Count_Type is abstract;
 

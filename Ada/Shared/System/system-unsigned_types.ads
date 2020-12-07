@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -39,6 +39,7 @@ pragma Compiler_Unit_Warning;
 
 package System.Unsigned_Types is
    pragma Pure;
+   pragma No_Elaboration_Code_All;
 
    type Short_Short_Unsigned is mod 2 ** Short_Short_Integer'Size;
    type Short_Unsigned       is mod 2 ** Short_Integer'Size;
@@ -50,8 +51,8 @@ package System.Unsigned_Types is
    --  Used in the implementation of Is_Negative intrinsic (see Exp_Intr)
 
    type Packed_Byte is mod 2 ** 8;
-   pragma Universal_Aliasing (Packed_Byte);
    for Packed_Byte'Size use 8;
+   pragma Universal_Aliasing (Packed_Byte);
    --  Component type for Packed_Bytes1, Packed_Bytes2 and Packed_Byte4 arrays.
    --  As this type is used by the compiler to implement operations on user
    --  packed array, it needs to be able to alias any type.
@@ -59,6 +60,7 @@ package System.Unsigned_Types is
    type Packed_Bytes1 is array (Natural range <>) of aliased Packed_Byte;
    for Packed_Bytes1'Alignment use 1;
    for Packed_Bytes1'Component_Size use Packed_Byte'Size;
+   pragma Suppress_Initialization (Packed_Bytes1);
    --  This is the type used to implement packed arrays where no alignment
    --  is required. This includes the cases of 1,2,4 (where we use direct
    --  masking operations), and all odd component sizes (where the clusters
@@ -67,6 +69,7 @@ package System.Unsigned_Types is
 
    type Packed_Bytes2 is new Packed_Bytes1;
    for Packed_Bytes2'Alignment use Integer'Min (2, Standard'Maximum_Alignment);
+   pragma Suppress_Initialization (Packed_Bytes2);
    --  This is the type used to implement packed arrays where an alignment
    --  of 2 (is possible) is helpful for maximum efficiency of the get and
    --  set routines in the corresponding library unit. This is true of all
@@ -77,6 +80,7 @@ package System.Unsigned_Types is
 
    type Packed_Bytes4 is new Packed_Bytes1;
    for Packed_Bytes4'Alignment use Integer'Min (4, Standard'Maximum_Alignment);
+   pragma Suppress_Initialization (Packed_Bytes4);
    --  This is the type used to implement packed arrays where an alignment
    --  of 4 (if possible) is helpful for maximum efficiency of the get and
    --  set routines in the corresponding library unit. This is true of all
@@ -84,6 +88,24 @@ package System.Unsigned_Types is
    --  are either handled by direct masking or not packed at all). In such
    --  cases the clusters can be assumed to be 4-byte aligned if the array
    --  is aligned (see System.Pack_12 in file s-pack12 as an example).
+
+   type Rev_Packed_Bytes1 is new Packed_Bytes1;
+   pragma Suppress_Initialization (Rev_Packed_Bytes1);
+   --  This is equivalent to Packed_Bytes1, but for packed arrays with reverse
+   --  scalar storage order. But the Scalar_Storage_Order attribute cannot be
+   --  set directly here, see Exp_Pakd for more details.
+
+   type Rev_Packed_Bytes2 is new Packed_Bytes2;
+   pragma Suppress_Initialization (Rev_Packed_Bytes2);
+   --  This is equivalent to Packed_Bytes2, but for packed arrays with reverse
+   --  scalar storage order. But the Scalar_Storage_Order attribute cannot be
+   --  set directly here, see Exp_Pakd for more details.
+
+   type Rev_Packed_Bytes4 is new Packed_Bytes4;
+   pragma Suppress_Initialization (Rev_Packed_Bytes4);
+   --  This is equivalent to Packed_Bytes4, but for packed arrays with reverse
+   --  scalar storage order. But the Scalar_Storage_Order attribute cannot be
+   --  set directly here, see Exp_Pakd for more details.
 
    type Bits_1 is mod 2**1;
    type Bits_2 is mod 2**2;

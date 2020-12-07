@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived for use with GNAT from AI-00248,  which is --
 -- expected to be a part of a future expected revised Ada Reference Manual. --
@@ -20,14 +20,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -231,6 +231,11 @@ package Ada.Directories is
    -- File and directory name operations --
    ----------------------------------------
 
+   type Name_Case_Kind is
+      (Unknown, Case_Sensitive, Case_Insensitive, Case_Preserving);
+   --  The type Name_Case_Kind represents the kind of file-name equivalence
+   --  rule for directories.
+
    function Full_Name (Name : String) return String;
    --  Returns the full name corresponding to the file name specified by Name.
    --  The exception Name_Error is propagated if the string given as Name does
@@ -280,6 +285,16 @@ package Ada.Directories is
    --  is not null and is not a possible extension, or if the string given as
    --  Name is not a possible simple name (if Extension is null) or base name
    --  (if Extension is non-null).
+
+   function Name_Case_Equivalence (Name : String) return Name_Case_Kind;
+   --  Returns the file-name equivalence rule for the directory containing
+   --  Name. Raises Name_Error if Name is not a full name. Returns
+   --  Case_Sensitive if file names that differ only in the case of letters are
+   --  considered different names. If file names that differ only in the case
+   --  of letters are considered the same name, then Case_Preserving is
+   --  returned if names have the case of the file name used when a file is
+   --  created; and Case_Insensitive is returned otherwise. Returns Unknown if
+   --  the file-name equivalence is not known.
 
    --------------------------------
    -- File and directory queries --

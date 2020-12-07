@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2000-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 2000-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -38,9 +38,10 @@ pragma Style_Checks ("M32766");
 
 --  This file is generated automatically, do not modify it by hand! Instead,
 --  make changes to s-oscons-tmplt.c and rebuild the GNAT runtime library.
---  This is the version for i686-pc-mingw32
+--  This is the version for x86_64-pc-mingw32
 
 with Interfaces.C;
+with System.Win32;
 package System.OS_Constants is
 
    pragma Pure;
@@ -49,15 +50,16 @@ package System.OS_Constants is
    -- General platform parameters --
    ---------------------------------
 
-   type OS_Type is (Windows, VMS, Other_OS);
+   type OS_Type is (Windows, Other_OS);
    Target_OS                     : constant OS_Type := Windows;
    pragma Warnings (Off, Target_OS);
    --  Suppress warnings on Target_OS since it is in general tested for
    --  equality with a constant value to implement conditional compilation,
    --  which normally generates a constant condition warning.
 
-   Target_Name                   : constant String  := "i686-pc-mingw32";
+   Target_Name                   : constant String  := "x86_64-pc-mingw32";
    SIZEOF_unsigned_int           : constant := 4;           --  Size of unsigned int
+   subtype Serial_Port_Descriptor is System.Win32.HANDLE;
 
    -------------------
    -- System limits --
@@ -107,28 +109,28 @@ package System.OS_Constants is
 
    --  The following constants are defined from <winsock2.h> (WSA*)
 
-   EACCES                        : constant := 13;          --  Permission denied
+   EACCES                        : constant := 10013;       --  Permission denied
    EADDRINUSE                    : constant := 10048;       --  Address already in use
    EADDRNOTAVAIL                 : constant := 10049;       --  Cannot assign address
    EAFNOSUPPORT                  : constant := 10047;       --  Addr family not supported
    EALREADY                      : constant := 10037;       --  Operation in progress
-   EBADF                         : constant := 9;           --  Bad file descriptor
+   EBADF                         : constant := 10009;       --  Bad file descriptor
    ECONNABORTED                  : constant := 10053;       --  Connection aborted
    ECONNREFUSED                  : constant := 10061;       --  Connection refused
    ECONNRESET                    : constant := 10054;       --  Connection reset by peer
    EDESTADDRREQ                  : constant := 10039;       --  Destination addr required
-   EFAULT                        : constant := 14;          --  Bad address
+   EFAULT                        : constant := 10014;       --  Bad address
    EHOSTDOWN                     : constant := 10064;       --  Host is down
    EHOSTUNREACH                  : constant := 10065;       --  No route to host
    EINPROGRESS                   : constant := 10036;       --  Operation now in progress
-   EINTR                         : constant := 4;           --  Interrupted system call
-   EINVAL                        : constant := 22;          --  Invalid argument
-   EIO                           : constant := 5;           --  Input output error
+   EINTR                         : constant := 10004;       --  Interrupted system call
+   EINVAL                        : constant := 10022;       --  Invalid argument
+   EIO                           : constant := 10101;       --  Input output error
    EISCONN                       : constant := 10056;       --  Socket already connected
    ELOOP                         : constant := 10062;       --  Too many symbolic links
-   EMFILE                        : constant := 24;          --  Too many open files
+   EMFILE                        : constant := 10024;       --  Too many open files
    EMSGSIZE                      : constant := 10040;       --  Message too long
-   ENAMETOOLONG                  : constant := 38;          --  Name too long
+   ENAMETOOLONG                  : constant := 10063;       --  Name too long
    ENETDOWN                      : constant := 10050;       --  Network is down
    ENETRESET                     : constant := 10052;       --  Disconn. on network reset
    ENETUNREACH                   : constant := 10051;       --  Network is unreachable
@@ -169,6 +171,41 @@ package System.OS_Constants is
 
    AF_INET                       : constant := 2;           --  IPv4 address family
    AF_INET6                      : constant := 23;          --  IPv6 address family
+   AF_UNIX                       : constant := 1;           --  Local unix family
+   AF_UNSPEC                     : constant := 0;           --  Unspecified address family
+
+   -----------------------------
+   -- addrinfo fields offsets --
+   -----------------------------
+
+   AI_FLAGS_OFFSET               : constant := 0;           --  Offset of ai_flags in addrinfo
+   AI_FAMILY_OFFSET              : constant := 4;           --  Offset of ai_family in addrinfo
+   AI_SOCKTYPE_OFFSET            : constant := 8;           --  Offset of ai_socktype in addrinfo
+   AI_PROTOCOL_OFFSET            : constant := 12;          --  Offset of ai_protocol in addrinfo
+   AI_ADDRLEN_OFFSET             : constant := 16;          --  Offset of ai_addrlen in addrinfo
+   AI_ADDR_OFFSET                : constant := 32;          --  Offset of ai_addr in addrinfo
+   AI_CANONNAME_OFFSET           : constant := 24;          --  Offset of ai_canonname in addrinfo
+   AI_NEXT_OFFSET                : constant := 40;          --  Offset of ai_next in addrinfo
+
+   ---------------------------------------
+   -- getaddrinfo getnameinfo constants --
+   ---------------------------------------
+
+   AI_PASSIVE                    : constant := 1;           --  NULL nodename for accepting
+   AI_CANONNAME                  : constant := 2;           --  Get the host official name
+   AI_NUMERICSERV                : constant := -1;          --  Service is a numeric string
+   AI_NUMERICHOST                : constant := 4;           --  Node is a numeric IP address
+   AI_ADDRCONFIG                 : constant := -1;          --  Returns addresses for only locally configured families
+   AI_V4MAPPED                   : constant := -1;          --  Returns IPv4 mapped to IPv6
+   AI_ALL                        : constant := -1;          --  Change AI_V4MAPPED behavior for unavailavle IPv6 addresses
+   NI_NAMEREQD                   : constant := 4;           --  Error if the hostname cannot be determined
+   NI_DGRAM                      : constant := 16;          --  Service is datagram
+   NI_NOFQDN                     : constant := 1;           --  Return only the hostname part for local hosts
+   NI_NUMERICSERV                : constant := 8;           --  Numeric form of the service
+   NI_NUMERICHOST                : constant := 2;           --  Numeric form of the hostname
+   NI_MAXHOST                    : constant := 1025;        --  Maximum size of hostname
+   NI_MAXSERV                    : constant := 32;          --  Maximum size of service name
+   EAI_SYSTEM                    : constant := -1;          --  Check errno for details
 
    ------------------
    -- Socket modes --
@@ -176,6 +213,7 @@ package System.OS_Constants is
 
    SOCK_STREAM                   : constant := 1;           --  Stream socket
    SOCK_DGRAM                    : constant := 2;           --  Datagram socket
+   SOCK_RAW                      : constant := 3;           --  Raw socket
 
    -----------------
    -- Host errors --
@@ -200,8 +238,30 @@ package System.OS_Constants is
 
    SOL_SOCKET                    : constant := 65535;       --  Options for socket level
    IPPROTO_IP                    : constant := 0;           --  Dummy protocol for IP
+   IPPROTO_IPV6                  : constant := 41;          --  IPv6 socket option level
    IPPROTO_UDP                   : constant := 17;          --  UDP
    IPPROTO_TCP                   : constant := 6;           --  TCP
+   IPPROTO_ICMP                  : constant := 1;           --  Internet Control Message Protocol
+   IPPROTO_IGMP                  : constant := 2;           --  Internet Group Management Protocol
+   IPPROTO_IPIP                  : constant := -1;          --  IPIP tunnels (older KA9Q tunnels use 94)
+   IPPROTO_EGP                   : constant := 8;           --  Exterior Gateway Protocol
+   IPPROTO_PUP                   : constant := 12;          --  PUP protocol
+   IPPROTO_IDP                   : constant := 22;          --  XNS IDP protocol
+   IPPROTO_TP                    : constant := -1;          --  SO Transport Protocol Class 4
+   IPPROTO_DCCP                  : constant := -1;          --  Datagram Congestion Control Protocol
+   IPPROTO_RSVP                  : constant := -1;          --  Reservation Protocol
+   IPPROTO_GRE                   : constant := -1;          --  General Routing Encapsulation
+   IPPROTO_ESP                   : constant := 50;          --  encapsulating security payload
+   IPPROTO_AH                    : constant := 51;          --  authentication header
+   IPPROTO_MTP                   : constant := -1;          --  Multicast Transport Protocol
+   IPPROTO_BEETPH                : constant := -1;          --  IP option pseudo header for BEET
+   IPPROTO_ENCAP                 : constant := -1;          --  Encapsulation Header
+   IPPROTO_PIM                   : constant := 103;         --  Protocol Independent Multicast
+   IPPROTO_COMP                  : constant := -1;          --  Compression Header Protocol
+   IPPROTO_SCTP                  : constant := 132;         --  Stream Control Transmission Protocol
+   IPPROTO_UDPLITE               : constant := -1;          --  UDP-Lite protocol
+   IPPROTO_MPLS                  : constant := -1;          --  MPLS in IP
+   IPPROTO_RAW                   : constant := 255;         --  Raw IP packets
 
    -------------------
    -- Request flags --
@@ -230,12 +290,34 @@ package System.OS_Constants is
    SO_SNDTIMEO                   : constant := 4101;        --  Emission timeout
    SO_RCVTIMEO                   : constant := 4102;        --  Reception timeout
    SO_ERROR                      : constant := 4103;        --  Get/clear error status
+   SO_BUSY_POLL                  : constant := -1;          --  Busy polling
    IP_MULTICAST_IF               : constant := 9;           --  Set/get mcast interface
    IP_MULTICAST_TTL              : constant := 10;          --  Set/get multicast TTL
    IP_MULTICAST_LOOP             : constant := 11;          --  Set/get mcast loopback
    IP_ADD_MEMBERSHIP             : constant := 12;          --  Join a multicast group
    IP_DROP_MEMBERSHIP            : constant := 13;          --  Leave a multicast group
    IP_PKTINFO                    : constant := 19;          --  Get datagram info
+   IP_RECVERR                    : constant := -1;          --  Extended reliable error message passing
+   IPV6_ADDRFORM                 : constant := -1;          --  Turn IPv6 socket into different address family
+   IPV6_ADD_MEMBERSHIP           : constant := 12;          --  Join IPv6 multicast group
+   IPV6_DROP_MEMBERSHIP          : constant := 13;          --  Leave IPv6 multicast group
+   IPV6_MTU                      : constant := -1;          --  Set/get MTU used for the socket
+   IPV6_MTU_DISCOVER             : constant := -1;          --  Control path-MTU discovery on the socket
+   IPV6_MULTICAST_HOPS           : constant := 10;          --  Set the multicast hop limit for the socket
+   IPV6_MULTICAST_IF             : constant := 9;           --  Set/get IPv6 mcast interface
+   IPV6_MULTICAST_LOOP           : constant := 11;          --  Set/get mcast loopback
+   IPV6_RECVPKTINFO              : constant := -1;          --  Set delivery of the IPV6_PKTINFO
+   IPV6_PKTINFO                  : constant := 19;          --  Get IPv6datagram info
+   IPV6_RTHDR                    : constant := 32;          --  Set the routing header delivery
+   IPV6_AUTHHDR                  : constant := -1;          --  Set the authentication header delivery
+   IPV6_DSTOPTS                  : constant := -1;          --  Set the destination options delivery
+   IPV6_HOPOPTS                  : constant := 1;           --  Set the hop options delivery
+   IPV6_FLOWINFO                 : constant := -1;          --  Set the flow ID delivery
+   IPV6_HOPLIMIT                 : constant := 21;          --  Set the hop count of the packet delivery
+   IPV6_RECVERR                  : constant := -1;          --  Extended reliable error message passing
+   IPV6_ROUTER_ALERT             : constant := -1;          --  Pass forwarded router alert hop-by-hop option
+   IPV6_UNICAST_HOPS             : constant := 4;           --  Set the unicast hop limit
+   IPV6_V6ONLY                   : constant := 27;          --  Restricted to IPv6 communications only
 
    ----------------------
    -- Type definitions --
@@ -251,10 +333,13 @@ package System.OS_Constants is
    --  Sizes of various data types
    SIZEOF_sockaddr_in            : constant := 16;          --  struct sockaddr_in
    SIZEOF_sockaddr_in6           : constant := 28;          --  struct sockaddr_in6
-   SIZEOF_fd_set                 : constant := 4100;        --  fd_set
+   SIZEOF_sockaddr_un            : constant := 110;         --  struct sockaddr_un
+   SIZEOF_fd_set                 : constant := 8200;        --  fd_set
    FD_SETSIZE                    : constant := 1024;        --  Max fd value
-   SIZEOF_struct_hostent         : constant := 16;          --  struct hostent
-   SIZEOF_struct_servent         : constant := 16;          --  struct servent
+   SIZEOF_struct_hostent         : constant := 32;          --  struct hostent
+   SIZEOF_struct_servent         : constant := 32;          --  struct servent
+   SIZEOF_socklen_t              : constant := 8;           --  Size of socklen_t
+   IF_NAMESIZE                   : constant := -1;          --  Max size of interface name with 0 terminator
 
    --  Fields of struct msghdr
    subtype Msg_Iovlen_T is Interfaces.C.size_t;
@@ -270,6 +355,7 @@ package System.OS_Constants is
    --  Set False for contexts where socket i/o are process blocking
 
    Inet_Pton_Linkname            : constant String  := "__gnat_inet_pton";
+   Inet_Ntop_Linkname            : constant String  := "__gnat_inet_ntop";
 
    ---------------------
    -- Threads support --
@@ -285,7 +371,7 @@ package System.OS_Constants is
    -- File and directory support --
    --------------------------------
 
-   SIZEOF_struct_file_attributes : constant := 24;          --  struct file_attributes
+   SIZEOF_struct_file_attributes : constant := 32;          --  struct file_attributes
    SIZEOF_struct_dirent_alloc    : constant := 269;         --  struct dirent allocation
 
    ------------------------------

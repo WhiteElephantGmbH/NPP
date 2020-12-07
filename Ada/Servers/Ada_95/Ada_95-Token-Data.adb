@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -2400,6 +2400,33 @@ package body Ada_95.Token.Data is
   end Add_Library_Package_Instantiation;
 
 
+  function New_Library_Subprogram_Instantiation (Id       : Identifier_List;
+                                                 Resource : Resource_Handle) return Unit_Handle is
+  begin
+    --TEST----------------------------------------------------------------------------
+      Write_Log ("*** new New_Library_Subprogram_Instantiation " & Image_Of (Id.all));
+    ----------------------------------------------------------------------------------
+    return new Library_Subprogram_Instantiation'(Location       => Id(Id'last),
+                                                 Resource       => Resource,
+                                                 Is_Used        => False,
+                                                 Parent         => Parent_Of (Id.all),
+                                                 Used_Packages  => null,
+                                                 Implementation => null,
+                                                 Profile        => (null, null),
+                                                 Overload       => null);
+  end New_Library_Subprogram_Instantiation;
+
+
+  procedure Add_Library_Subprogram_Instantiation (Self : Unit_Handle) is
+  begin
+    --TEST---------------------------------------------------------------------------------------
+      Write_Log ("*** add Add_Library_Subprogram_Instantiation " & Image_Of (Self.Location.all));
+      Write_Log ("    !!! incomplete implementation");
+    ---------------------------------------------------------------------------------------------
+    Self.Location.Data := Data_Handle(Self);
+  end Add_Library_Subprogram_Instantiation;
+
+
   function New_Library_Package_Renaming (Id       : Identifier_List;
                                          Resource : Resource_Handle) return Unit_Handle is
   begin
@@ -2424,6 +2451,36 @@ package body Ada_95.Token.Data is
     Package_Renaming_Handle(Self).Renamed_Item := Renamed_Package;
     Self.Location.Data := Data_Handle(Self);
   end Add_Library_Package_Renaming;
+
+
+  function New_Library_Subprogram_Renaming (Id       : Identifier_List;
+                                            Resource : Resource_Handle) return Unit_Handle is
+  begin
+    --TEST-------------------------------------------------------------------
+      Write_Log ("*** new Library_Subprogram_Renaming " & Image_Of (Id.all));
+    -------------------------------------------------------------------------
+    return new Library_Subprogram_Renaming'(Location      => Id(Id'last),
+                                            Resource      => Resource,
+                                            Is_Used       => False,
+                                            Parent        => Parent_Of (Id.all),
+                                            Used_Packages => null,
+                                            Specification => null,
+                                            Profile       => (null, null),
+                                            Overload      => null,
+                                            Declarations  => Tree.Empty,
+                                            Renamed_Unit  => null);
+  end New_Library_Subprogram_Renaming;
+
+
+  procedure Add_Library_Subprogram_Renaming (Self               : Unit_Handle;
+                                             Renamed_Subprogram : Unit_Handle) is
+  begin
+    --TEST------------------------------------------------------------------------------
+      Write_Log ("*** add Library_Subprogram_Renaming " & Image_Of (Self.Location.all));
+    ------------------------------------------------------------------------------------
+    Subprogram_Renaming_Handle(Self).Renamed_Unit := Renamed_Subprogram;
+    Self.Location.Data := Data_Handle(Self);
+  end Add_Library_Subprogram_Renaming;
 
 
   function New_Generic_Library_Package_Renaming (Id       : Identifier_List;

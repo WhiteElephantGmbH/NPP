@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2014, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -35,7 +35,7 @@
 with System.Unsigned_Types;
 
 package System.Val_Uns is
-   pragma Pure;
+   pragma Preelaborate;
 
    function Scan_Raw_Unsigned
      (Str : String;
@@ -61,7 +61,45 @@ package System.Val_Uns is
    --  Constraint_Error is raised.
    --
    --  Note: these rules correspond to the requirements for leaving the pointer
-   --  positioned in Text_IO.Get
+   --  positioned in Text_IO.Get. Note that the rules as stated in the RM would
+   --  seem to imply that for a case like:
+   --
+   --    8#12345670009#
+   --
+   --  the pointer should be left at the first # having scanned out the longest
+   --  valid integer literal (8), but in fact in this case the pointer points
+   --  past the final # and Constraint_Error is raised. This is the behavior
+   --  expected for Text_IO and enforced by the ACATS tests.
+   --
+   --  If a based literal is malformed in that a character other than a valid
+   --  hexadecimal digit is encountered during scanning out the digits after
+   --  the # (this includes the case of using the wrong terminator, : instead
+   --  of # or vice versa) there are two cases. If all the digits before the
+   --  non-digit are in range of the base, as in
+   --
+   --    8#100x00#
+   --    8#100:
+   --
+   --  then in this case, the "base" value before the initial # is returned as
+   --  the result, and the pointer points to the initial # character on return.
+   --
+   --  If an out of range digit has been detected before the invalid character,
+   --  as in:
+   --
+   --   8#900x00#
+   --   8#900:
+   --
+   --  then the pointer is also left at the initial # character, but constraint
+   --  error is raised reflecting the encounter of an out of range digit.
+   --
+   --  Finally if we have an unterminated fixed-point constant where the final
+   --  # or : character is missing, Constraint_Error is raised and the pointer
+   --  is left pointing past the last digit, as in:
+   --
+   --   8#22
+   --
+   --  This string results in a Constraint_Error with the pointer pointing
+   --  past the second 2.
    --
    --  Note: if Str is empty, i.e. if Max is less than Ptr, then this is a
    --  special case of an all-blank string, and Ptr is unchanged, and hence

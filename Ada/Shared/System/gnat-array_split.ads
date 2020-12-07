@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2002-2013, Free Software Foundation, Inc.         --
+--          Copyright (C) 2002-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,14 +15,14 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- GNAT was originally developed  by the GNAT team at  New York University. --
 -- Extensive contributions were provided by Ada Core Technologies Inc.      --
@@ -43,7 +43,7 @@ generic
    --  The array which is a sequence of element
 
    type Element_Set is private;
-   --  This type represent a set of elements. This set does not defined a
+   --  This type represent a set of elements. This set does not define a
    --  specific order of the elements. The conversion of a sequence to a
    --  set and membership tests in the set is performed using the routines
    --  To_Set and Is_In defined below.
@@ -56,6 +56,7 @@ generic
    --  Returns True if Item is found in Set, False otherwise
 
 package GNAT.Array_Split is
+   pragma Preelaborate;
 
    Index_Error : exception;
    --  Raised by all operations below if Index > Field_Count (S)
@@ -74,7 +75,7 @@ package GNAT.Array_Split is
    type Slice_Set is private;
    --  This type uses by-reference semantics. This is a set of slices as
    --  returned by Create or Set routines below. The abstraction represents
-   --  a set of items. Each item is a part of the original string named a
+   --  a set of items. Each item is a part of the original array named a
    --  Slice. It is possible to access individual slices by using the Slice
    --  routine below. The first slice in the Set is at the position/index
    --  1. The total number of slices in the set is returned by Slice_Count.

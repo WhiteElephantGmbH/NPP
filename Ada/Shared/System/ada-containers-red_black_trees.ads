@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2011, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,19 +15,21 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
 
 --  This package declares the tree type used to implement ordered containers
+
+with Ada.Containers.Helpers;
 
 package Ada.Containers.Red_Black_Trees is
    pragma Pure;
@@ -38,14 +40,16 @@ package Ada.Containers.Red_Black_Trees is
       type Node_Type (<>) is limited private;
       type Node_Access is access Node_Type;
    package Generic_Tree_Types is
+
       type Tree_Type is tagged record
-         First  : Node_Access;
-         Last   : Node_Access;
-         Root   : Node_Access;
+         First  : Node_Access := null;
+         Last   : Node_Access := null;
+         Root   : Node_Access := null;
          Length : Count_Type := 0;
-         Busy   : Natural := 0;
-         Lock   : Natural := 0;
+         TC     : aliased Helpers.Tamper_Counts;
       end record;
+
+      package Implementation is new Helpers.Generic_Implementation;
    end Generic_Tree_Types;
 
    generic
@@ -65,11 +69,12 @@ package Ada.Containers.Red_Black_Trees is
          Last   : Count_Type := 0;
          Root   : Count_Type := 0;
          Length : Count_Type := 0;
-         Busy   : Natural := 0;
-         Lock   : Natural := 0;
+         TC     : aliased Helpers.Tamper_Counts;
          Free   : Count_Type'Base := -1;
          Nodes  : Nodes_Type (1 .. Capacity) := (others => <>);
       end record;
+
+      package Implementation is new Helpers.Generic_Implementation;
    end Generic_Bounded_Tree_Types;
 
 end Ada.Containers.Red_Black_Trees;

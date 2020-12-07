@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2011, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,20 +15,22 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
--- As a special exception under Section 7 of GPL version 3, you are granted --
--- additional permissions described in the GCC Runtime Library Exception,   --
--- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
--- In particular,  you can freely  distribute your programs  built with the --
--- GNAT Pro compiler, including any required library run-time units,  using --
--- any licensing terms  of your choosing.  See the AdaCore Software License --
--- for full details.                                                        --
+--                                                                          --
+--                                                                          --
+--                                                                          --
+-- You should have received a copy of the GNU General Public License and    --
+-- a copy of the GCC Runtime Library Exception along with this program;     --
+-- see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see    --
+-- <http://www.gnu.org/licenses/>.                                          --
 --                                                                          --
 -- This unit was originally developed by Matthew J Heaney.                  --
 ------------------------------------------------------------------------------
 
 --  This package declares the hash-table type used to implement hashed
 --  containers.
+
+with Ada.Containers.Helpers;
 
 package Ada.Containers.Hash_Tables is
    pragma Pure;
@@ -40,6 +42,7 @@ package Ada.Containers.Hash_Tables is
       type Node_Access is access Node_Type;
 
    package Generic_Hash_Table_Types is
+
       type Buckets_Type is array (Hash_Type range <>) of Node_Access;
 
       type Buckets_Access is access all Buckets_Type;
@@ -47,16 +50,18 @@ package Ada.Containers.Hash_Tables is
       --  Storage_Size of zero so this package can be Pure
 
       type Hash_Table_Type is tagged record
-         Buckets : Buckets_Access;
+         Buckets : Buckets_Access := null;
          Length  : Count_Type := 0;
-         Busy    : Natural    := 0;
-         Lock    : Natural    := 0;
+         TC      : aliased Helpers.Tamper_Counts;
       end record;
+
+      package Implementation is new Helpers.Generic_Implementation;
    end Generic_Hash_Table_Types;
 
    generic
       type Node_Type is private;
    package Generic_Bounded_Hash_Table_Types is
+
       type Nodes_Type is array (Count_Type range <>) of Node_Type;
       type Buckets_Type is array (Hash_Type range <>) of Count_Type;
 
@@ -65,12 +70,13 @@ package Ada.Containers.Hash_Tables is
          Modulus  : Hash_Type) is
       tagged record
          Length  : Count_Type                  := 0;
-         Busy    : Natural                     := 0;
-         Lock    : Natural                     := 0;
+         TC      : aliased Helpers.Tamper_Counts;
          Free    : Count_Type'Base             := -1;
          Nodes   : Nodes_Type (1 .. Capacity)  := (others => <>);
          Buckets : Buckets_Type (1 .. Modulus) := (others => 0);
       end record;
+
+      package Implementation is new Helpers.Generic_Implementation;
    end Generic_Bounded_Hash_Table_Types;
 
 end Ada.Containers.Hash_Tables;

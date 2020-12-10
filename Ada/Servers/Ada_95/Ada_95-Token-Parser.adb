@@ -3576,6 +3576,7 @@ package body Ada_95.Token.Parser is
              | Lexical.Minus
              | Lexical.Left_Parenthesis
              | Lexical.Identifier
+             | Lexical.Target_Name
              | Lexical.Integer_Literal
              | Lexical.Real_Literal
              | Lexical.String_Literal
@@ -3657,6 +3658,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Plus
            | Lexical.Minus
            | Lexical.Identifier
+           | Lexical.Target_Name
            | Lexical.Integer_Literal
            | Lexical.Real_Literal
            | Lexical.String_Literal
@@ -6622,7 +6624,8 @@ package body Ada_95.Token.Parser is
       --Increment_Log_Indent;
       ---------------------------------------------------------------------------------
       if Element_Is (Lexical.Target_Name) then
-        The_Declaration := null;
+        The_Declaration := Sub_Type;
+        Name_Continuation (Sub_Type, The_Instantiation);
       else
         The_Item := Actual_Identifier;
         if The_Scope = null then
@@ -6653,9 +6656,9 @@ package body Ada_95.Token.Parser is
             The_Declaration := null;
           end if;
         end if;
-        if Token_Element = Lexical.Period then
-          Skip_To_End_Of_Name;
-        end if;
+      end if;
+      if Token_Element = Lexical.Period then
+        Skip_To_End_Of_Name;
       end if;
       --TEST--------------------------------------------------------------------------------------
       --Decrement_Log_Indent;
@@ -10093,18 +10096,19 @@ package body Ada_95.Token.Parser is
         Unused : constant Identifiers := Next_Unit_Name;
       begin
         if Token_Element = Lexical.Is_Is and then Next_Element_Ahead_Is (Lexical.Is_New) then
+          --TEST---------------------------------------------------------------------------
+          --Write_Log ("Library Subprogram Instantiation " & Image_Of (Unit.Location.all));
+          ---------------------------------------------------------------------------------
           declare
-            Generic_Unit : constant Data.Unit_Handle := Next_Unit_Of (Unit);
-            Actual_Part  : constant Data.List.Elements := Conditional_Generic_Actual_Part (Generic_Unit,
-                                                                                           Unit,
-                                                                                           null);
+            Generic_Unit : constant Data.Unit_Handle   := Next_Unit_Of (Unit);
+            Subprogram   : constant Identifier_Handle  := The_Actual_Identifier;
+            Actual_Part  : constant Data.List.Elements := Conditional_Generic_Actual_Part (Generic_Unit, Unit);
           begin
-            if Actual_Part'length /= 0 then
-              Data.Add_Library_Subprogram_Instantiation (Unit);
---!!! incomplete                                         Profile => Data.Actual_Profile_For
---                                                                    (Generic_Unit => The_Unit,
---                                                                     Subprogram   => The_Subprogram, ...)
-            end if;
+            Data.Add_Library_Subprogram_Instantiation
+              (Self    => Unit,
+               Profile => Data.Actual_Profile_For (Generic_Unit => Generic_Unit,
+                                                   Subprogram   => Subprogram,
+                                                   Actual_Part  => Actual_Part));
           end;
           Get_Element (Lexical.Semicolon);
         else
@@ -10125,7 +10129,7 @@ package body Ada_95.Token.Parser is
                 if Renamed_Unit /= null then
                   The_Actual_Identifier.Data := Data_Handle(Renamed_Unit);
                   Renamed_Unit.Is_Used := True;
-                  Profile := Data.Used (Profile); --!!!
+                  Profile := Data.Used (Profile);
                   Data.Add_Library_Subprogram_Renaming (Unit, Renamed_Unit);
                 end if;
               end;

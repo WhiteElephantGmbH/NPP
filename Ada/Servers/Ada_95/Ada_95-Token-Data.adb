@@ -2417,13 +2417,14 @@ package body Ada_95.Token.Data is
   end New_Library_Subprogram_Instantiation;
 
 
-  procedure Add_Library_Subprogram_Instantiation (Self : Unit_Handle) is
+  procedure Add_Library_Subprogram_Instantiation (Self    : Unit_Handle;
+                                                  Profile : Subprogram_Profile) is
   begin
     --TEST---------------------------------------------------------------------------------------
       Write_Log ("*** add Add_Library_Subprogram_Instantiation " & Image_Of (Self.Location.all));
-      Write_Log ("    !!! incomplete implementation");
     ---------------------------------------------------------------------------------------------
     Self.Location.Data := Data_Handle(Self);
+    Library_Subprogram_Instantiation_Handle(Self).Profile := Profile;
   end Add_Library_Subprogram_Instantiation;
 
 

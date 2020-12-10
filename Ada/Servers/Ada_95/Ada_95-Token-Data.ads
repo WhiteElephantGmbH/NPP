@@ -511,6 +511,9 @@ package Ada_95.Token.Data is
     null;
   end record;
 
+  type Library_Subprogram_Instantiation_Handle is access all Library_Subprogram_Instantiation'class;
+  for Library_Subprogram_Instantiation_Handle'storage_pool use Memory.Pool.all;
+
 
   type Library_Subprogram_Body is new Subprogram_Body with record
     Resource : Resource_Handle;
@@ -1156,7 +1159,8 @@ package Ada_95.Token.Data is
   function New_Library_Subprogram_Instantiation (Id       : Identifier_List;
                                                  Resource : Resource_Handle) return Unit_Handle;
 
-  procedure Add_Library_Subprogram_Instantiation (Self : Unit_Handle);
+  procedure Add_Library_Subprogram_Instantiation (Self    : Unit_Handle;
+                                                  Profile : Subprogram_Profile);
 
   function New_Generic_Library_Package_Renaming (Id       : Identifier_List;
                                                  Resource : Resource_Handle) return Unit_Handle;

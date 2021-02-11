@@ -499,14 +499,17 @@ package body Project is
         The_Part : constant String := Part_Of (Index);
       begin
         if Text.Is_Equal (The_Part, The_Project_Name) then
-          The_Product_Sub_Path := Text.String_Of ("\" & The_Part);
-        elsif not Text.Is_Equal (The_Product_Sub_Path, "") then
-          Text.Append_To (The_Product_Sub_Path, Files.Separator);
-          Text.Append_To (The_Product_Sub_Path, The_Part);
+          declare
+            The_Items : constant Strings.Item := Strings.Item_Of (List => Project_Parts,
+                                                                  Selection => (First => Index,
+                                                                                Last  => Project_Parts.Count - 2));
+            The_Text : constant String := "\" & Strings.Data_Of (The_Items, Separator => "\");
+          begin
+            The_Product_Sub_Path := Text.String_Of (Ada_95.File.Normalized_Folder (The_Text));
+          end;
         end if;
       end;
     end loop;
-    The_Product_Sub_Path := Text.String_Of (Ada_95.File.Normalized_Folder (Text.String_Of (The_Product_Sub_Path)));
     Define_Environment;
   end Create_Work_Area_For;
 

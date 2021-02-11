@@ -1,6 +1,6 @@
 Ada_Server ICON Ada_Server.Ico
 1 VERSIONINFO
-  FILEVERSION 45,0,0,8
+  FILEVERSION 45,0,0,9
   FILEFLAGSMASK 0x3FL
   FILEFLAGS 0x0L
   FILEOS 0x4L
@@ -11,7 +11,7 @@ BEGIN
   BEGIN
     BLOCK "040904E4"
     BEGIN
-      VALUE "LegalCopyright", "Copyright \251 White Elephant GmbH 2020\0"
+      VALUE "LegalCopyright", "Copyright \251 White Elephant GmbH 2021\0"
       VALUE "FileDescription", "Ada Server for Notepad++ Elephant Plugin\0"
       VALUE "OriginalFilename", "Ada_Server.exe\0"
       VALUE "InternalName", "Ada_Server\0"

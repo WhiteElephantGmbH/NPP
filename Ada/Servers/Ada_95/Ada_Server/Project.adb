@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -44,6 +44,7 @@ package body Project is
   The_Source_Root        : Text.String;
   The_Binary_Root        : Text.String;
   The_Product_Directory  : Text.String;
+  The_Product_Sub_Path   : Text.String;
   The_Promotion_Areas    : Text.String;
 
   The_Ignore_Areas        : String_List.Item;
@@ -73,6 +74,7 @@ package body Project is
     Text.Clear (The_Source_Root);
     Text.Clear (The_Binary_Root);
     Text.Clear (The_Product_Directory);
+    Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
@@ -103,6 +105,8 @@ package body Project is
   function Source_Folder return String is (Text.String_Of (The_Source_Root) & Files.Separator);
 
   function Product_Directory return String is (Text.String_Of (The_Product_Directory));
+
+  function Product_Sub_Path return String is (Text.String_Of (The_Product_Sub_Path));
 
 
   function Is_Defined return Boolean is
@@ -371,14 +375,14 @@ package body Project is
                           The_Compiler_Year := Compiler_Year'value(Year);
                         exception
                         when others =>
-                          Set_Error ("Unknow compiler: " & Compiler & " " & (if Year = "\"
+                          Set_Error ("Unknown compiler: " & Compiler & " " & (if Year = "\"
                                                                              then "(year missing)"
                                                                              else Year) & " in " & Filename);
                         end;
                       elsif Compiler = "GNATPRO" then
                         The_Gnat_Compiler := GNATPRO;
                       else
-                        Set_Error ("Unknow compiler: " & Compiler & " in " & Filename);
+                        Set_Error ("Unknown compiler: " & Compiler & " in " & Filename);
                       end if;
                     end;
                   elsif Resource = "Libraries" then
@@ -462,7 +466,7 @@ package body Project is
 
     use type String_List.Item;
 
-  begin -- Add_Work_Path_For
+  begin -- Create_Work_Area_For
     The_Work_Path := The_Base_Path;
     String_List.Clear (The_Source_Directories);
     The_Project_Directory := The_Language_Directory;
@@ -489,6 +493,23 @@ package body Project is
       The_Source_Directories := The_Source_Directories + (Source_Folder & Area);
     end loop;
     The_Project_Name := Text.String_Of (Part_Of (Project_Parts.Count - 1));
+    Text.Clear (The_Product_Sub_Path);
+    for Index in Strings.First_Index .. Project_Parts.Count - 2 loop
+      declare
+        The_Part : constant String := Part_Of (Index);
+      begin
+        if Text.Is_Equal (The_Part, The_Project_Name) then
+          declare
+            The_Items : constant Strings.Item := Strings.Item_Of (List => Project_Parts,
+                                                                  Selection => (First => Index,
+                                                                                Last  => Project_Parts.Count - 2));
+            The_Text : constant String := "\" & Strings.Data_Of (The_Items, Separator => "\");
+          begin
+            The_Product_Sub_Path := Text.String_Of (Ada_95.File.Normalized_Folder (The_Text));
+          end;
+        end if;
+      end;
+    end loop;
     Define_Environment;
   end Create_Work_Area_For;
 
@@ -750,9 +771,21 @@ package body Project is
     Interface_Name : constant String := Name & "_Interface";
     Gpr_Name       : constant String := Project_Name & Project_File_Extension;
 
-    Interface_Source : constant String := Folder & Interface_Name & ".ads";
 
-    Is_Dll : constant Boolean := Files.Exists (Interface_Source);
+    function Has_Interface_In (The_Path : String) return Boolean is
+      Interface_Source     : constant String := The_Path & Files.Separator & Interface_Name & ".ads";
+      Containing_Directory : constant String := File.Containing_Directory_Of (The_Path);
+    begin
+      if Containing_Directory /= Language_Directory then
+        if File.Exists (Interface_Source) then
+          return True;
+        end if;
+        return Has_Interface_In (Containing_Directory);
+      end if;
+      return False;
+    end Has_Interface_In;
+
+    Is_Dll : constant Boolean := Has_Interface_In (Folder);
 
     Source    : constant String := Folder & Gpr_Name;
     Filename  : constant String := Created_Target_Folder & Gpr_Name;
@@ -810,12 +843,12 @@ package body Project is
       Put ("");
       if Is_Dll then
         Put ("   for Library_Options use (""-L" & Product_Directory & """, ""resources.o"");");
-        Put ("   for Library_Dir use """ & Product_Directory & """;");
+        Put ("   for Library_Dir use """ & Product_Directory & Product_Sub_Path & """;");
         Put ("   for Library_Ali_Dir use """ & Target_Directory & """;");
         Put ("   for Library_Kind use ""dynamic"";");
         Put ("   for Library_Standalone use ""encapsulated"";");
       else
-        Put ("   for Exec_Dir use """ & Product_Directory & """;");
+        Put ("   for Exec_Dir use """ & Product_Directory & Product_Sub_Path & """;");
         Put ("   for Main use (""" & Program_Unit_Name & """);");
       end if;
       Put ("");

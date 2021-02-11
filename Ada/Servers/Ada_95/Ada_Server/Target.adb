@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -134,9 +134,11 @@ package body Target is
 
     Gpr_Build : constant String := Project.Tools_Folder & "gprbuild";
 
+    Product_Location : constant String := Project.Product_Directory & Project.Product_Sub_Path;
+
     Gpr_Parameters : constant String := " -j0 -P" & Project.Gpr_Filename &
                                         " -XBinary_Root=" & Project.Binary_Folder &
-                                        " -XProduct_Location=" & Project.Product_Directory &
+                                        " -XProduct_Location=" & Product_Location &
                                         " -XSource_Root=" & Project.Source_Folder &
                                         " " & Parameters;
 
@@ -144,6 +146,7 @@ package body Target is
 
   begin
     Log_Execution (Gpr_Build & Gpr_Parameters);
+    File.Create_Directory (Product_Location);
     declare
       Result : constant String := Os.Process.Execution_Of (Executable     => Gpr_Build,
                                                            Parameters     => Gpr_Parameters,

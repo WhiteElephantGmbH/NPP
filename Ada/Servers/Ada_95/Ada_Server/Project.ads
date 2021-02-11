@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -23,6 +23,8 @@ package Project is
   function Source_Folder return String;
 
   function Product_Directory return String;
+
+  function Product_Sub_Path return String;
 
   function Is_In_Reference_Area (Filename : String) return Boolean;
 

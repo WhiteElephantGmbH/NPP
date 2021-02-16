@@ -50,7 +50,6 @@ package body Project is
   The_Ignore_Areas        : String_List.Item;
   The_Implied_Areas       : String_List.Item;
   The_Reference_Areas     : String_List.Item;
-  The_Gui_Reference_Areas : String_List.Item;
   The_Libraries           : String_List.Item;
   The_Base_Path           : String_List.Item;
   The_Source_Directories  : String_List.Item;
@@ -79,7 +78,6 @@ package body Project is
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
     The_Reference_Areas.Clear;
-    The_Gui_Reference_Areas.Clear;
     The_Libraries.Clear;
     The_Base_Path.Clear;
     The_Source_Directories.Clear;
@@ -142,11 +140,6 @@ package body Project is
         return True;
       end if;
     end loop;
-    for Area of The_Gui_Reference_Areas loop
-      if Item = Area then
-        return True;
-      end if;
-    end loop;
     return False;
   end Is_Base_Area;
 
@@ -163,9 +156,8 @@ package body Project is
 
 
   function Reference_Areas return String_List.Item is
-    use type String_List.Item;
   begin
-    return The_Reference_Areas + The_Gui_Reference_Areas;
+    return The_Reference_Areas;
   end Reference_Areas;
 
 
@@ -303,9 +295,6 @@ package body Project is
   begin
     The_Gnat_Compiler := Unknown;
     The_Libraries.Clear;
-    for Area of The_Gui_Reference_Areas loop
-      The_Libraries.Append (Files.Name_Of (Area) & "ada");
-    end loop;
     if File.Exists (Filename) then
       begin
         Ada.Text_IO.Open (The_File, Ada.Text_IO.In_File, Filename);
@@ -619,7 +608,6 @@ package body Project is
     Define_Source_Path ("Ignore", The_Ignore_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Define_Source_Path ("Path", The_Implied_Areas, The_Path => The_Base_Path);
     Define_Source_Path ("Reference", The_Reference_Areas, The_Path => The_Base_Path);
-    Define_Source_Path ("Gui_Reference", The_Gui_Reference_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
@@ -644,9 +632,6 @@ package body Project is
     end loop;
     for Area of The_Reference_Areas loop
       Log.Write ("||| Reference: " & Area);
-    end loop;
-    for Area of The_Gui_Reference_Areas loop
-      Log.Write ("||| Gui Reference: " & Area);
     end loop;
     for Area of The_Ignore_Areas loop
       Log.Write ("||| Ignore: " & Area);

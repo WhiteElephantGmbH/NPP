@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -22,7 +22,7 @@ package Promotion is
   procedure Set_Error (Item      : String;
                        File      : String := "";
                        At_Line   : Server.Line_Number := Server.Line_Number'first;
-                       At_Column : Server.Column_Range := Server.Column_Range'first);
+                       At_Column : Server.Column_Range := Server.Column_Range'first) with No_Return;
 
   procedure Complete;
 

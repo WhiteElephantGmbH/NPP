@@ -4,6 +4,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada.Text_IO;
@@ -21,6 +22,8 @@ with Text;
 
 package body Project is
 
+  package Names is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
+                                                               Element_Type => String);
   Language : constant String := "Ada";
 
   procedure Set_Confirmation (Message : String := "") is
@@ -46,20 +49,27 @@ package body Project is
   The_Product_Directory  : Text.String;
   The_Product_Sub_Path   : Text.String;
   The_Promotion_Areas    : Text.String;
+  The_Library_Path       : Text.String;
 
-  The_Ignore_Areas        : String_List.Item;
-  The_Implied_Areas       : String_List.Item;
-  The_Reference_Areas     : String_List.Item;
-  The_Libraries           : String_List.Item;
-  The_Base_Path           : String_List.Item;
-  The_Source_Directories  : String_List.Item;
-  The_Promotion_List      : String_List.Item;
+  The_Ignore_Areas       : String_List.Item;
+  The_Implied_Areas      : String_List.Item;
+  The_Reference_Areas    : String_List.Item;
+  The_Libraries          : String_List.Item;
+  The_Base_Path          : String_List.Item;
+  The_Source_Directories : String_List.Item;
+  The_Promotion_List     : String_List.Item;
+
+  The_Library_Directories : Names.Map;
+  The_Library_Names       : Names.Map;
 
   Project_Is_Defined      : Boolean := False;
   The_Case_Handling_Style : Case_Modification;
 
   type Gnat_Compiler is (GPL, GNATPRO, Unknown);
   type Compiler_Year is range 2016 .. 2099;
+
+  Ada_Project_Path       : constant String := "ADA_PROJECT_PATH";
+  Project_File_Extension : constant String := ".gpr";
 
   The_Gnat_Compiler : Gnat_Compiler;
   The_Compiler_Year : Compiler_Year;
@@ -75,6 +85,7 @@ package body Project is
     Text.Clear (The_Product_Directory);
     Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
+    Text.Clear (The_Library_Path);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
     The_Reference_Areas.Clear;
@@ -82,6 +93,8 @@ package body Project is
     The_Base_Path.Clear;
     The_Source_Directories.Clear;
     The_Promotion_List.Clear;
+    The_Library_Directories.Clear;
+    The_Library_Names.Clear;
     Project_Is_Defined := False;
   end Set_Project_Undefined;
 
@@ -216,7 +229,7 @@ package body Project is
 
   Error_Set : exception;
 
-  procedure Set_Error (Message : String) is
+  procedure Set_Error (Message : String) with No_Return is
   begin
     case The_Phase is
     when Initializing =>
@@ -261,14 +274,13 @@ package body Project is
 
 
   procedure Check_Name (Library : String) is
-    Project_Path : constant String := "ADA_PROJECT_PATH";
-    Gpr_File     : constant String := Library & ".gpr";
+    Gpr_File : constant String := Library & Project_File_Extension;
   begin
-    if not Ada.Environment_Variables.Exists (Project_Path) then
-      Set_Error (Project_Path & " missing for " & Gpr_File & Resource_Info);
+    if not Ada.Environment_Variables.Exists (Ada_Project_Path) then
+      Set_Error (Ada_Project_Path & " missing for " & Gpr_File & Resource_Info);
     end if;
     declare
-      Path_Value : constant String := Ada.Environment_Variables.Value (Project_Path);
+      Path_Value : constant String := Ada.Environment_Variables.Value (Ada_Project_Path);
       Path_List  : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Path_Value, Separator => ';'));
     begin
       for Path of Path_List loop
@@ -276,7 +288,7 @@ package body Project is
           return;
         end if;
       end loop;
-      Set_Error (Gpr_File & " not found in " & Project_Path & "=" & Path_Value & Resource_Info);
+      Set_Error (Gpr_File & " not found in " & Ada_Project_Path & "=" & Path_Value & Resource_Info);
     end;
   end Check_Name;
 
@@ -401,9 +413,16 @@ package body Project is
       end;
     end if;
     Check_Compiler;
+    Text.Clear (The_Library_Path);
     for Library of The_Libraries loop
-      Log.Write ("||| Library: " & Library);
-      Check_Name (Library);
+      if The_Library_Names.Is_Empty then
+        Check_Name (Library);
+      elsif not The_Library_Names.Contains (Library) then
+        Set_Error ("Library id <" & Library & "> from " & Filename & " not found in " & Definition_File);
+      else
+        Text.Append_To (The_Library_Path, The_Library_Directories.Element(Library) & ";");
+      end if;
+      Log.Write ("||| Resource Library Id: " & Library);
     end loop;
   end Define_Environment;
 
@@ -575,6 +594,80 @@ package body Project is
       end loop;
     end Define_Source_Path;
 
+
+    function Project_Name_Of (Gpr_Filename : String) return String is
+      The_File : Ada.Text_IO.File_Type;
+    begin
+      begin
+        Ada.Text_IO.Open (The_File, Ada.Text_IO.In_File, Gpr_Filename);
+      exception
+      when Item: others =>
+        Log.Write (Item);
+        return "";
+      end;
+      begin
+        while not Ada.Text_IO.End_Of_File (The_File) loop
+          declare
+            Line  : constant String := Ada.Text_IO.Get_Line (The_File);
+            Items : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Line, Separator => ' '));
+            The_Index : Strings.Element_Count := Strings.First_Index;
+          begin
+            if Items.Count >= 3 then
+              if Items(The_Index) = "library" then
+                The_Index := The_Index + 1;
+              end if;
+              if Items(The_Index) = "project" then
+                Ada.Text_IO.Close (The_File);
+                return Items(The_Index + 1);
+              end if;
+            end if;
+          end;
+        end loop;
+      exception
+      when Item: others =>
+        Log.Write (Item);
+      end;
+      Ada.Text_IO.Close (The_File);
+      return "";
+    end Project_Name_Of;
+
+
+    procedure Define_Libraries is
+      List : constant String := Element_Of (Application => "Library", Key => "List", Must_Exist => False);
+    begin
+      if List /= "" then
+        declare
+          Library_Ids : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Strings.Purge_Of (List), ','));
+        begin
+          for Library of Library_Ids loop
+            declare
+              Gpr_Name : constant String := Element_Of (Application => "Library", Key => Library, Must_Exist => True);
+              Gpr_File : constant String := Gpr_Name & Project_File_Extension;
+            begin
+              if not File.Exists(Gpr_File) then
+                Set_Error ("File " & Gpr_File & " not found for " & Library & " in " & Definition_File);
+              end if;
+              declare
+                Library_Name      : constant String := Project_Name_Of (Gpr_File);
+                Library_Directory : constant String := File.Containing_Directory_Of (Gpr_File);
+              begin
+                if Library_Name = "" then
+                  Set_Error ("Library project name for " & Library & " not found in " & Gpr_File);
+                end if;
+                if The_Library_Names.Contains (Library) then
+                  Set_Error ("Library " & Library & " defined twice in " & Definition_File);
+                end if;
+                The_Library_Names.Insert (Key => Library, New_Item => Library_Name);
+                The_Library_Directories.Insert (Key => Library, New_Item => Library_Directory);
+                Log.Write ("||| Library " & Library & " - Location: " & Library_Directory & " - Name: " & Library_Name);
+              end;
+            end;
+          end loop;
+        end;
+      end if;
+    end Define_Libraries;
+
+
     Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Filename, Language, The_Language_Directory);
 
     The_Work_Path : String_List.Item;
@@ -608,6 +701,7 @@ package body Project is
     Define_Source_Path ("Ignore", The_Ignore_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Define_Source_Path ("Path", The_Implied_Areas, The_Path => The_Base_Path);
     Define_Source_Path ("Reference", The_Reference_Areas, The_Path => The_Base_Path);
+    Define_Libraries;
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
@@ -732,6 +826,12 @@ package body Project is
     begin
       if Text.Is_Equal (Id, "path") then
         Text.Append_To (The_Environment, Id & '=' & New_Path & Ascii.Nul);
+      elsif Text.Is_Null (The_Library_Path) then
+        Text.Append_To (The_Environment, Id & '=' & Value & Ascii.Nul);
+      elsif Text.Is_Equal (Id, "gpr_project_path") then
+        Log.Write ("||| " & Id & " ignored");
+      elsif Text.Is_Equal (Id, Ada_Project_Path) then
+        null;
       else
         Text.Append_To (The_Environment, Id & '=' & Value & Ascii.Nul);
       end if;
@@ -739,11 +839,17 @@ package body Project is
 
   begin
     Ada.Environment_Variables.Iterate (Add'access);
+    if not Text.Is_Null (The_Library_Path) then
+      declare
+        Ada_Path : constant String := Ada_Project_Path & "=" & Text.String_Of (The_Library_Path);
+      begin
+        Log.Write ("||| Environment: " & Ada_Path);
+        Text.Append_To (The_Environment, Ada_Path & Ascii.Nul);
+      end;
+    end if;
     return Text.String_Of (The_Environment);
   end Environment;
 
-
-  Project_File_Extension : constant String := ".gpr";
 
   Gpr_Is_Generated : Boolean := False;
 
@@ -782,6 +888,15 @@ package body Project is
       Ada.Text_IO.Put_Line (The_File, Line);
     end Put;
 
+    function Name_Of (The_Library : String) return String is
+    begin
+      if The_Library_Names.Is_Empty then
+        return The_Library;
+      else
+        return The_Library_Names.Element (The_Library);
+      end if;
+    end Name_Of;
+
   begin -- Gpr_Filename
     Gpr_Is_Generated := False;
     if Project_Name = "" then
@@ -795,7 +910,7 @@ package body Project is
       Ada.Text_IO.Create (The_File, Mode => Ada.Text_IO.Out_File, Name => Filename);
       if not Is_Dll and then not The_Libraries.Is_Empty then
         for Library of The_Libraries loop
-          Put ("with """ & Library & """;");
+          Put ("with """ & Name_Of (Library) & """;");
         end loop;
         Put ("");
       end if;

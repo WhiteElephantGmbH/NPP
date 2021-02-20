@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -49,6 +49,14 @@ package File is
   function Extension_Of (Name : String) return String renames Ada.Directories.Extension;
 
   function Containing_Directory_Of (Name : String) return String renames Ada.Directories.Containing_Directory;
+
+  function Name_Of (Name      : String;
+                    Extension : String) return String;
+  -- add extension if Name has no extension
+  -- no exception
+
+  function Full_Name_Of (Name_Or_Directory : String;
+                         Current_Directory : String) return String;
 
   function Exists (Name : String) return Boolean;
   -- no exception

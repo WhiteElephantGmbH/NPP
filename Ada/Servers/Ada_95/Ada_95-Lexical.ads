@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -478,6 +478,7 @@ package Ada_95.Lexical is
     Is_Ordered, -- GNAT
     Is_Optimize,
     Is_Page,
+    Is_Precondition, -- GNAT
     Is_Profile,
     Is_Polling, -- GNAT
     Is_Restrictions,

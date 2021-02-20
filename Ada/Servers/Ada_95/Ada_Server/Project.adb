@@ -61,6 +61,7 @@ package body Project is
 
   The_Library_Directories : Names.Map;
   The_Library_Names       : Names.Map;
+  The_Library_Sources     : Names.Map;
 
   Project_Is_Defined      : Boolean := False;
   The_Case_Handling_Style : Case_Modification;
@@ -95,6 +96,7 @@ package body Project is
     The_Promotion_List.Clear;
     The_Library_Directories.Clear;
     The_Library_Names.Clear;
+    The_Library_Sources.Clear;
     Project_Is_Defined := False;
   end Set_Project_Undefined;
 
@@ -519,6 +521,15 @@ package body Project is
       end;
     end loop;
     Define_Environment;
+    for Library of The_Libraries loop
+      declare
+        Source_Directory : constant String := The_Library_Sources.Element(Library);
+      begin
+        The_Reference_Areas.Append (Source_Directory);
+        The_Work_Path.Append (Source_Directory & Files.Separator);
+      end;
+    end loop;
+
   end Create_Work_Area_For;
 
 
@@ -595,41 +606,83 @@ package body Project is
     end Define_Source_Path;
 
 
-    function Project_Name_Of (Gpr_Filename : String) return String is
+    type Gpr_Information is record
+      Project_Name : Text.String;
+      Source_Path  : Text.String;
+    end record;
+
+    function Gpr_Information_Of (Gpr_Filename : String) return Gpr_Information is
+
       The_File : Ada.Text_IO.File_Type;
-    begin
+      The_Gpr  : Gpr_Information;
+
+      Gpr_Directory : constant String := File.Containing_Directory_Of (Gpr_Filename);
+
+      procedure Parse_Gpr is
+        The_Tokens : String_List.Item;
+
+        function Next_Token return String is
+        begin
+          while The_Tokens.Is_Empty loop
+            if Ada.Text_IO.End_Of_File (The_File) then
+              return "";
+            end if;
+            declare
+              Line   : constant String := Ada.Text_IO.Get_Line (The_File);
+              Tokens : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Line,
+                                                                                   Separator => ' ',
+                                                                                   Symbols=>")(;"));
+            begin
+              The_Tokens := Strings.List_Of (Tokens);
+            end;
+          end loop;
+          return Unused : constant String := The_Tokens.First_Element do
+            The_Tokens.Delete_First;
+          end return;
+        exception
+        when Item: others =>
+          Log.Write (Item);
+          return "";
+        end Next_Token;
+
+      begin -- Parse_Gpr
+        loop
+          declare
+            Token : constant String := Next_Token;
+          begin
+            exit when Token = "";
+            if (Token = "library" and then Next_Token = "project") or Token = "project" then
+              The_Gpr.Project_Name := Text.String_Of (Next_Token);
+            elsif Token = "for" and then Next_Token = "Source_Dirs" and then
+              Next_Token = "use" and then Next_Token = "("
+            then
+              declare
+                Source_Path : constant String := Text.Trimmed (Next_Token, '"');
+              begin
+                The_Gpr.Source_Path := Text.String_Of (File.Full_Name_Of (Name_Or_Directory => Source_Path,
+                                                                          Current_Directory => Gpr_Directory));
+              exception
+              when others =>
+                The_Gpr.Source_Path := Text.String_Of (Source_Path); -- use original to show in error message
+              end;
+              exit;
+            end if;
+          end;
+        end loop;
+      end Parse_Gpr;
+
+    begin -- Gpr_Information_Of
       begin
         Ada.Text_IO.Open (The_File, Ada.Text_IO.In_File, Gpr_Filename);
       exception
       when Item: others =>
         Log.Write (Item);
-        return "";
+        return The_Gpr;
       end;
-      begin
-        while not Ada.Text_IO.End_Of_File (The_File) loop
-          declare
-            Line  : constant String := Ada.Text_IO.Get_Line (The_File);
-            Items : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Line, Separator => ' '));
-            The_Index : Strings.Element_Count := Strings.First_Index;
-          begin
-            if Items.Count >= 3 then
-              if Items(The_Index) = "library" then
-                The_Index := The_Index + 1;
-              end if;
-              if Items(The_Index) = "project" then
-                Ada.Text_IO.Close (The_File);
-                return Items(The_Index + 1);
-              end if;
-            end if;
-          end;
-        end loop;
-      exception
-      when Item: others =>
-        Log.Write (Item);
-      end;
+      Parse_Gpr;
       Ada.Text_IO.Close (The_File);
-      return "";
-    end Project_Name_Of;
+      return The_Gpr;
+    end Gpr_Information_Of;
 
 
     procedure Define_Libraries is
@@ -642,31 +695,40 @@ package body Project is
           for Library of Library_Ids loop
             declare
               Gpr_Name : constant String := Element_Of (Application => "Library", Key => Library, Must_Exist => True);
-              Gpr_File : constant String := Gpr_Name & Project_File_Extension;
+              Gpr_File : constant String := File.Name_Of (Gpr_Name, Project_File_Extension);
             begin
               if not File.Exists(Gpr_File) then
                 Set_Error ("File " & Gpr_File & " not found for " & Library & " in " & Definition_File);
               end if;
               declare
-                Library_Name      : constant String := Project_Name_Of (Gpr_File);
-                Library_Directory : constant String := File.Containing_Directory_Of (Gpr_File);
+                Gpr             : constant Gpr_Information := Gpr_Information_Of (Gpr_File);
+                Gpr_Directory   : constant String := File.Containing_Directory_Of (Gpr_File);
+                Gpr_Name        : constant String := Text.String_Of (Gpr.Project_Name);
+                Gpr_Source_Path : constant String := Text.String_Of (Gpr.Source_Path);
               begin
-                if Library_Name = "" then
+                if Gpr_Name = "" then
                   Set_Error ("Library project name for " & Library & " not found in " & Gpr_File);
+                end if;
+                if Gpr_Source_Path = "" then
+                  Set_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
+                elsif not File.Directory_Exists (Gpr_Source_Path) then
+                  Set_Error (Gpr_Source_Path & " for " & Library & " not found in " & Gpr_File);
                 end if;
                 if The_Library_Names.Contains (Library) then
                   Set_Error ("Library " & Library & " defined twice in " & Definition_File);
                 end if;
-                The_Library_Names.Insert (Key => Library, New_Item => Library_Name);
-                The_Library_Directories.Insert (Key => Library, New_Item => Library_Directory);
-                Log.Write ("||| Library " & Library & " - Location: " & Library_Directory & " - Name: " & Library_Name);
+                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Name);
+                The_Library_Directories.Insert (Key => Library, New_Item => Gpr_Directory);
+                The_Library_Sources.Insert (Key => Library, New_Item => Gpr_Source_Path);
+                Log.Write ("||| Library " & Library & " - Location: " & Gpr_Directory
+                                                    & " - Name: " & Gpr_Name
+                                                    & " - Source: " & Gpr_Source_Path);
               end;
             end;
           end loop;
         end;
       end if;
     end Define_Libraries;
-
 
     Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Filename, Language, The_Language_Directory);
 
@@ -785,6 +847,8 @@ package body Project is
     for Area of Reference_Areas loop
       if Text.Is_Equal (The_Directory, Source_Folder & Area) then
         return True;
+      elsif Text.Is_Equal (The_Directory, Area) then
+        return True;
       end if;
     end loop;
     return False;
@@ -837,7 +901,7 @@ package body Project is
       end if;
     end Add;
 
-  begin
+  begin -- Environment
     Ada.Environment_Variables.Iterate (Add'access);
     if not Text.Is_Null (The_Library_Path) then
       declare
@@ -878,8 +942,8 @@ package body Project is
 
     Is_Dll : constant Boolean := Has_Interface_In (Folder);
 
-    Source    : constant String := Folder & Gpr_Name;
-    Filename  : constant String := Created_Target_Folder & Gpr_Name;
+    Source   : constant String := Folder & Gpr_Name;
+    Filename : constant String := Created_Target_Folder & Gpr_Name;
 
     The_File : Ada.Text_IO.File_Type;
 

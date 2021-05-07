@@ -41,6 +41,7 @@ package body Project is
   end Confirmation_Message;
 
 
+  The_Actual_Project     : Text.String;
   The_Project_Name       : Text.String;
   The_Project_Directory  : Text.String;
   The_Language_Directory : Text.String;
@@ -78,6 +79,7 @@ package body Project is
 
   procedure Set_Project_Undefined is
   begin
+    Text.Clear (The_Actual_Project);
     Text.Clear (The_Project_Name);
     Text.Clear (The_Project_Directory);
     Text.Clear (The_Language_Directory);
@@ -110,6 +112,8 @@ package body Project is
   function Directory return String is (Text.String_Of (The_Project_Directory));
 
   function Folder return String is (Directory & Files.Separator);
+
+  function Actual return String is (Text.String_Of (The_Actual_Project));
 
   function Name return String is (Text.String_Of (The_Project_Name));
 
@@ -736,6 +740,7 @@ package body Project is
 
   begin -- Initialized
     Log.Write ("||| Project.Initialize: " & Filename);
+    The_Actual_Project := Text.String_Of (Filename);
     The_Phase := Initializing;
     if The_Configuration_Handle = null then -- only first time because language directory does not change
       The_Configuration_Handle := new Configuration.File_Handle'(Configuration.Handle_For (Definition_File));

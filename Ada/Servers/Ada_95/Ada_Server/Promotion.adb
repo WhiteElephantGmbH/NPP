@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -85,6 +85,8 @@ package body Promotion is
         Set_Message ("Promotion of " & Module & " successfully completed.");
       end Build;
 
+      Actual_Project : constant String := Project.Actual;
+
     begin -- Promote_All_Projects
       declare
         Projects : constant String_List.Item := Project.Promotion_List;
@@ -106,6 +108,7 @@ package body Promotion is
               Build (The_Project);
             end if;
           end loop;
+          Project.Change_To (Actual_Project);
           Define_Next_Message_Color (Promotion.Blue);
           Set_Message ("Promote all successfully completed.");
         end if;

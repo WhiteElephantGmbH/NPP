@@ -197,7 +197,7 @@ package body File is
         Name      : constant String := FS.Simple_Name(Directory_Entry);
         Directory : constant String := FS.Full_Name(Directory_Entry);
       begin
-        if Name(Name'first) /= '.' then
+        if not (Name(Name'first) in '.' | '$') then
           The_Count := The_Count + 1;
           Iterate_Over_Leaf_Directories (Directory, Iterator);
         end if;

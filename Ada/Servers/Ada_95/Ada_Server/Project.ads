@@ -44,6 +44,8 @@ package Project is
 
   function Name return String;
 
+  function Actual return String;
+
   function Folder return String;
 
   function Directory return String;

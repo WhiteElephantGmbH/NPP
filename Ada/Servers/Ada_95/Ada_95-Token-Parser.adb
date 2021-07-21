@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -1135,7 +1135,7 @@ package body Ada_95.Token.Parser is
 
 
     -- generic_subprogram_declaration ::=
-    --      generic_formal_part  subprogram_specification ;
+    --      generic_formal_part  subprogram_specification [aspect_specification] ;
     --
     -- coded in Declarative_Part
 
@@ -8871,7 +8871,7 @@ package body Ada_95.Token.Parser is
         Parameters : constant Data.Formal_Block_Handle := Generic_Formal_Part (Scope);
 
         -- generic_subprogram_declaration ::=
-        --      generic_formal_part subprogram_specification ;
+        --      generic_formal_part subprogram_specification [aspect_specification] ;
         --
         procedure Generic_Subprogram (Is_Function : Boolean := False) is
           Id : constant Identifier_Handle := Next_Declaring_Identifier;
@@ -8897,6 +8897,7 @@ package body Ada_95.Token.Parser is
                Generic_Parameters => Parameters,
                Profile            => Subprogram_Profile (Data.Unit_Handle(Parameters), Is_Function));
           end if;
+          Conditional_Aspect_Specification ((Scope, null));
           Get_Element (Lexical.Semicolon);
         end Generic_Subprogram;
 

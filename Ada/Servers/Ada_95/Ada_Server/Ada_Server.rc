@@ -1,6 +1,6 @@
 Ada_Server ICON Ada_Server.Ico
 1 VERSIONINFO
-  FILEVERSION 45,0,0,13
+  FILEVERSION 45,1,0,1
   FILEFLAGSMASK 0x3FL
   FILEFLAGS 0x0L
   FILEOS 0x4L
@@ -15,8 +15,8 @@ BEGIN
       VALUE "FileDescription", "Ada Server for Notepad++ Elephant Plugin\0"
       VALUE "OriginalFilename", "Ada_Server.exe\0"
       VALUE "InternalName", "Ada_Server\0"
-      VALUE "ProductName", "GPL 2020\0"
-      VALUE "ProductVersion", "9.3.1\0"
+      VALUE "ProductName", "GPL 2021\0"
+      VALUE "ProductVersion", "10.3.1\0"
       VALUE "Libraries", "\0"
     END
   END

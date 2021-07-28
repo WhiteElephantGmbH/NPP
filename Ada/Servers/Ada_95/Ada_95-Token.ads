@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -61,31 +61,31 @@ package Ada_95.Token is
      Is_Numeric_Literal,
      Is_String_Literal);
 
-  type Object;
+  type Object is tagged;
 
-  type Line_Object;
+  type Line_Object is tagged;
 
-  type Lexical_Object;
+  type Lexical_Object is tagged;
 
   type String_Literal;
 
-  type Name_Object;
+  type Name_Object is tagged;
 
-  type Aspect;
+  type Aspect is tagged;
 
-  type Attribute;
+  type Attribute is tagged;
 
-  type Pragma_Identifier;
+  type Pragma_Identifier is tagged;
 
-  type Identifier;
+  type Identifier is tagged;
 
-  type Line_End_Comment;
+  type Line_End_Comment is tagged;
 
-  type Comment_Lines;
+  type Comment_Lines is tagged;
 
-  type Special_Comment;
+  type Special_Comment is tagged;
 
-  type Error_Object;
+  type Error_Object is tagged;
 
   type Handle is access all Object'class;
   for Handle'storage_pool use Memory.Pool.all;

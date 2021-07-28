@@ -615,12 +615,12 @@ package body Project is
       Source_Path  : Text.String;
     end record;
 
-    function Gpr_Information_Of (Gpr_Filename : String) return Gpr_Information is
+    function Gpr_Information_Of (The_Gpr_Filename : String) return Gpr_Information is
 
       The_File : Ada.Text_IO.File_Type;
       The_Gpr  : Gpr_Information;
 
-      Gpr_Directory : constant String := File.Containing_Directory_Of (Gpr_Filename);
+      Gpr_Directory : constant String := File.Containing_Directory_Of (The_Gpr_Filename);
 
       procedure Parse_Gpr is
         The_Tokens : String_List.Item;
@@ -705,12 +705,12 @@ package body Project is
                 Set_Error ("File " & Gpr_File & " not found for " & Library & " in " & Definition_File);
               end if;
               declare
-                Gpr             : constant Gpr_Information := Gpr_Information_Of (Gpr_File);
-                Gpr_Directory   : constant String := File.Containing_Directory_Of (Gpr_File);
-                Gpr_Name        : constant String := Text.String_Of (Gpr.Project_Name);
-                Gpr_Source_Path : constant String := Text.String_Of (Gpr.Source_Path);
+                Gpr              : constant Gpr_Information := Gpr_Information_Of (Gpr_File);
+                Gpr_Directory    : constant String := File.Containing_Directory_Of (Gpr_File);
+                Gpr_Project_Name : constant String := Text.String_Of (Gpr.Project_Name);
+                Gpr_Source_Path  : constant String := Text.String_Of (Gpr.Source_Path);
               begin
-                if Gpr_Name = "" then
+                if Gpr_Project_Name = "" then
                   Set_Error ("Library project name for " & Library & " not found in " & Gpr_File);
                 end if;
                 if Gpr_Source_Path = "" then
@@ -721,11 +721,11 @@ package body Project is
                 if The_Library_Names.Contains (Library) then
                   Set_Error ("Library " & Library & " defined twice in " & Definition_File);
                 end if;
-                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Name);
+                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Project_Name);
                 The_Library_Directories.Insert (Key => Library, New_Item => Gpr_Directory);
                 The_Library_Sources.Insert (Key => Library, New_Item => Gpr_Source_Path);
                 Log.Write ("||| Library " & Library & " - Location: " & Gpr_Directory
-                                                    & " - Name: " & Gpr_Name
+                                                    & " - Name: " & Gpr_Project_Name
                                                     & " - Source: " & Gpr_Source_Path);
               end;
             end;

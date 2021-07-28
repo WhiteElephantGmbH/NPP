@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                      (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                           *
+-- *                      (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                           *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,7 +12,7 @@ package Ada_95.Token.Data is
 
   Unknown_Specification : exception;
 
-  type Unit_Type;
+  type Unit_Type is tagged;
 
   type Unit_Handle is access all Unit_Type'class;
   for Unit_Handle'storage_pool use Memory.Pool.all;
@@ -142,7 +142,7 @@ package Ada_95.Token.Data is
 
   ----------------------------------------------------------------------------------------------------------------------
 
-  type Unit_Body;
+  type Unit_Body is tagged;
 
   type Unit_Body_Handle is access all Unit_Body'class;
   for Unit_Body_Handle'storage_pool use Memory.Pool.all;
@@ -284,7 +284,7 @@ package Ada_95.Token.Data is
 
   ----------------------------------------------------------------------------------------------------------------------
 
-  type Package_Instantiation;
+  type Package_Instantiation is tagged;
 
   type Instantiation_Handle is access all Package_Instantiation'class;
   for Instantiation_Handle'storage_pool use Memory.Pool.all;
@@ -549,7 +549,7 @@ package Ada_95.Token.Data is
 
   ----------------------------------------------------------------------------------------------------------------------
 
-  type With_Declaration;
+  type With_Declaration is tagged;
 
   type With_Handle is access all With_Declaration'class;
   for With_Handle'storage_pool use Memory.Pool.all;
@@ -946,7 +946,7 @@ package Ada_95.Token.Data is
 
   type Parameter is new Data_Object with null record;
 
-  type Incomplete_Object;
+  type Incomplete_Object is tagged;
 
   type Incomplete_Object_Handle is access all Incomplete_Object'class;
   for Incomplete_Object_Handle'storage_pool use Memory.Pool.all;
@@ -1002,7 +1002,7 @@ package Ada_95.Token.Data is
   for Formal_Package_Handle'storage_pool use Memory.Pool.all;
 
 
-  type Formal_Subprogram;
+  type Formal_Subprogram is tagged;
 
   type Formal_Subprogram_Handle is access all Formal_Subprogram'class;
   for Formal_Subprogram_Handle'storage_pool use Memory.Pool.all;

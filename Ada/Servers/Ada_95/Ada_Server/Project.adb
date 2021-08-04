@@ -677,7 +677,7 @@ package body Project is
 
     begin -- Gpr_Information_Of
       begin
-        Ada.Text_IO.Open (The_File, Ada.Text_IO.In_File, Gpr_Filename);
+        Ada.Text_IO.Open (The_File, Ada.Text_IO.In_File, The_Gpr_Filename);
       exception
       when Item: others =>
         Log.Write (Item);

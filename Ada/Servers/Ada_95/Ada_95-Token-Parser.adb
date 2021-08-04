@@ -1158,8 +1158,8 @@ package body Ada_95.Token.Parser is
     --        exception_handler
     --      {exception_handler}]
     --
-    procedure Handled_Sequence_Of_Statements (Scope        : Data.Unit_Handle;
-                                              Is_Task_Body : Boolean := False);
+    procedure Handled_Sequence_Of_Statements (Scope           : Data.Unit_Handle;
+                                              Is_In_Task_Body : Boolean := False);
 
 
     -- highest_precedence_operator ::=
@@ -7772,7 +7772,7 @@ package body Ada_95.Token.Parser is
       if not Element_Is (Lexical.Is_Separate) then
         Declarative_Part (Self);
         Get_Element (Lexical.Is_Begin);
-        Handled_Sequence_Of_Statements (Self, Is_Task_Body => True);
+        Handled_Sequence_Of_Statements (Self, Is_In_Task_Body => True);
         Check_Declaration_End (Self);
       end if;
       Get_Element (Lexical.Semicolon);
@@ -9918,8 +9918,8 @@ package body Ada_95.Token.Parser is
     --            exception_name
     --          | others
     --
-    procedure Handled_Sequence_Of_Statements (Scope        : Data.Unit_Handle;
-                                              Is_Task_Body : Boolean := False) is
+    procedure Handled_Sequence_Of_Statements (Scope           : Data.Unit_Handle;
+                                              Is_In_Task_Body : Boolean := False) is
       The_Scope : Data.Unit_Handle := Scope;
     begin
       Sequence_Of_Statements (Scope);
@@ -9947,7 +9947,7 @@ package body Ada_95.Token.Parser is
             exit when not Element_Is (Lexical.Is_When);
           end if;
         end loop;
-      elsif Is_Task_Body then
+      elsif Is_In_Task_Body then
         Style_Error_If_Restricted (Error.Missing_Exception_Handler);
       end if;
     end Handled_Sequence_Of_Statements;

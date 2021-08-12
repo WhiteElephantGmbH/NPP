@@ -226,6 +226,7 @@ package Ada_95.Lexical is
     Is_Has_Tagged_Values,
     Is_Integer_Value,
     Is_Machine_Size,
+    Is_Max_Integer_Size,
     Is_Max_Interrupt_Priority,
     Is_Max_Priority,
     Is_Maximum_Alignment,
@@ -306,7 +307,8 @@ package Ada_95.Lexical is
 
     -- single aspects
 
-    Is_Code, -- used as Single_Aspect'first
+    Is_Aggregate, -- used as Single_Aspect'first
+    Is_Code,
     Is_Coding,
     Is_Depends,
     Is_Dimension,
@@ -344,7 +346,8 @@ package Ada_95.Lexical is
     Is_Inline,
     Is_Pack,
     Is_Priority,
-    Is_Shared, -- used as Single_Aspect'last
+    Is_Shared,
+    Is_Static, -- used as Single_Aspect'last
 
     -- compound aspects shared with attributes (must match Attribute_Id enumeration)
 
@@ -385,6 +388,7 @@ package Ada_95.Lexical is
     Is_Linker_Section,
     Is_Lock_Free,
     Is_No_Tagged_Streams,
+    Is_No_Task_Parts,
     Is_Part_Of,
     Is_Persistent_Bss,
     Is_Predicate_Failure,
@@ -440,7 +444,7 @@ package Ada_95.Lexical is
 
   for Aspect_Id'size use 8;
 
-  subtype Single_Aspect is Aspect_Id range Is_Code .. Is_Shared;
+  subtype Single_Aspect is Aspect_Id range Is_Aggregate .. Is_Static;
 
   subtype Compound_Aspect is Aspect_Id range Is_Abstract_State .. Aspect_Id'last;
 
@@ -465,7 +469,8 @@ package Ada_95.Lexical is
     Is_Inline,
     Is_Pack,
     Is_Priority,
-    Is_Shared, -- Obsolescent_Single_Pragma'last
+    Is_Shared,
+    Is_Static, -- Obsolescent_Single_Pragma'last
 
     -- single pragma
 
@@ -522,7 +527,7 @@ package Ada_95.Lexical is
     Is_Ada_20, -- GNAT
     Is_Ada_2005, -- GNAT
     Is_Ada_2012, -- GNAT
-    Is_Ada_2020, -- GNAT
+    Is_Ada_2022, -- GNAT
     Is_Assertion_Policy,
     Is_Compile_Time_Error, -- GNAT
     Is_Compile_Time_Warning, -- GNAT

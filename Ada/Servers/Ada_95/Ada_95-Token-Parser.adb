@@ -985,7 +985,15 @@ package body Ada_95.Token.Parser is
 
 
     -- formal_package_actual_part ::=
-    --      ( <> ) | [generic_actual_part]
+    --      ( [others =>] <> )
+    --    | [generic_actual_part]
+    --    | (formal_package_association {, formal_package_association} [, others => <>])
+    --
+    -- coded in Generic_Formal_Part
+
+
+    -- formal_package_association ::=
+    --      generic_association | generic_formal_parameter_selector_name => <>
     --
     -- coded in Generic_Formal_Part
 
@@ -4056,6 +4064,9 @@ package body Ada_95.Token.Parser is
       if Next_Element_Is (Lexical.Left_Parenthesis) then
         loop
           Dummy := Expression (Within); -- handle argument
+          if Element_Is (Lexical.Range_Delimiter) then -- handle range
+            Dummy := Expression (Within);
+          end if;
           exit when not Element_Is (Lexical.Comma);
         end loop;
         Get_Element (Lexical.Right_Parenthesis);
@@ -7228,7 +7239,9 @@ package body Ada_95.Token.Parser is
       --       with package defining_identifier is new generic_package_name formal_package_actual_part ;
       --
       --    formal_package_actual_part ::=
-      --         ( <> ) | [generic_actual_part]
+      --         ( [others =>] <> )
+      --       | [generic_actual_part]
+      --       | (formal_package_association {, formal_package_association} [, others => <>])
       --
       procedure Formal_Package_Declaration is
         Id : constant Identifier_Handle := Next_Declaring_Identifier;
@@ -7241,6 +7254,12 @@ package body Ada_95.Token.Parser is
         begin
           if Element_Ahead_Is (Lexical.Unconstrained) then
             Get_Element (Lexical.Left_Parenthesis);
+            Get_Element (Lexical.Unconstrained);
+            Get_Element (Lexical.Right_Parenthesis);
+          elsif Element_Ahead_Is (Lexical.Is_Others) then
+            Get_Element (Lexical.Left_Parenthesis);
+            Get_Element (Lexical.Is_Others);
+            Get_Element (Lexical.Association);
             Get_Element (Lexical.Unconstrained);
             Get_Element (Lexical.Right_Parenthesis);
           else
@@ -7365,14 +7384,16 @@ package body Ada_95.Token.Parser is
             then
               The_Type := Data.New_Instantiation (The_Type, The_Instantiation);
             end if;
-            The_Type := Expression ((Scope, The_Type));
-            if The_Index /= Data.List.Not_Found then
-              if The_Index <= Actual_Part'last then
-                if The_Type = null and then The_Actual_Identifier.all in Operator_Symbol'class then
-                  The_Type := Data.Predefined_Operator;
-                  The_Actual_Identifier.Data := The_Type;
+            if not Element_Is (Lexical.Unconstrained) then -- GNAT 2022 ???
+              The_Type := Expression ((Scope, The_Type));
+              if The_Index /= Data.List.Not_Found then
+                if The_Index <= Actual_Part'last then
+                  if The_Type = null and then The_Actual_Identifier.all in Operator_Symbol'class then
+                    The_Type := Data.Predefined_Operator;
+                    The_Actual_Identifier.Data := The_Type;
+                  end if;
+                  Actual_Part(The_Index) := The_Type;
                 end if;
-                Actual_Part(The_Index) := The_Type;
               end if;
             end if;
             exit when not Element_Is (Lexical.Comma);
@@ -7516,6 +7537,8 @@ package body Ada_95.Token.Parser is
       end if;
       The_Unit := Data.New_Function_Expression_Declaration (The_Identifier, Scope, Profile);
       case Token_Element is
+      when Lexical.Is_Declare =>
+        Dummy := Declare_Expression ((The_Unit, null));
       when Lexical.Is_If =>
         Dummy := If_Expression ((The_Unit, null));
       when Lexical.Is_Case =>
@@ -10135,6 +10158,9 @@ package body Ada_95.Token.Parser is
                 end if;
               end;
               Get_Element (Lexical.Semicolon);
+            when Lexical.Is_With =>
+              Aspect_Specification ((Unit, null));
+              Get_Element (Lexical.Semicolon);
             when others =>
               Syntax_Error;
             end case;
@@ -10206,6 +10232,7 @@ package body Ada_95.Token.Parser is
                                    Profile            => Subprogram_Profile (Data.Unit_Handle(Generic_Parameters),
                                                                              Is_Function));
         end case;
+        Conditional_Aspect_Specification ((Unit, null));
         Get_Element (Lexical.Semicolon);
       end Generic_Subprogram;
 

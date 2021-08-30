@@ -3599,7 +3599,9 @@ package body Ada_95.Token.Parser is
             end if;
           when Lexical.Association =>
             Get_Next_Token;
-            The_Result_Type := Expression (Within);
+            if not Element_Is (Lexical.Unconstrained) then
+              The_Result_Type := Expression (Within);
+            end if;
           when Lexical.Is_Others =>
             Get_Next_Element (Lexical.Association);
             if not Element_Is (Lexical.Unconstrained) then

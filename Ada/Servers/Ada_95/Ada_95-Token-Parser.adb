@@ -3465,7 +3465,9 @@ package body Ada_95.Token.Parser is
       procedure Enumeration_Aggregate (Component_Type : Data_Handle) is
       begin
         loop
-          Dummy := Expression ((Within.Scope, Component_Type));
+          if not Element_Is (Lexical.Is_Others) then
+            Dummy := Expression ((Within.Scope, Component_Type));
+          end if;
           if Element_Is (Lexical.Association) then -- else not an aggregate
             Dummy := Expression (Within);
           end if;
@@ -7183,7 +7185,7 @@ package body Ada_95.Token.Parser is
               Data.New_Formal_Access_Type (Id         => Defining_Identifier,
                                            To_Type    => Subtype_Indication_Part ((Data.Unit_Handle(Parameters), null)),
                                            Parameters => Parameters);
-            when Lexical.Is_All =>
+            when Lexical.Is_All | Lexical.Is_Constant =>
               Get_Next_Token;
               Data.New_Formal_Access_Type (Id         => Defining_Identifier,
                                            To_Type    => Subtype_Indication_Part ((Data.Unit_Handle(Parameters), null)),

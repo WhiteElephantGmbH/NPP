@@ -51,6 +51,7 @@ package body Project is
   The_Product_Sub_Path   : Text.String;
   The_Promotion_Areas    : Text.String;
   The_Library_Path       : Text.String;
+  The_Tools_Directory    : Text.String;
 
   The_Ignore_Areas       : String_List.Item;
   The_Implied_Areas      : String_List.Item;
@@ -73,7 +74,7 @@ package body Project is
   Ada_Project_Path       : constant String := "ADA_PROJECT_PATH";
   Project_File_Extension : constant String := ".gpr";
 
-  The_Gnat_Compiler : Gnat_Compiler;
+  The_Gnat_Compiler : Gnat_Compiler := Unknown;
   The_Compiler_Year : Compiler_Year;
 
 
@@ -89,6 +90,7 @@ package body Project is
     Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
     Text.Clear (The_Library_Path);
+    Text.Clear (The_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
     The_Reference_Areas.Clear;
@@ -99,6 +101,7 @@ package body Project is
     The_Library_Directories.Clear;
     The_Library_Names.Clear;
     The_Library_Sources.Clear;
+    The_Gnat_Compiler := Unknown;
     Project_Is_Defined := False;
   end Set_Project_Undefined;
 
@@ -268,7 +271,7 @@ package body Project is
     when GNATPRO =>
       return System_Drive & "\GNATPRO\7.3.1\bin";
     when Unknown =>
-      return System_Drive & "\GNAT\2017\bin";
+      return Text.String_Of (The_Tools_Directory);
     end case;
   end Tools_Directory;
 
@@ -311,7 +314,6 @@ package body Project is
     Filename : constant String := Resource_Filename;
     The_File : Ada.Text_IO.File_Type;
   begin
-    The_Gnat_Compiler := Unknown;
     The_Libraries.Clear;
     if File.Exists (Filename) then
       begin
@@ -370,28 +372,30 @@ package body Project is
 
                 begin
                   if Resource = "ProductName" then
-                    Adjust_Index;
-                    declare
-                      Compiler : constant String := Next_Item;
-                    begin
-                      if Compiler = "GPL" then
-                        The_Gnat_Compiler := GPL;
-                        declare
-                          Year : constant String := Next_Item;
-                        begin
-                          The_Compiler_Year := Compiler_Year'value(Year);
-                        exception
-                        when others =>
-                          Set_Error ("Unknown compiler: " & Compiler & " " & (if Year = "\"
-                                                                             then "(year missing)"
-                                                                             else Year) & " in " & Filename);
-                        end;
-                      elsif Compiler = "GNATPRO" then
-                        The_Gnat_Compiler := GNATPRO;
-                      else
-                        Set_Error ("Unknown compiler: " & Compiler & " in " & Filename);
-                      end if;
-                    end;
+                    if Text.Is_Null (The_Tools_Directory) then
+                      Adjust_Index;
+                      declare
+                        Compiler : constant String := Next_Item;
+                      begin
+                        if Compiler = "GPL" then
+                          The_Gnat_Compiler := GPL;
+                          declare
+                            Year : constant String := Next_Item;
+                          begin
+                            The_Compiler_Year := Compiler_Year'value(Year);
+                          exception
+                          when others =>
+                            Set_Error ("Unknown compiler: " & Compiler & " " & (if Year = "\"
+                                                                               then "(year missing)"
+                                                                               else Year) & " in " & Filename);
+                          end;
+                        elsif Compiler = "GNATPRO" then
+                          The_Gnat_Compiler := GNATPRO;
+                        else
+                          Set_Error ("Unknown compiler: " & Compiler & " in " & Filename);
+                        end if;
+                      end;
+                    end if;
                   elsif Resource = "Libraries" then
                     Adjust_Index;
                     The_Libraries.Clear;
@@ -582,6 +586,20 @@ package body Project is
     end Define_Location;
 
 
+    procedure Define_Tools (The_Item : out Text.String) is
+
+      The_Directory : constant String := Text.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
+
+    begin
+     if The_Directory = "" then
+       The_Item := Text.Null_String;
+     elsif not File.Directory_Exists (The_Directory) then
+       Set_Error ("Tools Directory <" & The_Directory & "> Unknown");
+     end if;
+     The_Item := Text.String_Of (The_Directory);
+    end Define_Tools;
+
+
     procedure Define_Source_Path (Path_Name  :        String;
                                   The_Areas  : out    String_List.Item;
                                   The_Path   : in out String_List.Item;
@@ -768,6 +786,7 @@ package body Project is
     Define_Source_Path ("Ignore", The_Ignore_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Define_Source_Path ("Path", The_Implied_Areas, The_Path => The_Base_Path);
     Define_Source_Path ("Reference", The_Reference_Areas, The_Path => The_Base_Path);
+    Define_Tools (The_Tools_Directory);
     Define_Libraries;
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");

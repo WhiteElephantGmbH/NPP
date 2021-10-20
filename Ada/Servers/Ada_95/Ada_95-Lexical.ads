@@ -269,6 +269,7 @@ package Ada_95.Lexical is
     Is_Safe_Last,
     Is_Signed_Zeros,
     Is_Unbiased_Rounding,
+    Is_Valid_Value,
     Is_Wide_Image,
     Is_Wide_Value,
     Is_Wide_Wide_Image,

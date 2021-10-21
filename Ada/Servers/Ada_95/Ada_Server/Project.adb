@@ -519,11 +519,14 @@ package body Project is
         if Text.Is_Equal (The_Part, The_Project_Name) then
           declare
             The_Items : constant Strings.Item := Strings.Item_Of (List => Project_Parts,
-                                                                  Selection => (First => Index,
+                                                                  Selection => (First => Index + 1,
                                                                                 Last  => Project_Parts.Count - 2));
-            The_Text : constant String := "\" & Strings.Data_Of (The_Items, Separator => "\");
+
+            The_Text : constant String := Strings.Data_Of (The_Items, Separator => "\");
           begin
-            The_Product_Sub_Path := Text.String_Of (Ada_95.File.Normalized_Folder (The_Text));
+            if The_Text /= "" then
+              The_Product_Sub_Path := Text.String_Of (Ada_95.File.Normalized_Folder ("\" & The_Text));
+            end if;
           end;
         end if;
       end;

@@ -240,6 +240,7 @@ package body Target is
   begin
     Promotion.Set_Message ("Build " & Filename);
     Gpr_Execute ("-XLIBRARY_TYPE=static -eS -q");
+    Check_For_Parser_Errors_In (Filename);
     Promotion.Define_Next_Message_Color (Promotion.Green);
   exception
   when Promotion.Error =>

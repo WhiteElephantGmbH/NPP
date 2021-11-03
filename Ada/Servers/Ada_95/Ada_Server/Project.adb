@@ -519,7 +519,7 @@ package body Project is
         if Text.Is_Equal (The_Part, The_Project_Name) then
           declare
             The_Items : constant Strings.Item := Strings.Item_Of (List => Project_Parts,
-                                                                  Selection => (First => Index + 1,
+                                                                  Selection => (First => Index,
                                                                                 Last  => Project_Parts.Count - 2));
 
             The_Text : constant String := Strings.Data_Of (The_Items, Separator => "\");

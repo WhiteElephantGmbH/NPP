@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -47,13 +47,19 @@ package Ada_95.Error is
      Restricted_Function_Expression,
      Suspicious_Form_Of_Entry_Call, --Incorrect_Style'last
 
-     Obsolescent_Pragma_Call, -- In_Semantic'first
+     Already_Defined, -- In_Semantic'first
+     Compilers_Not_Defined,
+     Kind_Not_Defined,
+     Obsolescent_Pragma_Call,
      Parent_Unit_Name_Error,
      Special_Comment_In_Use,
      Style_Already_Set,
      Unit_Kind_Error,
      Unit_Name_Error,
-     Unknown_Specification, -- In_Semantic'last
+     Unknown_Project_Kind,
+     Unknown_Specification,
+     Version_Not_Defined,
+     Version_Number_Out_Of_Range, -- In_Semantic'last
 
      String_Not_Terminated,
      Syntax_Error,
@@ -64,7 +70,7 @@ package Ada_95.Error is
 
   subtype Incorrect_Style is Kind range Goto_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
 
-  subtype In_Semantic is Kind range Obsolescent_Pragma_Call .. Unknown_Specification;
+  subtype In_Semantic is Kind range Already_Defined .. Version_Number_Out_Of_Range;
 
 
   procedure Add (Message  : Kind;

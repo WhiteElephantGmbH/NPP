@@ -4,7 +4,9 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Containers.Indefinite_Ordered_Maps;
 with String_List;
+with Text;
 
 package Project is
 
@@ -54,12 +56,6 @@ package Project is
 
   function Defined_Environment return Boolean;
 
-  function Gpr_Filename return String;
-
-  function Resource_Object return String;
-
-  function Gpr_File_Is_Generated return Boolean;
-
   function Promotion_Areas return String;
 
   function Promotion_List return String_List.Item;
@@ -71,5 +67,31 @@ package Project is
   function Tools_Folder return String;
 
   function Environment return String;
+
+private
+
+  Object_Area : constant String := "objects";
+
+  function Object_Folder return String;
+
+  function Program_Unit_Name return String;
+
+  function Target_Directory return String;
+
+  procedure Set_Error (Message : String) with No_Return;
+
+  function System_Drive return String;
+
+  function Is_Legacy return Boolean;
+
+  package Names is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
+                                                               Element_Type => String);
+  The_Library_Directories : Names.Map;
+  The_Library_Names       : Names.Map;
+  The_Library_Sources     : Names.Map;
+
+  The_Tools_Directories  : Text.String;
+  The_Libraries          : String_List.Item;
+  The_Source_Directories : String_List.Item;
 
 end Project;

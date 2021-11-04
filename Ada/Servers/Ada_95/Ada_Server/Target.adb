@@ -10,7 +10,8 @@ with File;
 with Files;
 with Log;
 with Os.Process;
-with Project;
+with Project.Gpr;
+with Project.Resource;
 with Promotion;
 with Server;
 with Strings;
@@ -74,12 +75,16 @@ package body Target is
 
     function Resource_Filename return String is
     begin
-      return Source_Directory & Files.Separator & Resource_Name & ".rc";
+      if Project.Resource.Is_Generated then
+        return Project.Resource.Filename;
+      else
+        return Source_Directory & Files.Separator & Resource_Name & Project.Resource.Extension;
+      end if;
     end Resource_Filename;
 
     function Parameters return String is
     begin
-      return "-i " & Resource_Filename & " --output-format=coff -o " & Project.Resource_Object;
+      return "-i " & Resource_Filename & " --output-format=coff -o " & Project.Resource.Object;
     end Parameters;
 
     function Changed_To_Parent_Resource return Boolean is
@@ -88,7 +93,7 @@ package body Target is
       if Text.Is_Equal (Parent_Directory, Project.Language_Directory) or else
         not File.Directory_Exists (Parent_Directory)
       then
-        if Project.Gpr_File_Is_Generated then
+        if Project.Gpr.File_Is_Generated then
           Log.Write ("Target.Generate_Resource_Object - no shared resource <" & Resource_Filename & ">");
           Promotion.Set_Error ("Unknown Resource File");
         else
@@ -136,7 +141,7 @@ package body Target is
 
     Product_Location : constant String := Project.Product_Directory & Project.Product_Sub_Path;
 
-    Gpr_Parameters : constant String := " -j0 -P" & Project.Gpr_Filename &
+    Gpr_Parameters : constant String := " -j0 -P" & Project.Gpr.Filename &
                                         " -XBinary_Root=" & Project.Binary_Folder &
                                         " -XProduct_Location=" & Product_Location &
                                         " -XSource_Root=" & Project.Source_Folder &

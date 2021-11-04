@@ -2173,7 +2173,7 @@ package body Ada_95.Token.Parser is
     Unused_Id : Identifier_Handle;
 
     procedure Report_Error (Item     : Error.Kind;
-                            At_Token : Lexical_Handle) is
+                            At_Token : Lexical_Handle) with No_Return is
     begin
       Token.Mark_Error (Item, At_Token, Resource.Tokens);
       raise Reported_Error;
@@ -2193,7 +2193,7 @@ package body Ada_95.Token.Parser is
       end if;
     end Style_Error_If_Restricted;
 
-    procedure Syntax_Error is
+    procedure Syntax_Error with No_Return is
     begin
       Report_Error (Error.Syntax_Error, The_Token);
     end Syntax_Error;
@@ -3811,7 +3811,10 @@ package body Ada_95.Token.Parser is
     end Aspect_Mark;
 
 
-    Special_Comment_Detected : Boolean;
+    Console_Application_Token        : Lexical_Handle;
+    Console_Application_Kind_Defined : Boolean;
+    Build_Parameters_Defined         : Boolean;
+    Special_Comment_Detected         : Boolean;
 
     -- pragma ::=
     --    pragma identifier [ ( pragma_argument_association {, pragma_argument_association} ) ] ;
@@ -3824,8 +3827,9 @@ package body Ada_95.Token.Parser is
     --
     procedure Pragma_Call (Scope : Data.Unit_Handle) is
 
-      The_Handle : Pragma_Identifier_Handle;
-      Is_Found   : Boolean := True;
+      Pragma_Name : Lexical_Handle;
+      The_Handle  : Pragma_Identifier_Handle;
+      Is_Found    : Boolean := True;
 
       procedure Pragma_Argument_Identifier is
         Argument_Identifier : constant Token.Identifier_Handle := Actual_Identifier;
@@ -3863,11 +3867,144 @@ package body Ada_95.Token.Parser is
         end if;
       end Handle_Other_Pragmas;
 
+
+      procedure Handle_Build_Parameters is
+
+        Argument_Handle     : Lexical_Handle := The_Token;
+        Kind_Defined        : Boolean := False;
+        Version_Defined     : Boolean := False;
+        Description_Defined : Boolean := False;
+        Compilers_Defined   : Boolean := False;
+        Libraries_Defined   : Boolean := False;
+        Resources_Defined   : Boolean := False;
+
+        function Version_Number return Project.Version_Number is
+          Number_Token : constant Lexical_Handle := The_Token;
+        begin
+          if Kind_Of (Number_Token.all) /= Is_Numeric_Literal then
+            Syntax_Error;
+          end if;
+          Get_Next_Token;
+          declare
+            Number_Image : constant String := Image_Of (Number_Token.all);
+          begin
+            return Project.Version_Number'value(Number_Image);
+          exception
+          when others =>
+            Report_Error (Error.Version_Number_Out_Of_Range, Number_Token);
+          end;
+        end Version_Number;
+
+        procedure Check (Is_Defined : Boolean;
+                         Error_Kind : Error.Kind) is
+        begin
+          if not Is_Defined then
+            Report_Error (Error_Kind, Pragma_Name);
+          end if;
+        end Check;
+
+        function String_Element (Is_Defined : in out Boolean) return String is
+          String_Token : constant Lexical_Handle := The_Token;
+        begin
+          if Kind_Of (String_Token.all) /= Is_String_Literal then
+            Syntax_Error;
+          elsif Is_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Get_Next_Token;
+          Is_Defined := True;
+          return Image_Of (String_Token.all);
+        end String_Element;
+
+        procedure Define_Kind is
+          Id_Handle : constant Lexical_Handle := The_Token;
+          Id        : constant Identifier_Handle := Actual_Identifier;
+          Kind      : constant String := Image_Of (Id.all);
+        begin
+          if Kind_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Id.Data := Data.Predefined_Name;
+          if Kind = "Windows" then
+            Project.Define (Project.Windows_Application);
+          elsif Kind = "Console" then
+            Project.Define (Project.Console_Application);
+          elsif Kind = "Dll" then
+            Project.Define (Project.Dll);
+          else
+            Report_Error (Error.Unknown_Project_Kind, Id_Handle);
+          end if;
+          Kind_Defined := True;
+        end Define_Kind;
+
+        procedure Define_Version is
+          The_Version : Project.Version;
+        begin
+          if Version_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Get_Element (Lexical.Left_Parenthesis);
+          The_Version.Major := Version_Number;
+          Get_Element (Lexical.Comma);
+          The_Version.Minor := Version_Number;
+          Get_Element (Lexical.Comma);
+          The_Version.Variant := Version_Number;
+          Get_Element (Lexical.Comma);
+          The_Version.Revision := Version_Number;
+          Get_Element (Lexical.Right_Parenthesis);
+          Project.Define (The_Version);
+          Version_Defined := True;
+        end Define_Version;
+
+      begin -- Handle_Build_Parameters
+        if Console_Application_Kind_Defined then
+          Report_Error (Error.Obsolescent_Pragma_Call, Console_Application_Token);
+        elsif Build_Parameters_Defined then
+          Report_Error (Error.Already_Defined, The_Token);
+        end if;
+        The_Handle.Is_Used := True;
+        Get_Next_Token;
+        Get_Element (Lexical.Left_Parenthesis);
+        loop
+          Argument_Handle := The_Token;
+          declare
+            Id          : constant Identifier_Handle := Actual_Identifier;
+            Argument    : constant String := Image_Of (Id.all);
+          begin
+            Id.Data := Data.Predefined_Name;
+            Get_Element (Lexical.Association);
+            if Argument = "Kind" then
+              Define_Kind;
+            elsif Argument = "Version" then
+              Define_Version;
+            elsif Argument = "Description" then
+              Project.Define_Description (String_Element (Description_Defined));
+            elsif Argument = "Compilers" then
+              Project.Define_Compilers (String_Element (Compilers_Defined));
+            elsif Argument = "Libraries" then
+              Project.Define_Libraries (String_Element (Libraries_Defined));
+            elsif Argument = "Resources" then
+              Project.Define_Resources (String_Element (Resources_Defined));
+            else
+              Report_Error (Error.Syntax_Error, Argument_Handle);
+            end if;
+          end;
+          exit when not Element_Is (Lexical.Comma);
+        end loop;
+        Get_Element (Lexical.Right_Parenthesis);
+        Check (Compilers_Defined, Error.Compilers_Not_Defined);
+        Check (Kind_Defined, Error.Kind_Not_Defined);
+        Check (Version_Defined, Error.Version_Not_Defined);
+        Build_Parameters_Defined := True;
+        Project.Set_Build_Defined;
+      end Handle_Build_Parameters;
+
       use type Lexical.Style_Pragma;
 
     begin -- Pragma_Call
       Get_Next_Token;
       Check (Lexical.Pragma_Identifier);
+      Pragma_Name := The_Token;
       The_Handle := Pragma_Identifier_Handle(The_Token);
       case The_Handle.Designator is
       when Lexical.Style_Pragma =>
@@ -3881,9 +4018,16 @@ package body Ada_95.Token.Parser is
         The_Handle.Is_Used := True;
         Get_Next_Token;
       when Lexical.Is_Console_Application =>
+        Console_Application_Token := The_Token;
+        if Build_Parameters_Defined then
+          Report_Error (Error.Obsolescent_Pragma_Call, Console_Application_Token);
+        end if;
         Project.Set_Console_Application;
         The_Handle.Is_Used := True;
         Get_Next_Token;
+        Console_Application_Kind_Defined := True;
+      when Lexical.Is_Build =>
+        Handle_Build_Parameters;
       when Lexical.Obsolescent_Single_Pragma | Lexical.Obsolescent_Compound_Pragma =>
         if not Special_Comment_Detected and then Checker.Obsolescent_Pragma_Check (The_Style) then
           Report_Error (Error.Obsolescent_Pragma_Call, The_Token);
@@ -10314,6 +10458,8 @@ package body Ada_95.Token.Parser is
 
     begin -- Compilation_Unit
       The_Style := Next_Style (Resource.Tokens.First);
+      Build_Parameters_Defined := False;
+      Console_Application_Kind_Defined := False;
       Special_Comment_Detected := Has_Special_Comment;
       The_Token := Lexical_After (Resource.Tokens.First);
       Data.Add_Unit (Unit);

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2008 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2008 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,28 +10,105 @@ with Ada_95.Source.Buffer;
 with Ada_95.Token.Data;
 with Container.List;
 with Log;
+with Strings;
+with Text;
 
 package body Ada_95.Project is
 
-  The_Application_Kind : Application_Kind;
+  Build_Information_Defined : Boolean;
+
+  The_Version     : Version;
+  The_Kind        : Kind;
+  The_Description : Text.String;
+  The_Compilers   : Text.String;
+  The_Libraries   : Text.String;
+  The_Resources   : Text.String;
+
 
   procedure Initialize (Work_Path : String_List.Item) is
   begin
-    The_Application_Kind := Windows_Application;
+    Build_Information_Defined := False;
+    The_Kind := Windows_Application;
     File.Define_Work_Path (Work_Path);
     Library.Start;
   end Initialize;
 
 
+  procedure Set_Build_Defined is
+  begin
+    Build_Information_Defined := True;
+  end Set_Build_Defined;
+
+  function Has_Build_Information return Boolean is (Build_Information_Defined);
+
+
+  procedure Define (Item : Kind) is
+  begin
+    The_Kind := Item;
+  end Define;
+
+  function Actual_Kind return Kind is (The_Kind);
+
+
+  procedure Define (Item : Version) is
+  begin
+    The_Version := Item;
+  end Define;
+
+  function Actual_Version return Version is (The_Version);
+
+
+  function File_Version_Image return String is
+    function Image_Of is new Strings.Image_Of (Version_Number);
+  begin
+    return Image_Of (The_Version.Major) & ','
+         & Image_Of (The_Version.Minor) & ','
+         & Image_Of (The_Version.Variant) & ','
+         & Image_Of (The_Version.Revision);
+  end File_Version_Image;
+
+
+  procedure Define_Description (Item : String) is
+  begin
+    The_Description := Text.String_Of (Item);
+  end Define_Description;
+
+  function Actual_Description return String is (Text.String_Of (The_Description));
+
+
+  procedure Define_Compilers (Item : String) is
+  begin
+    The_Compilers := Text.String_Of (Item);
+  end Define_Compilers;
+
+  function Actual_Compilers return String is (Text.String_Of (The_Compilers));
+
+
+  procedure Define_Libraries (Item : String) is
+  begin
+    The_Libraries := Text.String_Of (Item);
+  end Define_Libraries;
+
+  function Actual_Libraries return String is (Text.String_Of (The_Libraries));
+
+
+  procedure Define_Resources (Item : String) is
+  begin
+    The_Resources := Text.String_Of (Item);
+  end Define_Resources;
+
+  function Actual_Resources return String is (Text.String_Of (The_Resources));
+
+
   procedure Set_Console_Application is
   begin
-    The_Application_Kind := Console_Application;
+    The_Kind := Console_Application;
   end Set_Console_Application;
 
 
   function Application_Kind_Image return String is
   begin
-    case The_Application_Kind is
+    case Application_Kind(The_Kind) is
     when Windows_Application =>
       return "windows";
     when Console_Application =>

@@ -477,6 +477,7 @@ package Ada_95.Lexical is
 
     Is_Assert, -- used as Single_Pragma'first
     Is_Assume, -- GNAT
+    Is_Build, -- WE
     Is_Elaborate,
     Is_External, -- GNAT
     Is_Implemented, -- GNAT
@@ -557,7 +558,7 @@ package Ada_95.Lexical is
     Is_Queueing_Policy,
     Is_Stream_Convert, -- GNAT
     Is_Style_Checks, -- GNAT
-    Is_Style_None, -- use as first in Style_Pragma
+    Is_Style_None, -- WE use as first in Style_Pragma
     Is_Style_Soudronic,
     Is_Style_Unrestricted,
     Is_Style_White_Elephant, -- use as last in Style_Pragma

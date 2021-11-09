@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -16,7 +16,13 @@
 pragma Style_White_Elephant;
 
 with Elephant_Interface;
-pragma Unreferenced (Elephant_Interface);
+
+pragma Build (Description   => "Elephant Nodepad++ Plugin",
+              Version       => (45, 1, 0, 2),
+              Kind          => Dll,
+              Use_Interface => Elephant_Interface,
+              Resource      => "Bit_Maps",
+              Compiler      => "GNAT\2021");
 
 procedure Elephant is
 begin

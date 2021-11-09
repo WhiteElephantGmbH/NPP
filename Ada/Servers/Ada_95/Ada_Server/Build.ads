@@ -4,18 +4,6 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-package Project.Resource is
+with Ada_95.Build;
 
-  Extension : constant String := ".rc";
-
-  function Filename return String;
-
-  function Object return String;
-
-  function Information return String;
-
-  procedure Generate;
-
-  procedure Evaluate_Legacy;
-
-end Project.Resource;
+package Build renames Ada_95.Build;

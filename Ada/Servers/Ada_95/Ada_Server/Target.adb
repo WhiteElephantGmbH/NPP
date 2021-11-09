@@ -6,6 +6,7 @@ pragma Style_White_Elephant;
 
 with Ada_95.Project;
 with Ada_95.Token;
+with Build;
 with File;
 with Files;
 with Log;
@@ -42,7 +43,7 @@ package body Target is
 
     use type Ada_95.Token.Handle;
 
-  begin
+  begin -- Check_For_Parser_Errors_In
     The_Error_Token := Ada_95.Project.First_Error_Of (Filename);
     if The_Error_Token /= null then
       Promotion.Set_Error (Item      => Error_Image,
@@ -75,7 +76,7 @@ package body Target is
 
     function Resource_Filename return String is
     begin
-      if Project.Resource.Is_Generated then
+      if Build.Is_Defined then
         return Project.Resource.Filename;
       else
         return Source_Directory & Files.Separator & Resource_Name & Project.Resource.Extension;
@@ -106,11 +107,13 @@ package body Target is
     end Changed_To_Parent_Resource;
 
   begin -- Generate_Resource_Object
-    while not File.Exists (Resource_Filename) loop
-      if not Changed_To_Parent_Resource then
-        return;
-      end if;
-    end loop;
+    if not Build.Is_Defined then
+      while not File.Exists (Resource_Filename) loop
+        if not Changed_To_Parent_Resource then
+          return;
+        end if;
+      end loop;
+    end if;
     Log_Execution (Windres & " " & Parameters);
     declare
       Result : constant String := Os.Process.Execution_Of (Executable     => Windres,
@@ -149,7 +152,10 @@ package body Target is
 
     End_Of_Text : constant String := "" & Ascii.Nul;
 
-  begin
+  begin -- Gpr_Execute
+    if not Project.Tools_Defined then
+      Promotion.Set_Error ("GNAT tools directory undefined");
+    end if;
     Log_Execution (Gpr_Build & Gpr_Parameters);
     File.Create_Directory (Product_Location);
     declare
@@ -244,8 +250,8 @@ package body Target is
 
   begin
     Promotion.Set_Message ("Build " & Filename);
-    Gpr_Execute ("-XLIBRARY_TYPE=static -eS -q");
     Check_For_Parser_Errors_In (Filename);
+    Gpr_Execute ("-XLIBRARY_TYPE=static -eS -q");
     Promotion.Define_Next_Message_Color (Promotion.Green);
   exception
   when Promotion.Error =>
@@ -263,7 +269,7 @@ package body Target is
     --TEST----------------------------------
     Log.Write ("&&& Promote " & Filename);
     ----------------------------------------
-    if Project.Defined_Environment then
+    if Project.Has_New_Resource then
       Generate_Resource_Object;
     end if;
     if Project.Is_Program_Unit (Filename) then

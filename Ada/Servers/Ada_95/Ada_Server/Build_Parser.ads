@@ -4,18 +4,8 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-package Project.Resource is
+package Build_Parser is
 
-  Extension : constant String := ".rc";
+  procedure Evaluate;
 
-  function Filename return String;
-
-  function Object return String;
-
-  function Information return String;
-
-  procedure Generate;
-
-  procedure Evaluate_Legacy;
-
-end Project.Resource;
+end Build_Parser;

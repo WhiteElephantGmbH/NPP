@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -21,8 +21,8 @@ package body Ada_95.File is
     The_Item : String := Strings.Trimmed (Item);
   begin
     for Index in The_Item'range loop
-      if The_Item(Index) = '/' then
-        The_Item(Index) := '\';
+      if The_Item(Index) = Files.Other_Separator then
+        The_Item(Index) := Files.Separator;
       end if;
     end loop;
     return The_Item;
@@ -34,10 +34,10 @@ package body Ada_95.File is
   begin
     if The_Folder'length = 0 then
       return "";
-    elsif The_Folder(The_Folder'last) = '\' then
+    elsif The_Folder(The_Folder'last) = Files.Separator then
       return The_Folder;
     else
-      return The_Folder & '\';
+      return The_Folder & Files.Separator;
     end if;
   end Normalized_Folder;
 
@@ -74,7 +74,7 @@ package body Ada_95.File is
         end if;
         for Index in reverse Name_First .. Name_Last loop
           case Path_And_Name(Index) is
-          when '\' | '/' =>
+          when Files.Separator | Files.Other_Separator =>
             Name_First := Index + 1;
             exit;
           when others =>
@@ -115,7 +115,7 @@ package body Ada_95.File is
   begin
     for Index in reverse Filename'range loop
       case Filename(Index) is
-      when '\' | '/' =>
+      when Files.Separator | Files.Other_Separator =>
         return Filename(Filename'first .. Index - 1);
       when others =>
         null;
@@ -129,7 +129,7 @@ package body Ada_95.File is
   begin
     for Index in reverse Filename'range loop
       case Filename(Index) is
-      when '\' | '/' =>
+      when Files.Separator | Files.Other_Separator =>
         return Filename(Index + 1 ..  Filename'last);
       when others =>
         null;

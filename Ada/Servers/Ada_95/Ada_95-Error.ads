@@ -47,17 +47,28 @@ package Ada_95.Error is
      Restricted_Function_Expression,
      Suspicious_Form_Of_Entry_Call, --Incorrect_Style'last
 
-     Already_Defined, -- In_Semantic'first
-     Compilers_Not_Defined,
+     Ada_Project_Path_Missing, -- In_Semantic'first
+     Already_Defined,
+     Compiler_Not_Defined,
+     Icon_Not_Allowed_For_Dlls,
+     Interface_File_Not_Found,
+     Interface_Not_Defined,
+     Interface_Specification_Expected,
      Kind_Not_Defined,
+     Library_Not_Found,
+     Library_Id_Not_Found,
      Obsolescent_Pragma_Call,
+     Only_For_Dlls,
      Parent_Unit_Name_Error,
+     Resource_File_Not_Found,
      Special_Comment_In_Use,
      Style_Already_Set,
      Unit_Kind_Error,
      Unit_Name_Error,
+     Unknown_Boolean_Value,
      Unknown_Project_Kind,
      Unknown_Specification,
+     Unknown_Tools_Directory,
      Version_Not_Defined,
      Version_Number_Out_Of_Range, -- In_Semantic'last
 
@@ -70,7 +81,7 @@ package Ada_95.Error is
 
   subtype Incorrect_Style is Kind range Goto_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
 
-  subtype In_Semantic is Kind range Already_Defined .. Version_Number_Out_Of_Range;
+  subtype In_Semantic is Kind range Ada_Project_Path_Missing .. Version_Number_Out_Of_Range;
 
 
   procedure Add (Message  : Kind;

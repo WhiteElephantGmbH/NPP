@@ -8,9 +8,10 @@ pragma Style_White_Elephant;
 --with Ada.Tags;
 ----------------
 with Ada.Strings.Equal_Case_Insensitive;
-with Ada_95.Project;
+with Ada_95.Build;
 with Ada_95.Token.Checker;
 with Log;
+with String_List;
 
 package body Ada_95.Token.Parser is
 
@@ -2436,16 +2437,19 @@ package body Ada_95.Token.Parser is
       end;
     end Get_Next_Unit_Name;
 
+    procedure Set_Used (Item : Identifier_Handle;
+                        To   : Boolean := True) is
+      The_Handle : constant Data_Handle := Item.Data;
+    begin
+      if The_Handle /= null and then The_Handle.all in Data.Declaration_Type'class then
+        Data.Declaration_Handle(The_Handle).Is_Used := To;
+      end if;
+    end Set_Used;
+
     procedure Set_Used (Items: Identifiers) is
     begin
       for Item of Items loop
-        declare
-          The_Handle : constant Data_Handle := Item.Data;
-        begin
-          if The_Handle /= null and then The_Handle.all in Data.Declaration_Type'class then
-            Data.Declaration_Handle(The_Handle).Is_Used := True;
-          end if;
-        end;
+        Set_Used (Item);
       end loop;
     end Set_Used;
 
@@ -3871,14 +3875,19 @@ package body Ada_95.Token.Parser is
       procedure Handle_Build_Parameters is
 
         Argument_Handle     : Lexical_Handle := The_Token;
+        String_Token        : Lexical_Handle;
+        Icon_True_Handle    : Lexical_Handle;
+        Interface_Token     : Lexical_Handle;
+        Icon_Defined        : Boolean := False;
         Kind_Defined        : Boolean := False;
         Version_Defined     : Boolean := False;
         Description_Defined : Boolean := False;
-        Compilers_Defined   : Boolean := False;
+        Compiler_Defined    : Boolean := False;
         Libraries_Defined   : Boolean := False;
-        Resources_Defined   : Boolean := False;
+        Interface_Defined   : Boolean := False;
+        Resource_Defined    : Boolean := False;
 
-        function Version_Number return Project.Version_Number is
+        function Version_Number return Build.Version_Number is
           Number_Token : constant Lexical_Handle := The_Token;
         begin
           if Kind_Of (Number_Token.all) /= Is_Numeric_Literal then
@@ -3888,7 +3897,7 @@ package body Ada_95.Token.Parser is
           declare
             Number_Image : constant String := Image_Of (Number_Token.all);
           begin
-            return Project.Version_Number'value(Number_Image);
+            return Build.Version_Number'value(Number_Image);
           exception
           when others =>
             Report_Error (Error.Version_Number_Out_Of_Range, Number_Token);
@@ -3903,42 +3912,71 @@ package body Ada_95.Token.Parser is
           end if;
         end Check;
 
-        function String_Element (Is_Defined : in out Boolean) return String is
-          String_Token : constant Lexical_Handle := The_Token;
+        function Next_String return String is
         begin
+          String_Token := The_Token;
           if Kind_Of (String_Token.all) /= Is_String_Literal then
             Syntax_Error;
-          elsif Is_Defined then
-            Report_Error (Error.Already_Defined, Argument_Handle);
           end if;
           Get_Next_Token;
+          declare
+            Image : constant String := Image_Of (String_Token.all);
+          begin
+            return Image(Image'first + 1 .. Image'last - 1);
+          end;
+        end Next_String;
+
+        function String_Element (Is_Defined : in out Boolean) return String is
+          Image : constant String := Next_String;
+        begin
+          if Is_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
           Is_Defined := True;
-          return Image_Of (String_Token.all);
+          return Image;
         end String_Element;
+
+        procedure Define_Icon is
+          Id_Handle   : constant Lexical_Handle := The_Token;
+          Id          : constant Identifier_Handle := Actual_Identifier;
+          The_Boolean : constant String := Image_Of (Id.all);
+        begin
+          if Icon_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Id.Data := Data.Predefined_Name;
+          if not Build.Defined_Icon (The_Boolean) then
+            Report_Error (Error.Unknown_Boolean_Value, Id_Handle);
+          end if;
+          if The_Boolean = "True" then
+            Icon_True_Handle := Id_Handle;
+            if Kind_Defined and then Build.Is_Dll then
+              Report_Error (Error.Icon_Not_Allowed_For_Dlls, Icon_True_Handle);
+            end if;
+          end if;
+          Icon_Defined := True;
+        end Define_Icon;
 
         procedure Define_Kind is
           Id_Handle : constant Lexical_Handle := The_Token;
           Id        : constant Identifier_Handle := Actual_Identifier;
-          Kind      : constant String := Image_Of (Id.all);
+          The_Kind  : constant String := Image_Of (Id.all);
         begin
           if Kind_Defined then
             Report_Error (Error.Already_Defined, Argument_Handle);
           end if;
           Id.Data := Data.Predefined_Name;
-          if Kind = "Windows" then
-            Project.Define (Project.Windows_Application);
-          elsif Kind = "Console" then
-            Project.Define (Project.Console_Application);
-          elsif Kind = "Dll" then
-            Project.Define (Project.Dll);
-          else
+          if not Build.Defined_Kind (The_Kind) then
             Report_Error (Error.Unknown_Project_Kind, Id_Handle);
+          end if;
+          if Build.Is_Dll and then Icon_True_Handle /= null then
+            Report_Error (Error.Icon_Not_Allowed_For_Dlls, Icon_True_Handle);
           end if;
           Kind_Defined := True;
         end Define_Kind;
 
         procedure Define_Version is
-          The_Version : Project.Version;
+          The_Version : Build.Version;
         begin
           if Version_Defined then
             Report_Error (Error.Already_Defined, Argument_Handle);
@@ -3952,9 +3990,69 @@ package body Ada_95.Token.Parser is
           Get_Element (Lexical.Comma);
           The_Version.Revision := Version_Number;
           Get_Element (Lexical.Right_Parenthesis);
-          Project.Define (The_Version);
+          Build.Define (The_Version);
           Version_Defined := True;
         end Define_Version;
+
+        procedure Define_Compiler is
+        begin
+          if not Build.Defined_Compiler (String_Element (Compiler_Defined)) then
+            Report_Error (Error.Unknown_Tools_Directory, String_Token);
+          end if;
+          if Build.Tools_Default_Set then
+            Identifier_Handle(Argument_Handle).Data := null;
+          end if;
+        end Define_Compiler;
+
+
+        procedure Define_Libraries is
+          The_Libraries : String_List.Item;
+        begin
+          if Libraries_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Get_Element (Lexical.Left_Parenthesis);
+          loop
+            declare
+              Library : constant String := Next_String;
+            begin
+              case Build.Check_Of (Library) is
+              when Build.Library_Ok | Build.Library_Id_Ok =>
+                The_Libraries.Append (Library);
+              when Build.Ada_Project_Path_Missing =>
+                Report_Error (Error.Ada_Project_Path_Missing, String_Token);
+              when Build.Library_Not_Found =>
+                Report_Error (Error.Library_Not_Found, String_Token);
+              when Build.Library_Id_Not_Found =>
+                Report_Error (Error.Library_Id_Not_Found, String_Token);
+              end case;
+            end;
+            exit when not Element_Is (Lexical.Comma);
+          end loop;
+          Get_Element (Lexical.Right_Parenthesis);
+          Build.Define_Libraries (The_Libraries);
+          Libraries_Defined := True;
+        end Define_Libraries;
+
+        procedure Define_Interface is
+          Id_Handle : constant Lexical_Handle := The_Token;
+          The_Unit  : constant Data_Handle := Name_Of (Scope);
+        begin
+          Interface_Token := Id_Handle;
+          if The_Unit = null or else Data_Kind_Of (The_Unit.all) /= Is_Package_Specification then
+            Report_Error (Error.Interface_Specification_Expected, Interface_Token);
+          elsif not Build.Defined_Interface (Image_Of (The_Actual_Identifier.all)) then
+            Report_Error (Error.Interface_File_Not_Found, Interface_Token);
+          end if;
+          Interface_Defined := True;
+        end Define_Interface;
+
+        procedure Define_Resource is
+        begin
+          if not Build.Defined_Resource (String_Element (Resource_Defined)) then
+            Report_Error (Error.Resource_File_Not_Found, String_Token);
+          end if;
+        end Define_Resource;
 
       begin -- Handle_Build_Parameters
         if Console_Application_Kind_Defined then
@@ -3968,23 +4066,27 @@ package body Ada_95.Token.Parser is
         loop
           Argument_Handle := The_Token;
           declare
-            Id          : constant Identifier_Handle := Actual_Identifier;
+            Id          : constant Identifier_Handle := Declaring_Identifier;
             Argument    : constant String := Image_Of (Id.all);
           begin
             Id.Data := Data.Predefined_Name;
             Get_Element (Lexical.Association);
-            if Argument = "Kind" then
+            if Argument = "Icon" then
+              Define_Icon;
+            elsif Argument = "Kind" then
               Define_Kind;
             elsif Argument = "Version" then
               Define_Version;
             elsif Argument = "Description" then
-              Project.Define_Description (String_Element (Description_Defined));
-            elsif Argument = "Compilers" then
-              Project.Define_Compilers (String_Element (Compilers_Defined));
+              Build.Define_Description (String_Element (Description_Defined));
+            elsif Argument = "Compiler" then
+              Define_Compiler;
             elsif Argument = "Libraries" then
-              Project.Define_Libraries (String_Element (Libraries_Defined));
-            elsif Argument = "Resources" then
-              Project.Define_Resources (String_Element (Resources_Defined));
+              Define_Libraries;
+            elsif Argument = "Use_Interface" then
+              Define_Interface;
+            elsif Argument = "Resource" then
+              Define_Resource;
             else
               Report_Error (Error.Syntax_Error, Argument_Handle);
             end if;
@@ -3992,11 +4094,15 @@ package body Ada_95.Token.Parser is
           exit when not Element_Is (Lexical.Comma);
         end loop;
         Get_Element (Lexical.Right_Parenthesis);
-        Check (Compilers_Defined, Error.Compilers_Not_Defined);
+        Check (Compiler_Defined, Error.Compiler_Not_Defined);
         Check (Kind_Defined, Error.Kind_Not_Defined);
         Check (Version_Defined, Error.Version_Not_Defined);
+        if Build.Is_Dll then
+          Check (Interface_Defined, Error.Interface_Not_Defined);
+        elsif Interface_Defined then
+          Report_Error (Error.Only_For_Dlls, Interface_Token);
+        end if;
         Build_Parameters_Defined := True;
-        Project.Set_Build_Defined;
       end Handle_Build_Parameters;
 
       use type Lexical.Style_Pragma;
@@ -4012,6 +4118,14 @@ package body Ada_95.Token.Parser is
           Report_Error (Error.Special_Comment_In_Use, The_Token);
         elsif The_Handle.Designator /= The_Style then
           The_Style := The_Handle.Designator;
+          case The_Style is
+          when Lexical.Is_Style_Soudronic =>
+            Build.Define_Company ("Soudronic AG");
+          when Lexical.Is_Style_White_Elephant =>
+            Build.Define_Company ("White Elephant GmbH");
+          when others =>
+            null;
+          end case;
         else
           Report_Error (Error.Style_Already_Set, The_Token);
         end if;
@@ -4022,7 +4136,7 @@ package body Ada_95.Token.Parser is
         if Build_Parameters_Defined then
           Report_Error (Error.Obsolescent_Pragma_Call, Console_Application_Token);
         end if;
-        Project.Set_Console_Application;
+        Build.Set_Console_Application;
         The_Handle.Is_Used := True;
         Get_Next_Token;
         Console_Application_Kind_Defined := True;

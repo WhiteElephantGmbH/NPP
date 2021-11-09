@@ -1,0 +1,7 @@
+PromoteBmp       BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/Promote.Bmp"
+PromoteAllBmp    BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/PromoteAll.Bmp"
+RunBmp           BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/Run.Bmp"
+ShowReferenceBmp BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/ShowReference.Bmp"
+UndoReferenceBmp BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/UndoReference.Bmp"
+ShowUsageBmp     BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/ShowUsage.Bmp"
+ShowUnusedBmp    BITMAP "H:/Source/Npp/Ada/Plugins/Elephant/ShowUnused.Bmp"

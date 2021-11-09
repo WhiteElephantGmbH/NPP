@@ -5,7 +5,7 @@
 pragma Style_White_Elephant;
 
 with Ada.Text_IO;
-with Ada_95.Project;
+with Build;
 with File;
 with Files;
 with Log;
@@ -21,31 +21,39 @@ package body Project.Gpr is
 
   function Filename return String is
 
-    Project_Name   : constant String := Name;
-    Interface_Name : constant String := Name & "_Interface";
-    Gpr_Name       : constant String := Project_Name & File_Extension;
+    Project_Name : constant String := Name;
+    Gpr_Name     : constant String := Project_Name & File_Extension;
 
+    Legacy_Interface_Name : constant String := Name & "_Interface";
 
-    function Has_Interface_In (The_Path : String) return Boolean is
-      Interface_Source     : constant String := The_Path & Files.Separator & Interface_Name & ".ads";
+    function Interface_Name return String is
+    begin
+      if Build.Is_Defined then
+        return Build.Actual_Interface;
+      else
+        return Legacy_Interface_Name;
+      end if;
+    end Interface_Name;
+
+    function Has_Legacy_Interface_In (The_Path : String) return Boolean is
+      Interface_Source     : constant String := The_Path & Files.Separator & Legacy_Interface_Name & ".ads";
       Containing_Directory : constant String := File.Containing_Directory_Of (The_Path);
     begin
       if Containing_Directory /= Language_Directory then
         if File.Exists (Interface_Source) then
           return True;
         end if;
-        return Has_Interface_In (Containing_Directory);
+        return Has_Legacy_Interface_In (Containing_Directory);
       end if;
       return False;
-    end Has_Interface_In;
+    end Has_Legacy_Interface_In;
 
     function Project_Is_Dll return Boolean is
-      use type Ada_95.Project.Kind;
     begin
-      if Is_Legacy then
-        return Has_Interface_In (Folder);
+      if Build.Is_Defined then
+        return Build.Is_Dll;
       else
-        return Ada_95.Project.Actual_Kind = Ada_95.Project.Dll;
+        return Has_Legacy_Interface_In (Folder);
       end if;
     end Project_Is_Dll;
 
@@ -151,7 +159,7 @@ package body Project.Gpr is
         Put ("      for Linker_Options use ();");
         Put ("      for Default_Switches (""ada"") use");
         Put ("         (""-g"", ""-L" & Product_Directory & """,");
-        Put ("          """ & Resource.Object & """,""-m" & Ada_95.Project.Application_Kind_Image &""");");
+        Put ("          """ & Resource.Object & """,""-m" & Build.Application_Kind_Image &""");");
         Put ("   end Linker;");
         Put ("");
       end if;

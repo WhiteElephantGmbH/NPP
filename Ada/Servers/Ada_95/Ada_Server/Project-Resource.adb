@@ -4,7 +4,9 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Calendar;
 with Ada.Text_IO;
+with Build;
 with File;
 with Files;
 with Log;
@@ -14,13 +16,20 @@ package body Project.Resource is
 
   Object_Name : constant String := "resources.o";
 
-  function Is_Generated return Boolean is
+
+  function Filename return String is
+    Legacy_Source    : constant String := Folder & Name & Extension;
+    Generated_Source : constant String := Target_Folder & Name & Extension;
   begin
-    return False;
-  end Is_Generated;
-
-
-  function Filename return String is (Directory & Files.Separator & Name & Extension);
+    if Build.Is_Defined then
+      if File.Exists (Legacy_Source) then
+        Set_Error ("Resource file <" & Legacy_Source & "> is obsolescent");
+      end if;
+      return Generated_Source;
+    else
+      return Legacy_Source;
+    end if;
+  end Filename;
 
 
   function Object return String is (Object_Folder & Object_Name);
@@ -28,18 +37,108 @@ package body Project.Resource is
 
   function Information return String is
   begin
-    if Is_Legacy then
-      return " (resource: " & Filename & ")";
-    else
+    if Build.Is_Defined then
       return "";
+    else
+      return " (resource: " & Filename & ")";
     end if;
   end Information;
+
+
+  procedure Generate is
+
+    Resource_Filename : constant String := Filename;
+
+    The_File : Ada.Text_IO.File_Type;
+
+    procedure Put (Line : String) is
+    begin
+      Ada.Text_IO.Put_Line (The_File, Line);
+    end Put;
+
+    function File_Version_Image return String is
+      function Image_Of is new Strings.Image_Of (Build.Version_Number);
+      Version : constant Build.Version := Build.Actual_Version;
+    begin
+      return Image_Of (Version.Major) & ','
+           & Image_Of (Version.Minor) & ','
+           & Image_Of (Version.Variant) & ','
+           & Image_Of (Version.Revision);
+    end File_Version_Image;
+
+    function Unix_Style_Of (Item : String) return String is
+      The_Item : String := Item;
+    begin
+      for The_Character of The_Item loop
+        if The_Character = Files.Separator then
+          The_Character := Files.Other_Separator;
+        end if;
+      end loop;
+      return The_Item;
+    end Unix_Style_Of;
+
+    function Icon_Name return String is
+    begin
+      return Unix_Style_Of (Folder & Name & ".ico");
+    end Icon_Name;
+
+    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
+    Product_Name          : constant String := Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
+    Product_Version       : constant String := Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
+
+    Actual_Year : constant Ada.Calendar.Year_Number := Ada.Calendar.Year (Ada.Calendar.Clock);
+
+  begin -- Generate
+    if File.Exists (Resource_Filename) then
+      return;
+    end if;
+    Log.Write ("||| Generate Resource " & Resource_Filename);
+    begin
+      Ada.Text_IO.Create (The_File, Mode => Ada.Text_IO.Out_File, Name => Resource_Filename);
+    exception
+    when others =>
+      Set_Error ("Can't create Resource " & Resource_Filename);
+    end;
+    if Build.Has_Icon then
+      Put ("1 ICON """ & Icon_Name & """");
+    end if;
+    Put ("1 VERSIONINFO");
+    Put ("  FILEVERSION " & File_Version_Image);
+    Put ("  FILEFLAGSMASK 0x3FL");
+    Put ("  FILEFLAGS 0x0L");
+    Put ("  FILEOS 0x4L");
+    Put ("  FILETYPE 0x1L");
+    Put ("  FILESUBTYPE 0x0L");
+    Put ("BEGIN");
+    Put ("  BLOCK ""StringFileInfo""");
+    Put ("  BEGIN");
+    Put ("    BLOCK ""040904E4""");
+    Put ("    BEGIN");
+    Put ("      VALUE ""LegalCopyright"", ""Copyright \251 " & Build.Actual_Company & Actual_Year'image & "\0""");
+    Put ("      VALUE ""FileDescription"", """ & Build.Actual_Description & "\0""");
+    Put ("      VALUE ""OriginalFilename"", """ & Name & (if Build.Is_Dll then ".dll" else ".exe") & "\0""");
+    Put ("      VALUE ""InternalName"", """ & Name & "\0""");
+    Put ("      VALUE ""ProductName"", """ & Product_Name & "\0""");
+    Put ("      VALUE ""ProductVersion"", """ & Product_Version & "\0""");
+    Put ("    END");
+    Put ("  END");
+    Put ("  BLOCK ""VarFileInfo""");
+    Put ("  BEGIN");
+    Put ("    VALUE ""Translation"", 0x409, 1252");
+    Put ("  END");
+    Put ("END");
+    if Build.Has_Resource then
+      Put ("#include """ & Unix_Style_Of(Build.Actual_Resource) & """");
+    end if;
+    Ada.Text_IO.Close (The_File);
+  end Generate;
 
 
   procedure Evaluate_Legacy is
     Resource_Filename : constant String := Filename;
     The_File          : Ada.Text_IO.File_Type;
   begin
+    Log.Write ("||| Evaluate Legacy");
     The_Libraries.Clear;
     if File.Exists (Resource_Filename) then
       begin
@@ -98,27 +197,32 @@ package body Project.Resource is
 
                 begin
                   if Resource_Item = "ProductName" then
-                    if Text.Is_Null (The_Tools_Directories) then
+                    if not Tools_Defined then
                       Adjust_Index;
                       declare
                         Compiler : constant String := Next_Item;
+                        Defined  : Boolean := False;
                       begin
                         if Compiler = "GPL" then
                           declare
                             type Compiler_Year is range 2016 .. 2099;
-                            Year : constant String := Next_Item;
+                            Year     : constant String := Next_Item;
+                            The_Year : Compiler_Year;
                           begin
-                            The_Tools_Directories := Text.String_Of
-                              (System_Drive & "\GNAT\" & Strings.Trimmed (Compiler_Year'value(Year)'img) & "\bin");
-                          exception
-                          when others =>
-                            Set_Error ("Unknown compiler: " & Compiler & " " & (if Year = "\"
-                                                                               then "(year missing)"
-                                                                               else Year) & " in " & Filename);
+                            begin
+                              The_Year := Compiler_Year'value(Year);
+                            exception
+                            when others =>
+                              Set_Error ("Unknown compiler: " & Compiler & " " & (if Year = "\"
+                                                                                 then "(year missing)"
+                                                                                 else Year) & " in " & Filename);
+                            end;
+                            Defined := Build.Defined_Compiler ("GNAT\" & Strings.Trimmed (The_Year'img));
                           end;
                         elsif Compiler = "GNATPRO" then
-                          The_Tools_Directories := Text.String_Of (System_Drive & "\GNATPRO\7.3.1\bin");
-                        else
+                          Defined := Build.Defined_Compiler ("GNATPRO\7.3.1");
+                        end if;
+                        if not Defined then
                           Set_Error ("Unknown compiler: " & Compiler & " in " & Filename);
                         end if;
                       end;

@@ -6,7 +6,6 @@ pragma Style_White_Elephant;
 
 with Ada.Containers.Indefinite_Ordered_Maps;
 with String_List;
-with Text;
 
 package Project is
 
@@ -54,7 +53,7 @@ package Project is
 
   function Language_Directory return String;
 
-  function Defined_Environment return Boolean;
+  function Has_New_Resource return Boolean;
 
   function Promotion_Areas return String;
 
@@ -63,6 +62,8 @@ package Project is
   function Must_Be_Build_First (Filename : String) return Boolean;
 
   function Created_Target_Folder return String;
+
+  function Tools_Defined return Boolean;
 
   function Tools_Folder return String;
 
@@ -78,11 +79,11 @@ private
 
   function Target_Directory return String;
 
+  function Target_Folder return String;
+
+  function Tools_Directory return String;
+
   procedure Set_Error (Message : String) with No_Return;
-
-  function System_Drive return String;
-
-  function Is_Legacy return Boolean;
 
   package Names is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
                                                                Element_Type => String);
@@ -90,7 +91,6 @@ private
   The_Library_Names       : Names.Map;
   The_Library_Sources     : Names.Map;
 
-  The_Tools_Directories  : Text.String;
   The_Libraries          : String_List.Item;
   The_Source_Directories : String_List.Item;
 

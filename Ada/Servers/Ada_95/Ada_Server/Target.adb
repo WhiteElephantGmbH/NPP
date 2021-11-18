@@ -83,7 +83,7 @@ package body Target is
 
     function Parameters return String is
     begin
-      return "-i " & Resource_Filename & " --output-format=coff -o " & Project.Resource.Object;
+      return "-i " & Resource_Filename & " --codepage=65001 --output-format=coff -o " & Project.Resource.Object;
     end Parameters;
 
     function Changed_To_Parent_Resource return Boolean is

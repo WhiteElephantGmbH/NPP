@@ -56,8 +56,6 @@ package body Target is
 
   procedure Generate_Resource_Object is
 
-    Target_Folder : constant String := Project.Created_Target_Folder;
-
     Windres : constant String := Project.Tools_Folder & "windres.exe";
 
     The_Resource_Name : Text.String := Text.String_Of (Project.Name);
@@ -118,7 +116,7 @@ package body Target is
     declare
       Result : constant String := Os.Process.Execution_Of (Executable     => Windres,
                                                            Parameters     => Parameters,
-                                                           Current_Folder => Target_Folder);
+                                                           Current_Folder => Source_Directory);
       Error_Text : constant String := Strings.Trimmed (Result);
     begin
       if Error_Text /= "" then

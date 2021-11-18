@@ -16,7 +16,13 @@
 pragma Style_White_Elephant;
 
 with Hello_Interface;
-pragma Unreferenced (Hello_Interface);
+
+pragma Build (Description   => "Hello Nodepad++ Plugin",
+              Version       => (2, 1, 0, 1),
+              Kind          => Dll,
+              Use_Interface => Hello_Interface,
+              Resource      => "Bitmap",
+              Compiler      => "GNAT\2021");
 
 procedure Hello is
 begin

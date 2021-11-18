@@ -27,8 +27,9 @@ package body Ada_95.Build is
   Library_Check         : Library_Check_Function;
 
 
-  procedure Initialize (Filename : String;
-                        Check    : Library_Check_Function) is
+  procedure Initialize (Filename   : String;
+                        Check      : Library_Check_Function;
+                        Is_Startup : Boolean) is
   begin
     Library_Check := Check;
     The_Project_Folder := Text.String_Of (Files.Normalized_Folder(Files.Directory_Of (Filename)));
@@ -36,13 +37,17 @@ package body Ada_95.Build is
     Use_Icon := True;
     The_Kind := Windows_Application;
     The_Version := (others => <>);
-    Text.Clear (The_Tools_Directories);
+    if Is_Startup or (not Tools_Have_Default) then
+      Text.Clear (The_Tools_Directories);
+    end if;
     Text.Clear (The_Company);
     Text.Clear (The_Description);
     Text.Clear (The_Resource);
     Text.Clear (The_Interface);
     String_List.Clear (The_Libraries);
-    Tools_Have_Default := False;
+    if Is_Startup then
+      Tools_Have_Default := False;
+    end if;
   end Initialize;
 
 

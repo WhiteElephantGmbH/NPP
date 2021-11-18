@@ -114,10 +114,10 @@ package body Promotion is
         end if;
       end;
     exception
-    when Error =>
-      Log.Write ("Promotion Error");
-    when Item: others =>
-      Log.Write ("Promotion.Handler.Promote_All", Item);
+    when Item: Error =>
+      Log.Write ("Promotion Error", Item);
+    when others =>
+      Log.Write ("Promotion.Handler.Promote_All");
       Define_Next_Message_Color (Promotion.Red);
       Set_Message ("Promote all failed.");
     end Promote_All_Projects;

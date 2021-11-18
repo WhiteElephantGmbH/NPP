@@ -591,7 +591,7 @@ package body Project is
     Log.Write ("||| Project.Initialize: " & Filename);
     The_Actual_Project := Text.String_Of (Filename);
     The_Phase := Initializing;
-    Build.Initialize (Filename, Library_Check'access);
+    Build.Initialize (Filename, Library_Check'access, Is_Startup => True);
     if The_Configuration_Handle = null then -- only first time because language directory does not change
       The_Configuration_Handle := new Configuration.File_Handle'(Configuration.Handle_For (Definition_File));
     end if;
@@ -675,7 +675,7 @@ package body Project is
       raise Program_Error;
     end if;
     The_Phase := Promoting;
-    Build.Initialize (Filename, Library_Check'access);
+    Build.Initialize (Filename, Library_Check'access, Is_Startup => False);
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     -----------------------------------------------
     Log.Write ("||| Project.Change_To: " & Filename);

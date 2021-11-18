@@ -27,8 +27,9 @@ package Ada_95.Build is
   type Library_Check_Function is access function (Library : String) return Library_Check_Completion;
 
 
-  procedure Initialize (Filename : String;
-                        Check    : Library_Check_Function);
+  procedure Initialize (Filename   : String;
+                        Check      : Library_Check_Function;
+                        Is_Startup : Boolean);
 
   procedure Define;
 

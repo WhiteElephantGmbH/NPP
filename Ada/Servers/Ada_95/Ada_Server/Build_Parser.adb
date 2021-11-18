@@ -160,13 +160,6 @@ package body Build_Parser is
                   Build.Define_Libraries (The_Libraries);
                 end Define_Libraries;
 
-                procedure Define_Interface is
-                begin
-                  if not Build.Defined_Interface (Attribute) then
-                    Log.Write ("!!! Build - Interface <" & Attribute & "> unknown");
-                  end if;
-                end Define_Interface;
-
                 procedure Define_Resource is
                 begin
                   if not Build.Defined_Resource (Attribute) then
@@ -207,7 +200,7 @@ package body Build_Parser is
                 elsif Attribute_Name = "Libraries" then
                   Define_Libraries;
                 elsif Attribute_Name = "Interface" then
-                  Define_Interface;
+                  Build.Define_Interface (Attribute);
                 elsif Attribute_Name = "Resource" then
                   Define_Resource;
                 elsif Attribute_Name = "Version" then

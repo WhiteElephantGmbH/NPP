@@ -4041,8 +4041,8 @@ package body Ada_95.Token.Parser is
           Interface_Token := Id_Handle;
           if The_Unit = null or else Data_Kind_Of (The_Unit.all) /= Is_Package_Specification then
             Report_Error (Error.Interface_Specification_Expected, Interface_Token);
-          elsif not Build.Defined_Interface (Image_Of (The_Actual_Identifier.all)) then
-            Report_Error (Error.Interface_File_Not_Found, Interface_Token);
+          else
+            Build.Define_Interface (Image_Of (The_Actual_Identifier.all));
           end if;
           Interface_Defined := True;
         end Define_Interface;

@@ -95,15 +95,10 @@ package body Ada_95.Build is
   end Application_Kind_Image;
 
 
-  function Defined_Interface (Item : String) return Boolean is
-    Filename : constant String := Project_Folder & Item & ".ads";
+  procedure Define_Interface (Item : String) is
   begin
-    if Files.Exists (Filename) then
-      The_Interface := Text.String_Of (Item);
-      return True;
-    end if;
-    return False;
-  end Defined_Interface;
+    The_Interface := Text.String_Of (Item);
+  end Define_Interface;
 
   function Actual_Interface return String is (Text.String_Of (The_Interface));
 

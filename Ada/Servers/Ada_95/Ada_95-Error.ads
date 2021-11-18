@@ -51,7 +51,6 @@ package Ada_95.Error is
      Already_Defined,
      Compiler_Not_Defined,
      Icon_Not_Allowed_For_Dlls,
-     Interface_File_Not_Found,
      Interface_Not_Defined,
      Interface_Specification_Expected,
      Kind_Not_Defined,

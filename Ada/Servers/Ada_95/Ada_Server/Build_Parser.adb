@@ -15,6 +15,8 @@ package body Build_Parser is
 
   procedure Evaluate is
 
+    End_Detected : exception;
+
     The_Line   : String(1..255);
     The_Index  : Natural := 0;
     Last_Index : Natural;
@@ -28,9 +30,12 @@ package body Build_Parser is
         loop
           if The_Index = 0 then
             if Ada.Text_IO.End_Of_File (The_File) then
-              return Ascii.Nul;
+              raise End_Detected;
             end if;
             Ada.Text_IO.Get_Line (The_File, The_Line, Last_Index);
+            if Ada.Text_IO.End_Of_File (The_File) then
+              raise End_Detected;
+            end if;
             Last_Index := Last_Index + 1;
             The_Line(Last_Index) := ' ';
             The_Index := 1;
@@ -53,8 +58,8 @@ package body Build_Parser is
         case Next_Character is
         when ' ' | '(' | ',' | ';' =>
           null;
-        when Ascii.Nul =>
-          return "";
+        when ')' =>
+          return ")";
         when others =>
           Start_Index := The_Index - 1;
           exit;
@@ -68,31 +73,25 @@ package body Build_Parser is
           case Next_Character is
           when '>' =>
             return "=>";
-          when Ascii.Nul =>
-            return "";
           when others =>
-            The_Index := The_Index - 1;
+            null;
           end case;
         when '"' =>
           loop
             case Next_Character is
             when '"' =>
               return The_Line(Start_Index + 1 .. The_Index - 2);
-            when Ascii.Nul =>
-              return "";
             when others =>
               null;
             end case;
           end loop;
         when others =>
           case Next_Character is
-          when ')' | '=' =>
+          when ')' => -- keep as token
             The_Index := The_Index - 1;
             return The_Line(Start_Index .. The_Index - 1);
           when ' ' | '(' | ',' | ';' =>
             return The_Line(Start_Index .. The_Index - 2);
-          when Ascii.Nul =>
-            return "";
           when others =>
             null;
           end case;
@@ -102,17 +101,10 @@ package body Build_Parser is
 
     function Found (Token : String) return Boolean is
     begin
-      loop
-        declare
-          Actual_Token : constant String := Next_Token;
-        begin
-          if Actual_Token = "" then
-            return False;
-          elsif Actual_Token = Token then
-            return True;
-          end if;
-        end;
+      while Token /= Next_Token loop
+        null;
       end loop;
+      return True;
     end Found;
 
     Filename : constant String := Project.Program_Unit;
@@ -161,7 +153,7 @@ package body Build_Parser is
                     declare
                       Token : constant String := Next_Token;
                     begin
-                      exit when Token in ")" | "";
+                      exit when Token = ")";
                       The_Libraries.Append (Token);
                     end;
                   end loop;
@@ -205,7 +197,7 @@ package body Build_Parser is
                 end Define_Icon;
 
               begin
-                exit when Attribute_Name = "" or else Association /= "=>";
+                exit  when Attribute_Name = ")" or else Association /= "=>";
                 if Attribute_Name = "Compiler" then
                   Define_Compiler;
                 elsif Attribute_Name = "Desciption" then
@@ -234,6 +226,9 @@ package body Build_Parser is
       end loop;
       Ada.Text_IO.Close (The_File);
     end if;
+  exception
+  when End_Detected =>
+    Ada.Text_IO.Close (The_File);
   end Evaluate;
 
 end Build_Parser;

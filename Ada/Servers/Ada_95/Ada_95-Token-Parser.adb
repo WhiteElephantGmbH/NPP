@@ -10,6 +10,7 @@ pragma Style_White_Elephant;
 with Ada.Strings.Equal_Case_Insensitive;
 with Ada_95.Build;
 with Ada_95.Token.Checker;
+with Indefinite_Doubly_Linked_Lists;
 with Log;
 with String_List;
 
@@ -3882,7 +3883,7 @@ package body Ada_95.Token.Parser is
         Kind_Defined        : Boolean := False;
         Version_Defined     : Boolean := False;
         Description_Defined : Boolean := False;
-        Compiler_Defined    : Boolean := False;
+        Compilers_Defined   : Boolean := False;
         Libraries_Defined   : Boolean := False;
         Interface_Defined   : Boolean := False;
         Resource_Defined    : Boolean := False;
@@ -3996,7 +3997,7 @@ package body Ada_95.Token.Parser is
 
         procedure Define_Compiler is
         begin
-          if not Build.Defined_Compiler (String_Element (Compiler_Defined)) then
+          if not Build.Defined_Compiler (String_Element (Compilers_Defined)) then
             Report_Error (Error.Unknown_Tools_Directory, String_Token);
           end if;
           if Build.Tools_Default_Set then
@@ -4004,9 +4005,51 @@ package body Ada_95.Token.Parser is
           end if;
         end Define_Compiler;
 
+        procedure Define_Compilers is
+        begin
+          if Compilers_Defined then
+            Report_Error (Error.Already_Defined, Argument_Handle);
+          end if;
+          Get_Element (Lexical.Left_Parenthesis);
+          declare
+            First_Compiler : constant String := Next_String;
+          begin
+            if not Build.Exists (First_Compiler) then
+              Report_Error (Error.Unknown_Tools_Directory, String_Token);
+            end if;
+            if Element_Is (Lexical.Comma) then
+              declare
+                Second_Compiler : constant String := Next_String;
+              begin
+                if not Build.Exists (Second_Compiler) then
+                  Report_Error (Error.Unknown_Tools_Directory, String_Token);
+                end if;
+                Compilers_Defined := Build.Defined_Compilers (First  => First_Compiler,
+                                                              Second => Second_Compiler);
+                if not Compilers_Defined then
+                  Report_Error (Error.Tools_Not_32_And_64_Bit, String_Token);
+                end if;
+              end;
+            else
+              Compilers_Defined := Build.Defined_Compilers (First  => First_Compiler,
+                                                            Second => "");
 
-        procedure Define_Libraries is
-          The_Libraries : String_List.Item;
+            end if;
+          end;
+          Get_Element (Lexical.Right_Parenthesis);
+        end Define_Compilers;
+
+        type Library_Info (Size : Natural) is record
+          Name        : String(1..Size);
+          Error_Token : Lexical_Handle;
+        end record;
+
+        package Library_List is new Indefinite_Doubly_Linked_Lists (Library_Info);
+
+        The_Library_List : Library_List.Item;
+        The_Libraries    : String_List.Item;
+
+        procedure Parse_Libraries is
         begin
           if Libraries_Defined then
             Report_Error (Error.Already_Defined, Argument_Handle);
@@ -4016,22 +4059,51 @@ package body Ada_95.Token.Parser is
             declare
               Library : constant String := Next_String;
             begin
-              case Build.Check_Of (Library) is
-              when Build.Library_Ok | Build.Library_Id_Ok =>
-                The_Libraries.Append (Library);
-              when Build.Ada_Project_Path_Missing =>
-                Report_Error (Error.Ada_Project_Path_Missing, String_Token);
-              when Build.Library_Not_Found =>
-                Report_Error (Error.Library_Not_Found, String_Token);
-              when Build.Library_Id_Not_Found =>
-                Report_Error (Error.Library_Id_Not_Found, String_Token);
-              end case;
+              The_Library_List.Append (Library_Info'(Name        => Library,
+                                                     Size        => Library'length,
+                                                     Error_Token => String_Token));
+              The_Libraries.Append (Library);
             end;
             exit when not Element_Is (Lexical.Comma);
           end loop;
           Get_Element (Lexical.Right_Parenthesis);
-          Build.Define_Libraries (The_Libraries);
           Libraries_Defined := True;
+        end Parse_Libraries;
+
+        procedure Check_Libraries_For (Size_Image : String) is
+        begin
+          for The_Info of The_Library_List loop
+            declare
+              Library : constant String := The_Info.Name & Size_Image;
+            begin
+              case Build.Check_Of (Library) is
+              when Build.Library_Ok | Build.Library_Id_Ok =>
+                null;
+              when Build.Ada_Project_Path_Missing =>
+                Report_Error (Error.Ada_Project_Path_Missing, The_Info.Error_Token);
+              when Build.Library_Not_Found =>
+                Report_Error (Error.Library_Not_Found, The_Info.Error_Token);
+              when Build.Library_Id_Not_Found =>
+                Report_Error (Error.Library_Id_Not_Found, The_Info.Error_Token);
+              end case;
+            end;
+          end loop;
+        end Check_Libraries_For;
+
+        procedure Define_Library is
+        begin
+          Check_Libraries_For ("");
+          Build.Define_Libraries (The_Libraries);
+        end Define_Library;
+
+        procedure Define_Libraries is
+        begin
+          Check_Libraries_For (Build.Directories_Area);
+          if Build.Has_Second_Tools_Directory then
+            Check_Libraries_For (Build.Directories_Area);
+            Build.Set_Back_To_First;
+          end if;
+          Build.Define_Libraries (The_Libraries);
         end Define_Libraries;
 
         procedure Define_Interface is
@@ -4081,8 +4153,12 @@ package body Ada_95.Token.Parser is
               Build.Define_Description (String_Element (Description_Defined));
             elsif Argument = "Compiler" then
               Define_Compiler;
-            elsif Argument = "Libraries" then
+              Define_Library;
+            elsif Argument = "Compilers" then
+              Define_Compilers;
               Define_Libraries;
+            elsif Argument = "Libraries" then
+              Parse_Libraries;
             elsif Argument = "Use_Interface" then
               Define_Interface;
             elsif Argument = "Resource" then
@@ -4094,7 +4170,7 @@ package body Ada_95.Token.Parser is
           exit when not Element_Is (Lexical.Comma);
         end loop;
         Get_Element (Lexical.Right_Parenthesis);
-        Check (Compiler_Defined, Error.Compiler_Not_Defined);
+        Check (Compilers_Defined, Error.Compiler_Not_Defined);
         Check (Kind_Defined, Error.Kind_Not_Defined);
         Check (Version_Defined, Error.Version_Not_Defined);
         if Build.Is_Dll then

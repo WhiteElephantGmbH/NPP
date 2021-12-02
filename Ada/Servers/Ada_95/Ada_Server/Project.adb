@@ -61,6 +61,8 @@ package body Project is
   Project_Is_Defined      : Boolean := False;
   The_Case_Handling_Style : Case_Modification;
 
+  The_Actual_Tools_Directory : Text.String;
+
   Ada_Project_Path : constant String := "ADA_PROJECT_PATH";
 
 
@@ -76,6 +78,7 @@ package body Project is
     Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
     Text.Clear (The_Library_Path);
+    Text.Clear (The_Actual_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
     The_Reference_Areas.Clear;
@@ -89,6 +92,19 @@ package body Project is
     Project_Is_Defined := False;
   end Set_Project_Undefined;
 
+  function Tools_Defined return Boolean renames Build.Tools_Defined;
+
+  function Tools_Directory return String renames Build.Tools_Directory;
+
+  function Tools_Folder return String is (Tools_Directory & Files.Separator);
+
+  function Tools_Kind return String renames Build.Tools_Kind_Image;
+
+  function Has_Second_Compiler return Boolean renames Build.Has_Second_Tools_Directory;
+
+  procedure Set_Back_To_First_Compiler renames Build.Set_Back_To_First;
+
+  function Compiler_Area return String renames Build.Compiler_Area;
 
   function Language_Directory return String is (Text.String_Of (The_Language_Directory));
 
@@ -108,7 +124,7 @@ package body Project is
 
   function Source_Folder return String is (Text.String_Of (The_Source_Root) & Files.Separator);
 
-  function Product_Directory return String is (Text.String_Of (The_Product_Directory));
+  function Product_Directory return String is (Text.String_Of (The_Product_Directory) & Compiler_Area);
 
   function Product_Sub_Path return String is (Text.String_Of (The_Product_Sub_Path));
 
@@ -180,7 +196,7 @@ package body Project is
   function Target_Directory return String is
     Project_Area : constant String := Part_Of (Directory, After => Source_Folder);
   begin
-    return Binary_Folder & Project_Area;
+    return Binary_Folder & Project_Area & Compiler_Area;
   end Target_Directory;
 
 
@@ -225,18 +241,6 @@ package body Project is
       raise Program_Error;
     end case;
   end Set_Error;
-
-
-  function Tools_Directory return String is
-  begin
-    return Build.Tools_Directories;
-  end Tools_Directory;
-
-
-  function Tools_Defined return Boolean is
-  begin
-    return Build.Tools_Defined;
-  end Tools_Defined;
 
 
   function Library_Check (Item : String) return Build.Library_Check_Completion is
@@ -338,7 +342,9 @@ package body Project is
 
   begin -- Has_New_Resource
     The_Phase := Promoting;
-    Build_Parser.Evaluate;
+    if not Build.Is_Defined then
+      Build_Parser.Evaluate;
+    end if;
     Check_Icon;
     declare
       Resource_Filename : constant String := Resource.Filename;
@@ -505,7 +511,7 @@ package body Project is
          Set_Error ("Tools Directory <" & The_Directory & "> Unknown");
        end if;
        Build.Set_Tools_Default;
-       Build.Define_Tools_Directories (The_Directory);
+       Build.Define_Tools_Directory (The_Directory);
      end if;
     end Define_Default_Tools;
 
@@ -725,12 +731,6 @@ package body Project is
 
 
   function Case_Handling_Style return Case_Modification is (The_Case_Handling_Style);
-
-
-  function Tools_Folder return String is
-  begin
-    return Tools_Directory & Files.Separator;
-  end Tools_Folder;
 
 
   function Environment return String is

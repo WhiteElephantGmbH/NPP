@@ -31,7 +31,7 @@ package body Os.Pipe is
 
   type Access_Control_List is record
     Header : aliased Win32.Winnt.ACL;
-    Buffer : ACL_Buffer;
+    Unused : ACL_Buffer;
   end record;
 
   type Named_Pipe (Name_Length : Positive;

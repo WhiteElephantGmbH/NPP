@@ -62,6 +62,7 @@ package Ada_95.Error is
      Resource_File_Not_Found,
      Special_Comment_In_Use,
      Style_Already_Set,
+     Tools_Not_32_And_64_Bit,
      Unit_Kind_Error,
      Unit_Name_Error,
      Unknown_Boolean_Value,

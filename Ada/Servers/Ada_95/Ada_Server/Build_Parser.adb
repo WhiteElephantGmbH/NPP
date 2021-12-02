@@ -138,6 +138,22 @@ package body Build_Parser is
                   end if;
                 end Define_Compiler;
 
+                procedure Define_Compilers is
+                  Token : constant String := Next_Token;
+                  Is_Ok : Boolean := False;
+                begin
+                  if Token = ")" then
+                    Is_Ok :=  Build.Defined_Compilers (First  => Attribute,
+                                                       Second => "");
+                  elsif Next_Token = ")" then
+                    Is_Ok :=  Build.Defined_Compilers (First  => Attribute,
+                                                       Second => Token);
+                  end if;
+                  if not Is_Ok then
+                    Log.Write ("!!! Build - Compilers unknown");
+                  end if;
+                end Define_Compilers;
+
                 procedure Define_Kind is
                 begin
                   if not Build.Defined_Kind (Attribute) then
@@ -193,6 +209,8 @@ package body Build_Parser is
                 exit  when Attribute_Name = ")" or else Association /= "=>";
                 if Attribute_Name = "Compiler" then
                   Define_Compiler;
+                elsif Attribute_Name = "Compilers" then
+                  Define_Compilers;
                 elsif Attribute_Name = "Desciption" then
                   Build.Define_Description (Attribute);
                 elsif Attribute_Name = "Kind" then

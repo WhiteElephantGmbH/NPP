@@ -51,17 +51,32 @@ package Ada_95.Build is
 
   function Actual_Version return Version;
 
+  function Exists (Compiler : String) return Boolean;
+
   function Defined_Compiler (Item : String) return Boolean;
 
-  procedure Define_Tools_Directories (Item : String);
-
-  procedure Set_Tools_Default;
-
-  function Tools_Directories return String;
+  function Defined_Compilers (First  : String;
+                              Second : String) return Boolean;
 
   function Tools_Defined return Boolean;
 
+  procedure Define_Tools_Directory (Item : String);
+
+  procedure Set_Tools_Default;
+
+  function Tools_Directory return String;
+
   function Tools_Default_Set return Boolean;
+
+  function Tools_Kind_Image return String;
+
+  function Compiler_Area return String;
+
+  function Directories_Area return String;
+
+  function Has_Second_Tools_Directory return Boolean;
+
+  procedure Set_Back_To_First;
 
   procedure Define_Description (Item : String);
 

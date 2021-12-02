@@ -247,10 +247,9 @@ package body Target is
   procedure Build (Filename : String) is
 
   begin
-    Promotion.Set_Message ("Build " & Filename);
+    Promotion.Set_Message ("Build " & Project.Tools_Kind & Filename);
     Check_For_Parser_Errors_In (Filename);
     Gpr_Execute ("-XLIBRARY_TYPE=static -eS -q");
-    Promotion.Define_Next_Message_Color (Promotion.Green);
   exception
   when Promotion.Error =>
     raise;
@@ -263,17 +262,30 @@ package body Target is
 
 
   procedure Promote (Filename : String) is
+
+    procedure Promote is
+    begin
+      if Project.Has_New_Resource then
+        Generate_Resource_Object;
+      end if;
+      if Project.Is_Program_Unit (Filename) then
+        Build (Filename);
+      else
+        Compile (Filename);
+      end if;
+    end Promote;
+
   begin
-    --TEST----------------------------------
+    --TEST--------------------------------
     Log.Write ("&&& Promote " & Filename);
-    ----------------------------------------
-    if Project.Has_New_Resource then
-      Generate_Resource_Object;
+    --------------------------------------
+    Promote;
+    if Project.Has_Second_Compiler then
+      Promote;
+      Project.Set_Back_To_First_Compiler;
     end if;
     if Project.Is_Program_Unit (Filename) then
-      Build (Filename);
-    else
-      Compile (Filename);
+      Promotion.Define_Next_Message_Color (Promotion.Green);
     end if;
   end Promote;
 

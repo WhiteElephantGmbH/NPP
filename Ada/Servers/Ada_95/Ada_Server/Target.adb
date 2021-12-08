@@ -265,10 +265,12 @@ package body Target is
 
     procedure Promote is
     begin
-      if Project.Has_New_Resource then
-        Generate_Resource_Object;
-      end if;
       if Project.Is_Program_Unit (Filename) then
+        if Project.Has_New_Resource then
+          Generate_Resource_Object;
+        else
+          Project.Define_Environment;
+        end if;
         Build (Filename);
       else
         Compile (Filename);

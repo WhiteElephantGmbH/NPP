@@ -66,12 +66,14 @@ package Project is
   function Tools_Defined return Boolean;
 
   function Tools_Folder return String;
-  
+
   function Tools_Kind return String;
 
   function Has_Second_Compiler return Boolean;
 
   procedure Set_Back_To_First_Compiler;
+
+  procedure Define_Environment;
 
   function Environment return String;
 

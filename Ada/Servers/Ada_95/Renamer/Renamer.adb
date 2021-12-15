@@ -5,10 +5,10 @@
 pragma Style_White_Elephant;
 
 pragma Build (Description => "Ada Renamer",
-              Version     => (45, 1, 0 ,3),
+              Version     => (45, 1, 0 ,4),
               Kind        => Console,
               Icon        => False,
-              Compiler    => "GNAT\2021");
+              Compiler    => "GNATPRO\21.2");
 
 with Work;
 

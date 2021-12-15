@@ -18,11 +18,11 @@ pragma Style_White_Elephant;
 with Elephant_Interface;
 
 pragma Build (Description   => "Elephant Nodepad++ Plugin",
-              Version       => (45, 1, 0, 3),
+              Version       => (45, 1, 0, 4),
               Kind          => Dll,
               Use_Interface => Elephant_Interface,
               Resource      => "Bit_Maps",
-              Compiler      => "GNAT\2021");
+              Compiler      => "GNATPRO\21.2");
 
 procedure Elephant is
 begin

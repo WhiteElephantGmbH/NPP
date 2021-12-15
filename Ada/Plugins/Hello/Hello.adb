@@ -18,11 +18,11 @@ pragma Style_White_Elephant;
 with Hello_Interface;
 
 pragma Build (Description   => "Hello Nodepad++ Plugin",
-              Version       => (2, 1, 0, 1),
+              Version       => (2, 1, 0, 2),
               Kind          => Dll,
               Use_Interface => Hello_Interface,
               Resource      => "Bitmap",
-              Compiler      => "GNAT\2021");
+              Compiler      => "GNATPRO\21.2");
 
 procedure Hello is
 begin

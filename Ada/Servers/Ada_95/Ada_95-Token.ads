@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -240,8 +240,6 @@ package Ada_95.Token is
 
   function Lexical_Before (Item : Lexical_Handle) return Lexical_Handle with Inline;
 
-  function Has_Special_Comment return Boolean;
-
   function Next_Special_Comment (Item : Handle) return Special_Comment_Handle;
 
   function Line_End_Special_Comment (Item : Handle) return Special_Comment_Handle;
@@ -251,7 +249,8 @@ package Ada_95.Token is
   function Image_Of (Item      : Identifiers;
                      Separator : Character := '.') return String;
 
-  function Next_Style (Item : Handle) return Lexical.Style_Pragma;
+  function Next_Style (Item          :     Handle;
+                       Style_Defined : out Boolean) return Lexical.Style_Pragma;
 
   function Is_Marked (Mark       : String;
                       Annotation : Special_Comment_Handle) return Boolean;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -143,8 +143,6 @@ package body Ada_95.Token is
   ----------------------------------------------------------------------------------------------------------------------
 
   Special_Comments_Allowed : Boolean;
-  Special_Comment_Detected : Boolean;
-
 
   function Handle_Of (Item : Sequence;
                       Line : Line_Number) return Handle is
@@ -457,12 +455,6 @@ package body Ada_95.Token is
   end Lexical_Before;
 
 
-  function Has_Special_Comment return Boolean is
-  begin
-    return Special_Comment_Detected;
-  end Has_Special_Comment;
-
-
   function Next_Special_Comment (Item : Handle) return Special_Comment_Handle is
     The_Handle : Handle := Item.Next;
   begin
@@ -573,15 +565,24 @@ package body Ada_95.Token is
   end Annotation_Text;
 
 
-  function Next_Style (Item : Handle) return Lexical.Style_Pragma is
+  function Next_Style (Item          :     Handle;
+                       Style_Defined : out Boolean) return Lexical.Style_Pragma is
     use all type Lexical.Style_Pragma;
     Annotation : constant Special_Comment_Handle := Next_Special_Comment (Item);
-    Style_Name : constant String := "Is_Style_" & Annotation_Text ("STYLE", Annotation);
-    The_Style  : Lexical.Style_Pragma;
   begin
-    The_Style := Lexical.Style_Pragma'value(Style_Name);
-    Annotation.Is_Used := True;
-    return The_Style;
+    Style_Defined := False;
+    if Annotation = null then
+      return Is_Style_None;
+    end if;
+    declare
+      Style_Name : constant String := "Is_Style_" & Annotation_Text ("STYLE", Annotation);
+      The_Style  : Lexical.Style_Pragma;
+    begin
+      The_Style := Lexical.Style_Pragma'value(Style_Name);
+      Annotation.Is_Used := True;
+      Style_Defined := True;
+      return The_Style;
+    end;
   exception
   when others =>
     return Is_Style_None;
@@ -1007,7 +1008,6 @@ package body Ada_95.Token is
     The_Comment_Count := 0;
     The_Parenthesis_Nesting_Level := 0;
     Special_Comments_Allowed := True;
-    Special_Comment_Detected := False;
     The_List := Sequence'(First       => Start_Object,
                           Last        => Start_Object,
                           Last_Line   => null,
@@ -1066,7 +1066,6 @@ package body Ada_95.Token is
   begin -- Append_Comment
     if Has_Tokens then
       if Special_Comments_Allowed and then Comment.Is_Special (Item) then
-        Special_Comment_Detected := True;
         Append_Line_Object (Special_Line_End_Comment'(Handle        => Item,
                                                       Is_Used       => False,
                                                       Column        => The_Position,
@@ -1088,7 +1087,6 @@ package body Ada_95.Token is
         Append_Lines;
       end if;
       if Special_Comments_Allowed and Comment.Is_Special (Item) then
-        Special_Comment_Detected := True;
         if The_Comment_Count > 0 then
           Append_Comments;
         end if;

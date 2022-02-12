@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -423,6 +423,16 @@ package body Ada_95.Token.Pre_Parser is
     The_Token := Lexical_After (Start_Token);
     while The_Token /= null loop
       case The_Token.Element is
+      when Lexical.Is_Limited =>
+        case Next_Token.Element is
+        when Lexical.Is_Private =>
+          Get_Next_Element (Lexical.Is_With);
+          Find (Lexical.Semicolon);
+        when Lexical.Is_With =>
+          Find (Lexical.Semicolon);
+        when others =>
+          Syntax_Error;
+        end case;
       when Lexical.Is_Private =>
         case Next_Token.Element is
         when Lexical.Is_Procedure

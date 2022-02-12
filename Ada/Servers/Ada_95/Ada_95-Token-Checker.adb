@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2010 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2010 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,9 +12,9 @@ package body Ada_95.Token.Checker is
                                       The_Style : Lexical.Style_Pragma) is
   begin
     case The_Style is
-    when Is_Style_None | Is_Style_Soudronic | Is_Style_White_Elephant =>
+    when Is_Style_Soudronic | Is_Style_White_Elephant =>
       null;
-    when Is_Style_Unrestricted =>
+    when others =>
       Unit.Is_Used := True;
     end case;
   end Define_Block_Label_Usage;
@@ -34,7 +34,7 @@ package body Ada_95.Token.Checker is
           return False;
         end if;
       end if;
-    when Is_Style_None | Is_Style_Unrestricted =>
+    when others =>
       null;
     end case;
     return True;
@@ -46,7 +46,7 @@ package body Ada_95.Token.Checker is
     case The_Style is
     when Is_Style_Soudronic | Is_Style_White_Elephant =>
       return True;
-    when Is_Style_None | Is_Style_Unrestricted =>
+    when others =>
       return False;
     end case;
   end Obsolescent_Pragma_Check;
@@ -55,12 +55,11 @@ package body Ada_95.Token.Checker is
   function Is_Restricted  (The_Style : Lexical.Style_Pragma) return Boolean is
   begin
     case The_Style is
-    when Is_Style_Unrestricted =>
-      return False;
-    when others =>
+    when Is_Style_Soudronic | Is_Style_White_Elephant =>
       return True;
+    when others =>
+      return False;
     end case;
   end Is_Restricted;
-
 
 end Ada_95.Token.Checker;

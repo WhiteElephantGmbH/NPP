@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -63,7 +63,6 @@ package Ada_95.Lexical is
     Is_Delay,
     Is_Aliased,
     Is_Limited,
-    Is_Mod,
     Is_Xor,
     Is_Terminate,
     Is_Reverse,
@@ -82,6 +81,7 @@ package Ada_95.Lexical is
     Is_Access,
     Is_Delta,
     Is_Digits,
+    Is_Mod, -- used as Reserved_Word'last
 
     Semicolon,
     Period,
@@ -123,7 +123,7 @@ package Ada_95.Lexical is
     Error);
   for Element'size use 8;
 
-  subtype Reserved_Word is Element range Element'first .. Is_Digits;
+  subtype Reserved_Word is Element range Element'first .. Is_Mod;
 
   subtype Delimiter is Element range Semicolon .. Special_Id;
 
@@ -136,6 +136,7 @@ package Ada_95.Lexical is
     Is_Access,
     Is_Delta,
     Is_Digits,
+    Is_Mod,
 
     -- single attributes
 
@@ -216,22 +217,24 @@ package Ada_95.Lexical is
     Is_Compiler_Version,
     Is_Code_Address,
     Is_Default_Bit_Order,
+    Is_Descriptor_Size,
     Is_Elab_Body,
     Is_Elab_Spec,
     Is_Enum_Rep,
     Is_Enum_Val,
+    Is_Finalization_Size,
     Is_Fixed_Value,
     Is_Has_Access_Values,
     Is_Has_Discriminants,
     Is_Has_Tagged_Values,
     Is_Integer_Value,
+    Is_Loop_Entry,
     Is_Machine_Size,
     Is_Max_Integer_Size,
     Is_Max_Interrupt_Priority,
     Is_Max_Priority,
     Is_Maximum_Alignment,
     Is_Mechanism_Code,
-    Is_Loop_Entry, -- GNAT
     Is_Null_Parameter,
     Is_Passed_By_Reference,
     Is_Pool_Address,
@@ -268,6 +271,7 @@ package Ada_95.Lexical is
     Is_Safe_First,
     Is_Safe_Last,
     Is_Signed_Zeros,
+    Is_System_Allocator_Alignment,
     Is_Unbiased_Rounding,
     Is_Valid_Value,
     Is_Wide_Image,
@@ -282,6 +286,7 @@ package Ada_95.Lexical is
     Is_External_Tag,
     Is_Machine_Radix,
     Is_Object_Size,
+    Is_Scalar_Storage_Order,
     Is_Storage_Pool,
     Is_Storage_Size,
     Is_Value_Size);
@@ -357,6 +362,7 @@ package Ada_95.Lexical is
     Is_External_Tag,
     Is_Machine_Radix,
     Is_Object_Size,
+    Is_Scalar_Storage_Order,
     Is_Storage_Pool,
     Is_Storage_Size,
     Is_Value_Size,
@@ -400,7 +406,6 @@ package Ada_95.Lexical is
     Is_Refined_Post,
     Is_Refined_State,
     Is_Remote_Access_Type,
-    Is_Scalar_Storage_Order,
     Is_Simple_Storage_Pool,
     Is_Simple_Storage_Pool_Type,
     Is_Static_Predicate,
@@ -456,10 +461,10 @@ package Ada_95.Lexical is
     Is_Annotate,
     Is_Cpu,
     Is_Independent,
-    Is_Obsolescent, -- GNAT
+    Is_Obsolescent,
     Is_Preelaborate,
     Is_Pure,
-    Is_Unreferenced, -- GNAT
+    Is_Unreferenced,
     Is_Volatile,
     Is_Warnings,
     Is_Asynchronous, -- Obsolescent_Single_Pragma'first
@@ -476,22 +481,22 @@ package Ada_95.Lexical is
     -- single pragma
 
     Is_Assert, -- used as Single_Pragma'first
-    Is_Assume, -- GNAT
+    Is_Assume,
     Is_Build, -- WE
     Is_Elaborate,
-    Is_External, -- GNAT
-    Is_Implemented, -- GNAT
+    Is_External,
+    Is_Implemented,
     Is_List,
-    Is_Ordered, -- GNAT
+    Is_Ordered,
     Is_Optimize,
     Is_Page,
-    Is_Precondition, -- GNAT
+    Is_Precondition,
     Is_Profile,
-    Is_Polling, -- GNAT
+    Is_Polling,
     Is_Restrictions,
     Is_Reviewable,
     Is_Suppress,
-    Is_Undefined, -- GNAT
+    Is_Undefined,
     Is_Unsuppress, -- used as Single_Pragma'last
 
     -- compound pragma shared with aspects (must match Aspect_Id enumeration)
@@ -501,17 +506,17 @@ package Ada_95.Lexical is
     Is_Discard_Names,
     Is_Dispatching_Domain,
     Is_Elaborate_Body,
-    Is_Favor_Top_Level, -- GNAT
+    Is_Favor_Top_Level,
     Is_Independent_Components,
     Is_Inline_Always,
     Is_No_Elaboration_Code_All,
     Is_Preelaborable_Initialization,
     Is_Pure_Function,
-    Is_Relative_Deadline, -- GNAT
+    Is_Relative_Deadline,
     Is_Remote_Call_Interface,
     Is_Remote_Types,
     Is_Shared_Passive,
-    Is_Spark_Mode, -- GNAT
+    Is_Spark_Mode,
     Is_Suppress_Initialization,
     Is_Unchecked_Union,
     Is_Universal_Aliasing,
@@ -524,49 +529,49 @@ package Ada_95.Lexical is
 
     -- compound pragma
 
-    Is_Ada_05, -- GNAT used as Compound_Pragma'first
-    Is_Ada_12, -- GNAT
-    Is_Ada_20, -- GNAT
-    Is_Ada_2005, -- GNAT
-    Is_Ada_2012, -- GNAT
-    Is_Ada_2022, -- GNAT
+    Is_Ada_05, -- used as Compound_Pragma'first
+    Is_Ada_12,
+    Is_Ada_20,
+    Is_Ada_2005,
+    Is_Ada_2012,
+    Is_Ada_2022,
     Is_Assertion_Policy,
-    Is_Compile_Time_Error, -- GNAT
-    Is_Compile_Time_Warning, -- GNAT
+    Is_Compile_Time_Error,
+    Is_Compile_Time_Warning,
     Is_Compiler_Unit_Warning,
-    Is_Complete_Representation, -- GNAT
-    Is_Complex_Representation, -- GNAT
+    Is_Complete_Representation,
+    Is_Complex_Representation,
     Is_Console_Application, -- WE
-    Is_Convention_Identifier, -- GNAT
+    Is_Convention_Identifier,
     Is_Detect_Blocking,
     Is_Elaborate_All,
-    Is_Export_Procedure, -- GNAT
-    Is_Finalize_Storage_Only, -- GNAT
-    Is_Implementation_Defined, -- GNAT
+    Is_Export_Procedure,
+    Is_Finalize_Storage_Only,
+    Is_Implementation_Defined,
     Is_Inspection_Point,
     Is_Linker_Options,
     Is_Locking_Policy,
-    Is_Loop_Invariant, -- GNAT
-    Is_Machine_Attribute, -- GNAT
+    Is_Loop_Invariant,
+    Is_Machine_Attribute,
     Is_Memory_Size,
-    Is_No_Component_Reordering, -- GNAT
-    Is_No_Strict_Aliasing, -- GNAT
+    Is_No_Component_Reordering,
+    Is_No_Strict_Aliasing,
     Is_Normalize_Scalars,
     Is_Partition_Elaboration_Policy,
     Is_Priority_Specific_Dispatching,
-    Is_Provide_Shift_Operators, -- GNAT
+    Is_Provide_Shift_Operators,
     Is_Queueing_Policy,
-    Is_Stream_Convert, -- GNAT
-    Is_Style_Checks, -- GNAT
+    Is_Stream_Convert,
+    Is_Style_Checks,
     Is_Style_None, -- WE use as first in Style_Pragma
     Is_Style_Soudronic,
     Is_Style_Unrestricted,
     Is_Style_White_Elephant, -- use as last in Style_Pragma
     Is_System_Name,
     Is_Task_Dispatching_Policy,
-    Is_Unevaluated_Use_Of_Old, -- GNAT
-    Is_Unimplemented_Unit, -- GNAT
-    Is_Weak_External); -- GNAT
+    Is_Unevaluated_Use_Of_Old,
+    Is_Unimplemented_Unit,
+    Is_Weak_External);
 
   for Pragma_Id'size use 8;
 

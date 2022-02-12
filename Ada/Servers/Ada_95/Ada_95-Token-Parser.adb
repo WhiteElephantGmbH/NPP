@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -196,14 +196,12 @@ package body Ada_95.Token.Parser is
 
 
     -- access_definition ::=
-    --      [not null] access subtype_mark
-    --
-    -- coded in Parameter_Specification and Discriminant_Specification and Object_Declaration
+    --      [not null] access access_definition_part
 
     -- access_definition_part ::=
     --      [constant] subtype_mark
     --    | [protected] procedure parameter_profile
-    --    | [protected] function  parameter_and_result_profile
+    --    | [protected] function parameter_and_result_profile
     --
     function Access_Definition_Part (Scope : Data.Unit_Handle) return Data_Handle;
 
@@ -549,7 +547,7 @@ package body Ada_95.Token.Parser is
 
 
     -- context_item ::=
-    --      with_clause
+    --      [private | limited [private]] with_clause
     --    | use_clause
     --
     -- coded in Preprocessing_And_Context_Clause
@@ -2961,6 +2959,30 @@ package body Ada_95.Token.Parser is
 
     begin --Expression;
       Was_Component := True;
+      case Token_Element is
+      when Lexical.Is_If =>
+        --TEST------------------------
+        --Write_Log ("if expression");
+        ------------------------------
+        return If_Expression (Within);
+      when Lexical.Is_Case =>
+        --TEST--------------------------
+        --Write_Log ("case expression");
+        --------------------------------
+        return Case_Expression (Within);
+      when Lexical.Is_For =>
+        --TEST--------------------------------
+        --Write_Log ("quantified expression");
+        --------------------------------------
+        return Quantified_Expression (Within);
+      when Lexical.Is_Declare =>
+        --TEST-----------------------------
+        --Write_Log ("declare expression");
+        -----------------------------------
+        return Declare_Expression (Within);
+      when others =>
+        null;
+      end case;
       Relation;
       case Token_Element is
       when Lexical.Is_And =>
@@ -3643,9 +3665,9 @@ package body Ada_95.Token.Parser is
             exit;
           when Lexical.Is_Declare =>
             The_Result_Type := Declare_Expression (Within);
-            --TEST-----------------------------------
+            --TEST--------------------------------
             --Write_Log ("-> declare expression");
-            -----------------------------------------
+            --------------------------------------
             exit;
           when others =>
             Not_Implemented ("Aggregate: " & Image_Of (The_Token.all));
@@ -4825,14 +4847,14 @@ package body Ada_95.Token.Parser is
                 Syntax_Error;
               end if;
               Dummy := Expression ((Scope, null));
-              if Element_Is (Lexical.Range_Delimiter) then
-                Dummy := Expression ((Scope, Dummy));
-              end if;
             else
               --TEST--------------------------------
               --Write_Log ("-> POSITION NOT FOUND");
               --------------------------------------
               return False;
+            end if;
+            if not Associated and then Element_Is (Lexical.Range_Delimiter) then -- array slice
+              Dummy := Expression ((Scope, Dummy));
             end if;
             exit when Element_Is (Lexical.Right_Parenthesis);
             Get_Element (Lexical.Comma);
@@ -6002,6 +6024,10 @@ package body Ada_95.Token.Parser is
                     loop
                       Index_Type := Data.Index_Subtype_Of (Definition, The_Index, The_Instantiation);
                       Unused_Type := Expression ((Scope, Index_Type));
+                      if The_Token.Element = Lexical.Is_Range then
+                        Unused_Type := Range_Constraint (Within);
+                        exit;
+                      end if;
                       Is_Slice := Is_Slice or not Was_Component;
                       --TEST------------------------------------------------
                       --Write_Log ("Is_Slice : " & Boolean'image(Is_Slice));
@@ -6877,6 +6903,38 @@ package body Ada_95.Token.Parser is
       begin
         loop
           case Token_Element is
+          when Lexical.Is_If =>
+            --TEST-------------------------------
+            Write_Log ("%%% SKIP if expression");
+            -------------------------------------
+            Dummy := If_Expression (Within);
+            The_Expected_Type := Separator;
+            The_Count := The_Count - 1;
+            exit when (The_Count = 0);
+          when Lexical.Is_Case =>
+            --TEST---------------------------------
+            Write_Log ("%%% SKIP case expression");
+            --------------------------------------
+            Dummy := Case_Expression (Within);
+            The_Expected_Type := Separator;
+            The_Count := The_Count - 1;
+            exit when (The_Count = 0);
+          when Lexical.Is_For =>
+            --TEST---------------------------------------
+            Write_Log ("%%% SKIP quantified expression");
+            ---------------------------------------------
+           Dummy := Quantified_Expression (Within);
+            The_Expected_Type := Separator;
+            The_Count := The_Count - 1;
+            exit when (The_Count = 0);
+          when Lexical.Is_Declare =>
+            --TEST------------------------------------
+            Write_Log ("%%% SKIP declare expression");
+            ------------------------------------------
+            Dummy := Declare_Expression (Within);
+            The_Expected_Type := Separator;
+            The_Count := The_Count - 1;
+            exit when (The_Count = 0);
           when Lexical.Identifier
              | Lexical.Is_All
              | Lexical.Is_Null
@@ -6896,6 +6954,7 @@ package body Ada_95.Token.Parser is
             -----------------------------------------------------------
             The_Expected_Type := Item;
           when Lexical.Is_Abs
+             | Lexical.Is_New
              | Lexical.Is_Not
           =>
             exit when The_Expected_Type /= Item;
@@ -9158,8 +9217,11 @@ package body Ada_95.Token.Parser is
                                               Definition => Array_Type_Definition (Scope));
         when Lexical.Is_Not =>
           Get_Next_Element (Lexical.Is_Null);
-          Get_Element (Lexical.Is_Access);
-          The_Subtype := Access_Definition_Part (Scope);
+          if Element_Is (Lexical.Is_Access) then
+            The_Subtype := Access_Definition_Part (Scope);
+          else
+            The_Subtype := Subtype_Mark (Scope);
+          end if;
         when Lexical.Is_Access =>
           Get_Next_Token;
           The_Subtype := Access_Definition_Part (Scope);
@@ -10647,10 +10709,9 @@ package body Ada_95.Token.Parser is
       end Subunit;
 
     begin -- Compilation_Unit
-      The_Style := Next_Style (Resource.Tokens.First);
+      The_Style := Next_Style (Resource.Tokens.First, Special_Comment_Detected);
       Build_Parameters_Defined := False;
       Console_Application_Kind_Defined := False;
-      Special_Comment_Detected := Has_Special_Comment;
       The_Token := Lexical_After (Resource.Tokens.First);
       Data.Add_Unit (Unit);
       Unused_Id := Style_Checked (Unit.Location);
@@ -10660,6 +10721,20 @@ package body Ada_95.Token.Parser is
           With_Clause;
         when Lexical.Is_Use =>
           Use_Clause (Unit, In_Context => True);
+        when Lexical.Is_Limited =>
+          case Next_Token.Element is
+          when Lexical.Is_Private =>
+            case Next_Token.Element is
+            when Lexical.Is_With =>
+              With_Clause (Is_Private => True);
+            when others =>
+              Syntax_Error;
+            end case;
+          when Lexical.Is_With =>
+            With_Clause (Is_Private => False);
+          when others =>
+            Syntax_Error;
+          end case;
         when Lexical.Is_Private =>
           Is_Private := True;
           case Next_Token.Element is

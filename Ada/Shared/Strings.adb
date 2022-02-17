@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -730,6 +730,18 @@ package body Strings is
   end Item_Of;
 
 
+  function Found_In (List : Item;
+                     Name : String) return Boolean is
+  begin
+    for The_Name of List loop
+      if The_Name = Name then
+        return True;
+      end if;
+    end loop;
+    return False;
+  end Found_In;
+
+
   function Item_Of (List : String_List.Item) return Item is
     The_Length : Natural := 0;
   begin
@@ -757,8 +769,8 @@ package body Strings is
     The_List : String_List.Item;
     use type String_List.Item;
   begin
-    for Index in List.Positions'range loop
-      The_List := The_List + List(Index);
+    for Name of List loop
+      The_List := The_List + Name;
     end loop;
     return The_List;
   end List_Of;
@@ -768,8 +780,8 @@ package body Strings is
     The_List : String_List.Item;
     use type String_List.Item;
   begin
-    for Index in List.Positions'range loop
-      The_List := The_List + Trimmed (List(Index));
+    for Name of List loop
+      The_List := The_List + Trimmed (Name);
     end loop;
     return The_List;
   end Trimmed_List_Of;

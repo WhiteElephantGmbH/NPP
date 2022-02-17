@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -224,6 +224,10 @@ package Strings is
   function Item_Of (List      : Item;
                     Selection : Slice) return Item;
   -- Exception: CONSTRAINT_ERROR: Index out of range.
+
+
+  function Found_In (List : Item;
+                     Name : String) return Boolean;
 
 
   function Data_Of (List      : String_List.Item;

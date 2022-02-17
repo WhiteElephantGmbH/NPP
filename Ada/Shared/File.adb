@@ -15,7 +15,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Strings;
+with Log;
 
 package body File is
 
@@ -173,14 +173,32 @@ package body File is
   end X_Copy;
 
 
-  function Is_Leaf_Directory (Directory : String) return Boolean is
-    Handle : FS.Search_Type;
-  begin
-    FS.Start_Search (Search    => Handle,
-                     Directory => Directory,
-                     Pattern   => "",
-                     Filter    => (FS.Directory => True, others => False));
-    return FS.More_Entries (Handle);
+  function Is_Leaf_Directory (Directory  : String;
+                              Exceptions : Strings.Item := Strings.None) return Boolean is
+
+    The_Count : Natural := 0;
+
+    procedure Iterate_For (Directory_Entry : FS.Directory_Entry_Type) is
+    begin
+      declare
+        Name : constant String := FS.Simple_Name(Directory_Entry);
+      begin
+        Log.Write ("Name: " & Name);
+        if not (Name(Name'first) = '.') and then not Strings.Found_In (Exceptions, Name) then
+          The_Count := The_Count + 1;
+        end if;
+      end;
+    exception
+    when others =>
+      null;
+    end Iterate_For;
+
+  begin -- Is_Leaf_Directory
+    FS.Search (Directory => Directory,
+               Pattern   => "",
+               Filter    => (FS.Directory => True, others => False),
+               Process   => Iterate_For'access);
+    return The_Count = 0;
   exception
   when others =>
     return False;
@@ -188,7 +206,8 @@ package body File is
 
 
   procedure Iterate_Over_Leaf_Directories (From_Directory : String;
-                                           Iterator       : access procedure (Leaf_Directory : String)) is
+                                           Iterator       : access procedure (Leaf_Directory : String);
+                                           Exceptions     : Strings.Item := Strings.None) is
     The_Count : Natural := 0;
 
     procedure Iterate_For (Directory_Entry : FS.Directory_Entry_Type) is
@@ -197,7 +216,7 @@ package body File is
         Name      : constant String := FS.Simple_Name(Directory_Entry);
         Directory : constant String := FS.Full_Name(Directory_Entry);
       begin
-        if not (Name(Name'first) in '.' | '$') then
+        if not (Name(Name'first) in '.') and then not Strings.Found_In (Exceptions, Name) then
           The_Count := The_Count + 1;
           Iterate_Over_Leaf_Directories (Directory, Iterator);
         end if;

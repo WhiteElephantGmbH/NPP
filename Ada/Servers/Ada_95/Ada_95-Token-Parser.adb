@@ -699,6 +699,9 @@ package body Ada_95.Token.Parser is
     --
     function Discrete_Range (Within : Data.Context) return Data_Handle;
 
+    function Discrete_Range_Or_Expression (Within : Data.Context) return Data_Handle;
+    -- used in discrete_choice
+
 
     -- discrete_subtype_definition ::=
     --      discrete_subtype_indication
@@ -4362,8 +4365,8 @@ package body Ada_95.Token.Parser is
     --      discrete_subtype_indication
     --    | range
     --
-    function Discrete_Range (Within : Data.Context) return Data_Handle is
-      Declaration  : constant Data_Handle := Simple_Expression (Within);
+    function Discrete_Range_Part (Within     : Data.Context;
+                                  First_Item : Data_Handle) return Data_Handle is
     begin
       case Token_Element is
       when Lexical.Range_Delimiter =>
@@ -4371,15 +4374,27 @@ package body Ada_95.Token.Parser is
         --Write_Log ("DISCRETE_RANGE (range)");
         ---------------------------------------
         Get_Next_Token;
-        return Simple_Expression ((Within.Scope, Declaration));
+        return Simple_Expression ((Within.Scope, First_Item));
       when others =>
         --TEST-------------------------------------------------------
         --Write_Log ("DISCRETE_RANGE (discrete_subtype_indication)");
         -------------------------------------------------------------
         Conditional_Constraint (Within);
-        return Declaration;
+        return First_Item;
       end case;
+    end Discrete_Range_Part;
+
+
+    function Discrete_Range (Within : Data.Context) return Data_Handle is
+    begin
+      return Discrete_Range_Part (Within, Simple_Expression (Within));
     end Discrete_Range;
+
+
+    function Discrete_Range_Or_Expression (Within : Data.Context) return Data_Handle is
+    begin
+      return Discrete_Range_Part (Within, Expression (Within));
+    end Discrete_Range_Or_Expression;
 
 
     -- discrete_subtype_definition ::=
@@ -4404,7 +4419,7 @@ package body Ada_95.Token.Parser is
         if Element_Is (Lexical.Is_Others) then
           return True;
         else
-          Dummy := Discrete_Range (Within);
+          Dummy := Discrete_Range_Or_Expression (Within);
         end if;
         exit when not Element_Is (Lexical.Vertical_Line);
       end loop;

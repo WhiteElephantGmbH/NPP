@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -418,7 +418,7 @@ package body Log is
       Write (Prefix & Exceptions.Information_Of (Occurrence));
     exception
     when Item: others =>
-      Write (Prefix & "Log.Write failed for " & Ada.Exceptions.Exception_Name (Occurrence));
+      Write (Prefix & "Log.Write failed for " & Exceptions.Name_Of (Occurrence));
       Write (Exceptions.Information_Of (Item));
       Guarded.Flush;
     end;

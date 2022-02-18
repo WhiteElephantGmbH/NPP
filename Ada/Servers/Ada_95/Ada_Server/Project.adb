@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -25,6 +25,12 @@ with Text;
 package body Project is
 
   Language : constant String := "Ada";
+
+  Body_Extension : constant String := ".adb";
+
+  use type Strings.Item;
+  Leaf_Directory_Exceptions : constant Strings.Item := "$Osx" + "$Linux" + Build.Sub_Directories;
+
 
   procedure Set_Confirmation (Message : String := "") is
   begin
@@ -52,6 +58,7 @@ package body Project is
   The_Promotion_Areas    : Text.String;
   The_Library_Path       : Text.String;
 
+  The_Source_Directories : String_List.Item;
   The_Ignore_Areas       : String_List.Item;
   The_Implied_Areas      : String_List.Item;
   The_Reference_Areas    : String_List.Item;
@@ -103,6 +110,8 @@ package body Project is
   function Has_Second_Compiler return Boolean renames Build.Has_Second_Tools_Directory;
 
   procedure Set_Back_To_First_Compiler renames Build.Set_Back_To_First;
+
+  function Is_Maching (Filename : String) return Boolean renames Build.Is_Maching;
 
   function Compiler_Area return String renames Build.Compiler_Area;
 
@@ -191,6 +200,23 @@ package body Project is
     end if;
     return "";
   end Part_Of;
+
+
+  function Project_Subdirectory return String is
+  begin
+    return Folder & Build.Directories_Area;
+  end Project_Subdirectory;
+
+
+  function Source_Directories return String_List.Item is
+    use type String_List.Item;
+  begin
+    if File.Directory_Exists (Project_Subdirectory) then
+      return Project_Subdirectory + The_Source_Directories;
+    else
+      return The_Source_Directories;
+    end if;
+  end Source_Directories;
 
 
   function Target_Directory return String is
@@ -445,6 +471,11 @@ package body Project is
     Build_Parser.Evaluate;
     Check_Icon;
     Define_Environment;
+
+    if File.Directory_Exists (Project_Subdirectory) then
+      The_Work_Path.Prepend (Project_Subdirectory & Files.Separator);
+    end if;
+
     for Library of The_Libraries loop
       declare
         Source_Directory : constant String := The_Library_Sources.Element(Library);
@@ -463,9 +494,9 @@ package body Project is
 
 
   function Application_From (The_Directory : String) return String is
-    Module : constant String := Files.Module_Of (The_Directory);
+    Package_Name : constant String := Files.Module_Of (The_Directory);
   begin
-    return The_Directory & Files.Separator & Module & ".adb";
+    return The_Directory & Files.Separator & Package_Name & Body_Extension;
   end Application_From;
 
 
@@ -589,15 +620,40 @@ package body Project is
       end if;
     end Define_Libraries;
 
-    Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Filename, Language, The_Language_Directory);
+    function Project_Filename_Of (Actual_Name : String) return String is
+    begin
+      declare
+        Actual_Directory : constant String := File.Containing_Directory_Of (Actual_Name);
+        Directory_Name   : constant String := File.Base_Name_Of (Actual_Directory);
+      begin
+        if Strings.Found_In (Build.Sub_Directories, Directory_Name) then
+          declare
+            Application_Name : constant String := Application_From (File.Containing_Directory_Of (Actual_Directory));
+          begin
+            if File.Exists (Application_Name) then
+              Log.Write ("||| Project Name: " & Application_Name);
+              return Application_Name;
+            end if;
+          end;
+        end if;
+      end;
+      return Actual_Name;
+    exception
+    when others =>
+      return Actual_Name;
+    end Project_Filename_Of;
+
+    Project_Name : constant String :=  Project_Filename_Of (Filename);
+
+    Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Project_Name, Language, The_Language_Directory);
 
     The_Work_Path : String_List.Item;
 
   begin -- Initialized
     Log.Write ("||| Project.Initialize: " & Filename);
-    The_Actual_Project := Text.String_Of (Filename);
+    The_Actual_Project := Text.String_Of (Project_Name);
     The_Phase := Initializing;
-    Build.Initialize (Filename, Library_Check'access, Is_Startup => True);
+    Build.Initialize (Project_Name, Library_Check'access, Is_Startup => True);
     if The_Configuration_Handle = null then -- only first time because language directory does not change
       The_Configuration_Handle := new Configuration.File_Handle'(Configuration.Handle_For (Definition_File));
     end if;
@@ -609,9 +665,9 @@ package body Project is
       Set_Error ("Unknown project for " & Filename);
     else
       declare
-        Leaf_Directory : constant String := Files.Directory_Of (Filename);
+        Leaf_Directory : constant String := Files.Directory_Of (Project_Name);
       begin
-        if not File.Is_Leaf_Directory (Leaf_Directory) then
+        if not File.Is_Leaf_Directory (Leaf_Directory, Leaf_Directory_Exceptions) then
           Set_Error ("Not in project area " & Filename);
         else
           if not File.Exists (Application_From (Leaf_Directory)) then
@@ -718,7 +774,7 @@ package body Project is
   end Is_In_Reference_Area;
 
 
-  function Program_Unit_Name return String is (Name & ".adb");
+  function Program_Unit_Name return String is (Name & Body_Extension);
 
 
   function Program_Unit return String is (Folder & Program_Unit_Name);
@@ -891,7 +947,7 @@ package body Project is
               Promotion.Set_Error (Header & Area & " NOT allowed!");
             end if;
             begin
-              File.Iterate_Over_Leaf_Directories (Location, Append_Project'access);
+              File.Iterate_Over_Leaf_Directories (Location, Append_Project'access, Leaf_Directory_Exceptions);
             exception
             when others =>
               Promotion.Set_Error (Header & Area & " unknown!");

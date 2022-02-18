@@ -117,7 +117,7 @@ package Strings is
   --    capitalized, otherwise the string is reduced to lowercase.
 
   function Reduced (The_String : String) return String;
-  -- Function to return a "reduces" version of the supplied string.
+  -- Function to return a "reduced" version of the supplied string.
   --    white_spaces :== {<cr> | <lf> | <tab> | space}.
   --    Leading & trailing white_spaces are removed.
   --    {<tab> | space} replaced with a single space.

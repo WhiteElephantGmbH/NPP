@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                           (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -83,89 +83,88 @@ package body Project.Gpr is
     if Project_Name = "" then
       return "";
     end if;
+    File.Delete (Gpr_Filename);
     if File.Exists (Source) then
-      File.Delete (Gpr_Filename);
       return Source;
-    elsif not File.Exists (Gpr_Filename) then
-      Is_Generated := True;
-      Ada.Text_IO.Create (The_File, Mode => Ada.Text_IO.Out_File, Name => Gpr_Filename);
-      if not Is_Dll and then not The_Libraries.Is_Empty then
-        for Library of The_Libraries loop
-          Put ("with """ & Name_Of (Library) & """;");
-        end loop;
-        Put ("");
-      end if;
-      Put ("project " & Project_Name & " is");
-      Put ("");
-      Put ("   package Naming is");
-      Put ("      for Casing use ""mixedcase"";");
-      Put ("   end Naming;");
-      Put ("");
-      if Is_Dll then
-        Put ("   for Library_Name use """ & Project_Name & """;");
-        Put ("   for Shared_Library_Prefix use """";");
-        Put ("");
-      end if;
-      for The_Directory of The_Source_Directories loop
-        if The_Directory = The_Source_Directories.First_Element then
-          Put ("   for Source_Dirs use (""" & The_Directory & """,");
-        elsif The_Directory = The_Source_Directories.Last_Element then
-          Put ("                        """ & The_Directory & """);");
-        else
-          Put ("                        """ & The_Directory & """,");
-        end if;
+    end if;
+    Is_Generated := True;
+    Ada.Text_IO.Create (The_File, Mode => Ada.Text_IO.Out_File, Name => Gpr_Filename);
+    if not Is_Dll and then not The_Libraries.Is_Empty then
+      for Library of The_Libraries loop
+        Put ("with """ & Name_Of (Library) & """;");
       end loop;
       Put ("");
-      if Is_Dll then
-        Put ("   for Library_Interface use (""" & Interface_Name & """);");
-        Put ("");
-      end if;
-      Put ("   for Object_Dir use """ & Object_Area & """;");
-      Put ("");
-      if Is_Dll then
-        Put ("   for Library_Options use (""-L" & Product_Directory & """, ""resources.o"");");
-        Put ("   for Library_Dir use """ & Product_Directory & Product_Sub_Path & """;");
-        Put ("   for Library_Ali_Dir use """ & Target_Directory & """;");
-        Put ("   for Library_Kind use ""dynamic"";");
-        Put ("   for Library_Standalone use ""encapsulated"";");
-      else
-        Put ("   for Exec_Dir use """ & Product_Directory & Product_Sub_Path & """;");
-        Put ("   for Main use (""" & Program_Unit_Name & """);");
-      end if;
-      Put ("");
-      Put ("   package Pretty_Printer is");
-      Put ("      for Default_Switches (""ada"") use (""-i2"", ""-M0"", ""-aL"", ""-A1"", ""-A4"");");
-      Put ("   end Pretty_Printer;");
-      Put ("");
-      Put ("   package Builder is");
-      Put ("      for Default_Switches (""ada"") use (""-s"", ""-g"");");
-      if not Is_Dll then
-        Put ("      for Executable (""" & Program_Unit_Name & """) use """ & Project_Name & """;");
-      end if;
-      Put ("   end Builder;");
-      Put ("");
-      Put ("   package Compiler is");
-      Put ("      for Default_Switches (""ada"") use");
-      Put ("         (""-O1"", ""-gnatQ"", ""-gnata"", ""-gnato"", ""-g"", ""-gnat12"",");
-      Put ("          ""-gnatwceGhijkmopruvz.c.N.p.t.w.x"", ""-gnatykmpM120"");");
-      Put ("   end Compiler;");
-      Put ("");
-      Put ("   package Binder is");
-      Put ("      for Default_Switches (""ada"") use (""-E"");");
-      Put ("   end Binder;");
-      Put ("");
-      if not Is_Dll then
-        Put ("   package Linker is");
-        Put ("      for Linker_Options use ();");
-        Put ("      for Default_Switches (""ada"") use");
-        Put ("         (""-g"", ""-L" & Product_Directory & """,");
-        Put ("          """ & Resource.Object & """,""-m" & Build.Application_Kind_Image &""");");
-        Put ("   end Linker;");
-        Put ("");
-      end if;
-      Put ("end " & Project_Name & ";");
-      Ada.Text_IO.Close (The_File);
     end if;
+    Put ("project " & Project_Name & " is");
+    Put ("");
+    Put ("   package Naming is");
+    Put ("      for Casing use ""mixedcase"";");
+    Put ("   end Naming;");
+    Put ("");
+    if Is_Dll then
+      Put ("   for Library_Name use """ & Project_Name & """;");
+      Put ("   for Shared_Library_Prefix use """";");
+      Put ("");
+    end if;
+    for The_Directory of Source_Directories loop
+      if The_Directory = Source_Directories.First_Element then
+        Put ("   for Source_Dirs use (""" & The_Directory & """,");
+      elsif The_Directory = Source_Directories.Last_Element then
+        Put ("                        """ & The_Directory & """);");
+      else
+        Put ("                        """ & The_Directory & """,");
+      end if;
+    end loop;
+    Put ("");
+    if Is_Dll then
+      Put ("   for Library_Interface use (""" & Interface_Name & """);");
+      Put ("");
+    end if;
+    Put ("   for Object_Dir use """ & Object_Area & """;");
+    Put ("");
+    if Is_Dll then
+      Put ("   for Library_Options use (""-L" & Product_Directory & """, ""resources.o"");");
+      Put ("   for Library_Dir use """ & Product_Directory & Product_Sub_Path & """;");
+      Put ("   for Library_Ali_Dir use """ & Target_Directory & """;");
+      Put ("   for Library_Kind use ""dynamic"";");
+      Put ("   for Library_Standalone use ""encapsulated"";");
+    else
+      Put ("   for Exec_Dir use """ & Product_Directory & Product_Sub_Path & """;");
+      Put ("   for Main use (""" & Program_Unit_Name & """);");
+    end if;
+    Put ("");
+    Put ("   package Pretty_Printer is");
+    Put ("      for Default_Switches (""ada"") use (""-i2"", ""-M0"", ""-aL"", ""-A1"", ""-A4"");");
+    Put ("   end Pretty_Printer;");
+    Put ("");
+    Put ("   package Builder is");
+    Put ("      for Default_Switches (""ada"") use (""-s"", ""-g"");");
+    if not Is_Dll then
+      Put ("      for Executable (""" & Program_Unit_Name & """) use """ & Project_Name & """;");
+    end if;
+    Put ("   end Builder;");
+    Put ("");
+    Put ("   package Compiler is");
+    Put ("      for Default_Switches (""ada"") use");
+    Put ("         (""-O1"", ""-gnatQ"", ""-gnata"", ""-gnato"", ""-g"", ""-gnat12"",");
+    Put ("          ""-gnatwceGhijkmopruvz.c.N.p.t.w.x"", ""-gnatykmpM120"");");
+    Put ("   end Compiler;");
+    Put ("");
+    Put ("   package Binder is");
+    Put ("      for Default_Switches (""ada"") use (""-E"");");
+    Put ("   end Binder;");
+    Put ("");
+    if not Is_Dll then
+      Put ("   package Linker is");
+      Put ("      for Linker_Options use ();");
+      Put ("      for Default_Switches (""ada"") use");
+      Put ("         (""-g"", ""-L" & Product_Directory & """,");
+      Put ("          """ & Resource.Object & """,""-m" & Build.Application_Kind_Image &""");");
+      Put ("   end Linker;");
+      Put ("");
+    end if;
+    Put ("end " & Project_Name & ";");
+    Ada.Text_IO.Close (The_File);
     return Gpr_Filename;
   end Filename;
 

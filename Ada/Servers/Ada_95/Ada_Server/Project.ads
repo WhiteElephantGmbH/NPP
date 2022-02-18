@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -72,6 +72,8 @@ package Project is
   function Has_Second_Compiler return Boolean;
 
   procedure Set_Back_To_First_Compiler;
+  
+  function Is_Maching (Filename : String) return Boolean;
 
   procedure Define_Environment;
 
@@ -84,6 +86,8 @@ private
   function Object_Folder return String;
 
   function Program_Unit_Name return String;
+
+  function Source_Directories return String_List.Item;
 
   function Target_Directory return String;
 
@@ -99,7 +103,6 @@ private
   The_Library_Names       : Names.Map;
   The_Library_Sources     : Names.Map;
 
-  The_Libraries          : String_List.Item;
-  The_Source_Directories : String_List.Item;
+  The_Libraries : String_List.Item;
 
 end Project;

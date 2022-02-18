@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -14,8 +14,6 @@
 -- *    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.                *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
-
-with Log;
 
 package body File is
 
@@ -183,7 +181,6 @@ package body File is
       declare
         Name : constant String := FS.Simple_Name(Directory_Entry);
       begin
-        Log.Write ("Name: " & Name);
         if not (Name(Name'first) = '.') and then not Strings.Found_In (Exceptions, Name) then
           The_Count := The_Count + 1;
         end if;

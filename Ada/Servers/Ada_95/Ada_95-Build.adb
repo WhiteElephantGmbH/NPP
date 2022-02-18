@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                                  *
+-- *                   (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -192,9 +192,9 @@ package body Ada_95.Build is
   begin
     case The_Tools_Kind is
     when Size_32 =>
-      return "32";
+      return Sub_Directory_32;
     when Size_64 =>
-      return "64";
+      return Sub_Directory_64;
     end case;
   end Directories_Area;
 
@@ -307,6 +307,29 @@ package body Ada_95.Build is
   begin
     The_Tools_Kind := Size_64;
   end Set_Back_To_First;
+
+
+  function Is_Maching (Filename : String) return Boolean is
+
+    Directory : constant String := Files.Directory_Of (Filename);
+
+    function Direcory_Ends_With (Postfix : String) return Boolean is
+    begin
+      return Postfix = Directory(Directory'last - Postfix'length + 1 .. Directory'last);
+    exception
+    when others =>
+      return False;
+    end Direcory_Ends_With;
+
+  begin -- Is_Maching
+    if Direcory_Ends_With (Sub_Directory_32) then
+       return The_Tools_Kind = Size_32;
+    elsif Direcory_Ends_With (Sub_Directory_64) then
+      return The_Tools_Kind = Size_64;
+    else
+      return True;
+    end if;
+  end Is_Maching;
 
 
   function Check_Of (Library : String) return Library_Check_Completion is

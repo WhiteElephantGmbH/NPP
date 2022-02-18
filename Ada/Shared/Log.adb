@@ -16,13 +16,13 @@
 pragma Style_White_Elephant;
 
 with Ada.Calendar;
-with Ada.Task_Identification;
 with Ada.Text_IO;
 with Application;
 with Configuration;
 with Date_Time;
 with Exceptions;
 with File;
+with Os;
 with Strings;
 with String_List;
 with System;
@@ -272,10 +272,9 @@ package body Log is
         The_Current_Size := 2;
       end if;
       declare
-        Id   : constant String := Ada.Task_Identification.Image (Ada.Task_Identification.Current_Task);
         Time : constant String := Log_Time'image(Log_Time(Ada.Calendar.Seconds(Ada.Calendar.Clock)));
       begin
-        Io.Put_Line (The_File, Time & " (" & Id(Id'last - 7 .. Id'last) & ") => " & The_String);
+        Io.Put_Line (The_File, Time & " (" & Os.Thread_Id & ") => " & The_String);
         if Flush_After_Write then
           Io.Flush (The_File);
         end if;

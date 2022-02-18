@@ -1,12 +1,19 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                                  *
+-- *                   (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with String_List;
+with Strings;
 
 package Ada_95.Build is
+
+  Sub_Directory_32 : constant String := "32";
+  Sub_Directory_64 : constant String := "64";
+
+  use type Strings.Item;
+  Sub_Directories : constant Strings.Item := Sub_Directory_32 + Sub_Directory_64;
 
   type Kind is (Console_Application, Windows_Application, Dll);
 
@@ -77,6 +84,8 @@ package Ada_95.Build is
   function Has_Second_Tools_Directory return Boolean;
 
   procedure Set_Back_To_First;
+
+  function Is_Maching (Filename : String) return Boolean;
 
   procedure Define_Description (Item : String);
 

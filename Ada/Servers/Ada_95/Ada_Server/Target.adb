@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -273,7 +273,9 @@ package body Target is
         end if;
         Build (Filename);
       else
-        Compile (Filename);
+        if Project.Is_Maching (Filename) then
+          Compile (Filename);
+        end if;
       end if;
     end Promote;
 

@@ -14,17 +14,27 @@ package body Ada_95.Token.Checker is
     case The_Style is
     when Is_Style_Soudronic | Is_Style_White_Elephant =>
       null;
-    when others =>
+    when Is_Style_None | Is_Style_Unrestricted =>
       Unit.Is_Used := True;
     end case;
   end Define_Block_Label_Usage;
 
 
-  function Is_Ok (Item      : Identifier_Handle;
-                  The_Style : Lexical.Style_Pragma) return Boolean is
+  function Has_Style (The_Style : Lexical.Style_Pragma) return Boolean is
   begin
     case The_Style is
     when Is_Style_Soudronic | Is_Style_White_Elephant =>
+      return True;
+    when Is_Style_Unrestricted | Is_Style_None =>
+      return False;
+    end case;
+  end Has_Style;
+
+
+  function Is_Ok (Item      : Identifier_Handle;
+                  The_Style : Lexical.Style_Pragma) return Boolean is
+  begin
+    if Has_Style (The_Style) then
       if Item.all in Operator_Symbol'class then
         if not Name.Is_Lower (Item.Id) then
           return False;
@@ -34,30 +44,17 @@ package body Ada_95.Token.Checker is
           return False;
         end if;
       end if;
-    when others =>
-      null;
-    end case;
+    end if;
     return True;
   end Is_Ok;
-
-
-  function Obsolescent_Pragma_Check (The_Style : Lexical.Style_Pragma) return Boolean is
-  begin
-    case The_Style is
-    when Is_Style_Soudronic | Is_Style_White_Elephant =>
-      return True;
-    when others =>
-      return False;
-    end case;
-  end Obsolescent_Pragma_Check;
 
 
   function Is_Restricted  (The_Style : Lexical.Style_Pragma) return Boolean is
   begin
     case The_Style is
-    when Is_Style_Soudronic | Is_Style_White_Elephant =>
+    when Is_Style_Soudronic | Is_Style_White_Elephant | Is_Style_None=>
       return True;
-    when others =>
+    when Is_Style_Unrestricted =>
       return False;
     end case;
   end Is_Restricted;

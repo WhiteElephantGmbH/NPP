@@ -2188,6 +2188,14 @@ package body Ada_95.Token.Parser is
       Report_Error (The_Error, At_Token);
     end Style_Error;
 
+    procedure Conditional_Style_Error (The_Error       : Error.Incorrect_Style;
+                                       The_Error_Token : Lexical_Handle := The_Token) is
+    begin
+      if Checker.Has_Style (The_Style) then
+        Style_Error (The_Error, The_Error_Token);
+      end if;
+    end Conditional_Style_Error;
+
     procedure Style_Error_If_Restricted (The_Error       : Error.Incorrect_Style;
                                          The_Error_Token : Lexical_Handle := The_Token) is
     begin
@@ -4244,8 +4252,8 @@ package body Ada_95.Token.Parser is
       when Lexical.Is_Build =>
         Handle_Build_Parameters;
       when Lexical.Obsolescent_Single_Pragma | Lexical.Obsolescent_Compound_Pragma =>
-        if not Special_Comment_Detected and then Checker.Obsolescent_Pragma_Check (The_Style) then
-          Report_Error (Error.Obsolescent_Pragma_Call, The_Token);
+        if not Special_Comment_Detected then
+          Conditional_Style_Error (Error.Obsolescent_Pragma_Call);
         end if;
         Handle_Other_Pragmas;
       when Lexical.Is_Unreferenced =>
@@ -7945,7 +7953,7 @@ package body Ada_95.Token.Parser is
       use type Data.List.Elements_Access;
     begin
       if not Is_Basic and Profile.Parameters /= null then
-        Style_Error_If_Restricted (Error.Restricted_Function_Expression, Profile_Token);
+        Conditional_Style_Error (Error.Function_Expression_Not_Allowed_In_Body, Profile_Token);
       end if;
       The_Unit := Data.New_Function_Expression_Declaration (The_Identifier, Scope, Profile);
       case Token_Element is
@@ -9824,7 +9832,7 @@ package body Ada_95.Token.Parser is
     --
     procedure Label (Scope : Data.Unit_Handle) is
     begin
-      Style_Error_If_Restricted (Error.Goto_Not_Allowed);
+      Style_Error_If_Restricted (Error.Goto_Label_Not_Allowed);
       Data.New_Label (Next_Declaring_Identifier, Scope);
       Get_Element (Lexical.End_Label);
     end Label;

@@ -215,7 +215,7 @@ package body File is
       begin
         if not (Name(Name'first) in '.') and then not Strings.Found_In (Exceptions, Name) then
           The_Count := The_Count + 1;
-          Iterate_Over_Leaf_Directories (Directory, Iterator);
+          Iterate_Over_Leaf_Directories (Directory, Iterator, Exceptions);
         end if;
       end;
     exception

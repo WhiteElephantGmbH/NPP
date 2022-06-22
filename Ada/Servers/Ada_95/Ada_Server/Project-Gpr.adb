@@ -7,7 +7,6 @@ pragma Style_White_Elephant;
 with Ada.Text_IO;
 with Build;
 with File;
-with Files;
 with Log;
 with Project.Resource;
 with Strings;
@@ -24,8 +23,6 @@ package body Project.Gpr is
     Project_Name : constant String := Name;
     Gpr_Name     : constant String := Project_Name & File_Extension;
 
-    Legacy_Interface_Name : constant String := Name & "_Interface";
-
     function Interface_Name return String is
     begin
       if Build.Is_Defined then
@@ -35,29 +32,7 @@ package body Project.Gpr is
       end if;
     end Interface_Name;
 
-    function Has_Legacy_Interface_In (The_Path : String) return Boolean is
-      Interface_Source     : constant String := The_Path & Files.Separator & Legacy_Interface_Name & ".ads";
-      Containing_Directory : constant String := File.Containing_Directory_Of (The_Path);
-    begin
-      if Containing_Directory /= Language_Directory then
-        if File.Exists (Interface_Source) then
-          return True;
-        end if;
-        return Has_Legacy_Interface_In (Containing_Directory);
-      end if;
-      return False;
-    end Has_Legacy_Interface_In;
-
-    function Project_Is_Dll return Boolean is
-    begin
-      if Build.Is_Defined then
-        return Build.Is_Dll;
-      else
-        return Has_Legacy_Interface_In (Folder);
-      end if;
-    end Project_Is_Dll;
-
-    Is_Dll : constant Boolean := Project_Is_Dll;
+    Product_Is_Dll : constant Boolean := Project.Is_Dll;
 
     Source       : constant String := Folder & Gpr_Name;
     Gpr_Filename : constant String := Created_Target_Folder & Gpr_Name;
@@ -101,7 +76,7 @@ package body Project.Gpr is
     Put ("      for Casing use ""mixedcase"";");
     Put ("   end Naming;");
     Put ("");
-    if Is_Dll then
+    if Product_Is_Dll then
       Put ("   for Library_Name use """ & Project_Name & """;");
       Put ("   for Shared_Library_Prefix use """";");
       Put ("");
@@ -116,13 +91,13 @@ package body Project.Gpr is
       end if;
     end loop;
     Put ("");
-    if Is_Dll then
+    if Product_Is_Dll then
       Put ("   for Library_Interface use (""" & Interface_Name & """);");
       Put ("");
     end if;
     Put ("   for Object_Dir use """ & Object_Area & """;");
     Put ("");
-    if Is_Dll then
+    if Product_Is_Dll then
       Put ("   for Library_Options use (""-L" & Product_Directory & """, ""resources.o"");");
       Put ("   for Library_Dir use """ & Product_Directory & Product_Sub_Path & """;");
       Put ("   for Library_Ali_Dir use """ & Target_Directory & """;");
@@ -139,7 +114,7 @@ package body Project.Gpr is
     Put ("");
     Put ("   package Builder is");
     Put ("      for Default_Switches (""ada"") use (""-s"", ""-g"");");
-    if not Is_Dll then
+    if not Product_Is_Dll then
       Put ("      for Executable (""" & Program_Unit_Name & """) use """ & Project_Name & """;");
     end if;
     Put ("   end Builder;");

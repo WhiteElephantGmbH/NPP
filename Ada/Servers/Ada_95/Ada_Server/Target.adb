@@ -22,7 +22,7 @@ package body Target is
 
   procedure Log_Execution (Item : String) is
   begin
-    Log.Write ("   -> " & Item);
+    Log.Write ("    -> " & Item);
   end Log_Execution;
 
 
@@ -228,7 +228,7 @@ package body Target is
     if Strings.Lowercase_Of(Filename(Filename'last - 2 .. Filename'last)) = "ads" then
       Promotion.Set_Message ("Check " & Filename);
       --TEST------------------------------------
-      Log.Write ("    -> Check: " & Filename);
+      Log_Execution ("Check: " & Filename);
       ------------------------------------------
       Gpr_Execute ("-ws -c -gnatc -u -q -eS " & Filename);
       Check_For_Parser_Errors_In (Filename);
@@ -236,7 +236,7 @@ package body Target is
     else
       Promotion.Set_Message ("Compile " & Filename);
       --TEST--------------------------------------
-      Log.Write ("    -> Compile: " & Filename);
+      Log_Execution ("Compile: " & Filename);
       --------------------------------------------
       Gpr_Execute ("-ws -c -u -q -eS " & Filename);
       Check_For_Parser_Errors_In (Filename);
@@ -261,6 +261,23 @@ package body Target is
   end Build;
 
 
+  procedure Modifier_Handling is
+    Modifier : constant String := Project.Modifier_Tool;
+  begin
+    if Modifier /= "" then
+      Log_Execution ("Modify: " & Project.Product);
+      declare
+        Result : constant String := Os.Process.Execution_Of (Executable => Modifier,
+                                                             Parameters => Project.Modifier_Parameters);
+      begin
+        if Result /= "" then
+          Log_Execution ("Modify Result: " & Result);
+        end if;
+      end;
+    end if;
+  end Modifier_Handling;
+
+
   procedure Promote (Filename : String) is
 
     procedure Promote is
@@ -272,6 +289,7 @@ package body Target is
           Project.Define_Environment;
         end if;
         Build (Filename);
+        Modifier_Handling;
       else
         if Project.Is_Maching (Filename) then
           Compile (Filename);

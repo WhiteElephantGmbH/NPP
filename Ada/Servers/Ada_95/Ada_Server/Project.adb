@@ -58,6 +58,9 @@ package body Project is
   The_Promotion_Areas    : Text.String;
   The_Library_Path       : Text.String;
 
+  The_Modifier_Tool       : Text.String;
+  The_Modifier_Parameters : Text.String;
+
   The_Source_Directories : String_List.Item;
   The_Ignore_Areas       : String_List.Item;
   The_Implied_Areas      : String_List.Item;
@@ -85,6 +88,8 @@ package body Project is
     Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
     Text.Clear (The_Library_Path);
+    Text.Clear (The_Modifier_Tool);
+    Text.Clear (The_Modifier_Parameters);
     Text.Clear (The_Actual_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
@@ -129,6 +134,10 @@ package body Project is
 
   function Name return String is (Text.String_Of (The_Project_Name));
 
+  function Modifier_Tool return String is (Text.String_Of (The_Modifier_Tool));
+
+  function Modifier_Parameters return String is (Text.String_Of (The_Modifier_Parameters));
+
   function Binary_Folder return String is (Text.String_Of (The_Binary_Root) & Files.Separator);
 
   function Source_Folder return String is (Text.String_Of (The_Source_Root) & Files.Separator);
@@ -136,6 +145,36 @@ package body Project is
   function Product_Directory return String is (Text.String_Of (The_Product_Directory) & Compiler_Area);
 
   function Product_Sub_Path return String is (Text.String_Of (The_Product_Sub_Path));
+
+  function Product_Extension return String is (if Is_Dll then ".dll" else ".exe");
+
+  function Product return String is (Product_Directory & Product_Sub_Path & Files.Separator & Name & Product_Extension);
+
+  function Legacy_Interface_Name return String is (Name & "_Interface");
+
+
+  function Has_Legacy_Interface_In (The_Path : String) return Boolean is
+    Interface_Source     : constant String := The_Path & Files.Separator & Legacy_Interface_Name & ".ads";
+    Containing_Directory : constant String := File.Containing_Directory_Of (The_Path);
+  begin
+    if Containing_Directory /= Language_Directory then
+      if File.Exists (Interface_Source) then
+        return True;
+      end if;
+      return Has_Legacy_Interface_In (Containing_Directory);
+    end if;
+    return False;
+  end Has_Legacy_Interface_In;
+
+
+  function Is_Dll return Boolean is
+  begin
+    if Build.Is_Defined then
+      return Build.Is_Dll;
+    else
+      return Has_Legacy_Interface_In (Folder);
+    end if;
+  end Is_Dll;
 
 
   function Is_Defined return Boolean is
@@ -532,6 +571,43 @@ package body Project is
     end Define_Location;
 
 
+    procedure Define_Modifier is
+
+      Modifier  : constant String := Element_Of (Application => "Product", Key => "Modifier", Must_Exist => False);
+      Items     : constant Strings.Item := Strings.Item_Of (Modifier, Separator => '|');
+      Tool      : constant String := (if Items.Count > 0 then Strings.Trimmed (Items(Strings.First_Index)) else "");
+      Parameter : constant String := (if Items.Count = 2 then Strings.Trimmed (Items(Strings.First_Index + 1)) else "");
+
+      Product_Id : constant String := "%Product%";
+
+      From_Index : Natural;
+
+    begin
+      if Modifier = "" then
+        return;
+      elsif Items.Count > 2 then
+        Set_Error ("Modifier incorrect parameters");
+      elsif Tool = "" then
+        Set_Error ("Product Modifier not defined");
+      elsif not File.Exists (Tool) then
+        Set_Error ("Product Modifier <" & Tool & "> unknown");
+      end if;
+      The_Modifier_Tool := Text.String_Of (Tool);
+      Log.Write ("||| Modifier - Tool       : " & Modifier_Tool);
+      if Items.Count = 2 then
+        The_Modifier_Parameters := Text.String_Of (Parameter);
+        From_Index :=  Text.Location_Of (Product_Id, In_String => The_Modifier_Parameters);
+        if From_Index /= Text.Not_Found then
+          Text.Replace_Slice_In (The_String => The_Modifier_Parameters,
+                                 From       => From_Index,
+                                 To         => From_Index + Product_Id'length - 1,
+                                 The_Source => Product);
+          Log.Write ("|||          - Parameters : " & Modifier_Parameters);
+        end if;
+      end if;
+    end Define_Modifier;
+
+
     procedure Define_Default_Tools is
 
       The_Directory : constant String := Text.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
@@ -685,6 +761,7 @@ package body Project is
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
+    Define_Modifier;
     declare
       Case_Update : constant String := Element_Of (Key => "Case_Update", Application => "Style", Must_Exist => False);
       Token_Kind  : constant String := Strings.Legible_Of (Case_Update);

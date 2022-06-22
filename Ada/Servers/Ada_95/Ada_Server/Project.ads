@@ -27,6 +27,10 @@ package Project is
 
   function Product_Sub_Path return String;
 
+  function Is_Dll return Boolean;
+
+  function Product return String;
+
   function Is_In_Reference_Area (Filename : String) return Boolean;
 
   function Run return Boolean;
@@ -51,6 +55,10 @@ package Project is
 
   function Directory return String;
 
+  function Modifier_Tool return String;
+
+  function Modifier_Parameters return String;
+
   function Language_Directory return String;
 
   function Has_New_Resource return Boolean;
@@ -72,7 +80,7 @@ package Project is
   function Has_Second_Compiler return Boolean;
 
   procedure Set_Back_To_First_Compiler;
-  
+
   function Is_Maching (Filename : String) return Boolean;
 
   procedure Define_Environment;
@@ -94,6 +102,8 @@ private
   function Target_Folder return String;
 
   function Tools_Directory return String;
+
+  function Legacy_Interface_Name return String;
 
   procedure Set_Error (Message : String) with No_Return;
 

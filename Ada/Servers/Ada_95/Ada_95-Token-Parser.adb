@@ -4033,7 +4033,7 @@ package body Ada_95.Token.Parser is
           if not Build.Defined_Compiler (String_Element (Compilers_Defined)) then
             Report_Error (Error.Unknown_Tools_Directory, String_Token);
           end if;
-          if Build.Tools_Default_Set then
+          if Build.Global_Tools_Used then
             Identifier_Handle(Argument_Handle).Data := null;
           end if;
         end Define_Compiler;
@@ -4067,6 +4067,9 @@ package body Ada_95.Token.Parser is
               Compilers_Defined := Build.Defined_Compilers (First  => First_Compiler,
                                                             Second => "");
 
+            end if;
+            if Build.Global_Tools_Used then
+              Identifier_Handle(Argument_Handle).Data := null;
             end if;
           end;
           Get_Element (Lexical.Right_Parenthesis);

@@ -192,7 +192,7 @@ package body Npp.Plugin is
                                 For_Code : Win.INT) is
     use type Handler_List.Item;
   begin
-    The_Notify_Handlers(Last_Id) := The_Notify_Handlers(Last_Id) + (Handler, For_Code);
+    The_Notify_Handlers(Last_Id) := The_Notify_Handlers(Last_Id) + Handler_Data'(Handler, For_Code);
   end Add_Notify_Handler;
 
 

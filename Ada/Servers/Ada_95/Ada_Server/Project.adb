@@ -631,7 +631,7 @@ package body Project is
     end Define_Modifier;
 
 
-    procedure Define_Default_Tools is
+    procedure Define_Global_Tools is
 
       The_Directory : constant String := Text.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
 
@@ -640,10 +640,9 @@ package body Project is
        if not File.Directory_Exists (The_Directory) then
          Set_Error ("Tools Directory <" & The_Directory & "> Unknown");
        end if;
-       Build.Set_Tools_Default;
-       Build.Define_Tools_Directory (The_Directory);
+       Build.Define_Global_Tools_Directory (The_Directory);
      end if;
-    end Define_Default_Tools;
+    end Define_Global_Tools;
 
 
     procedure Define_Source_Path (Path_Name  :        String;
@@ -779,7 +778,7 @@ package body Project is
     Define_Source_Path ("Ignore", The_Ignore_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Define_Source_Path ("Path", The_Implied_Areas, The_Path => The_Base_Path);
     Define_Source_Path ("Reference", The_Reference_Areas, The_Path => The_Base_Path);
-    Define_Default_Tools;
+    Define_Global_Tools;
     Define_Libraries;
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");

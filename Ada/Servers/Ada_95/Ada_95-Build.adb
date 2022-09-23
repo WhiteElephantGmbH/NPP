@@ -16,22 +16,23 @@ package body Ada_95.Build is
 
   type Directories is array (Tools_Kind) of Text.String;
 
-  The_Project_Folder    : Text.String;
-  Build_Defined         : Boolean;
-  Use_Icon              : Boolean;
-  The_Version           : Version;
-  The_Kind              : Kind;
-  The_Company           : Text.String;
-  The_Description       : Text.String;
-  The_Tools_Directory   : Text.String;
-  The_Tools_Kind        : Tools_Kind;
-  The_Tools_Directories : Directories;
-  Tools_Have_Default    : Boolean;
-  Has_Second_Tools      : Boolean;
-  The_Libraries         : String_List.Item;
-  The_Resource          : Text.String;
-  The_Interface         : Text.String;
-  Library_Check         : Library_Check_Function;
+  The_Project_Folder          : Text.String;
+  Build_Defined               : Boolean;
+  Use_Icon                    : Boolean;
+  The_Version                 : Version;
+  The_Kind                    : Kind;
+  The_Company                 : Text.String;
+  The_Description             : Text.String;
+  The_Global_Tools_Directory : Text.String;
+  Global_Tools_In_Use        : Boolean;
+  The_Tools_Directory         : Text.String;
+  The_Tools_Kind              : Tools_Kind;
+  The_Tools_Directories       : Directories;
+  Has_Second_Tools            : Boolean;
+  The_Libraries               : String_List.Item;
+  The_Resource                : Text.String;
+  The_Interface               : Text.String;
+  Library_Check               : Library_Check_Function;
 
 
   procedure Initialize (Filename   : String;
@@ -44,7 +45,8 @@ package body Ada_95.Build is
     Use_Icon := True;
     The_Kind := Windows_Application;
     The_Version := (others => <>);
-    if Is_Startup or (not Tools_Have_Default) then
+    if Is_Startup then
+      Text.Clear (The_Global_Tools_Directory);
       Text.Clear (The_Tools_Directory);
       Text.Clear (The_Tools_Directories(Size_32));
       Text.Clear (The_Tools_Directories(Size_64));
@@ -55,9 +57,6 @@ package body Ada_95.Build is
     Text.Clear (The_Resource);
     Text.Clear (The_Interface);
     String_List.Clear (The_Libraries);
-    if Is_Startup then
-      Tools_Have_Default := False;
-    end if;
   end Initialize;
 
 
@@ -153,39 +152,51 @@ package body Ada_95.Build is
   end System_Drive;
 
 
-  function Tools_Location_Of (Compiler : String) return String is
-  begin
-    return System_Drive & Files.Separator & Compiler & Files.Separator  & "bin";
-  end Tools_Location_Of;
-
-
-  function Exists (Compiler : String) return Boolean is
-  begin
-    return Files.Directory_Exists (Tools_Location_Of (Compiler));
-  end Exists;
-
-
-  function Defined_Compiler (Item : String) return Boolean is
-    The_Directory : constant String := Tools_Location_Of (Item);
-  begin
-    if Files.Directory_Exists (The_Directory) then
-      if not Tools_Have_Default then
-        Has_Second_Tools := False;
-        Text.Clear (The_Tools_Directories(Size_32));
-        Text.Clear (The_Tools_Directories(Size_64));
-        Define_Tools_Directory (The_Directory);
-      end if;
-      return True;
-    end if;
-    return False;
-  end Defined_Compiler;
-
-
   function Is_Size_32 (Location : String) return Boolean is
     Gcc_32 : constant String := "i686-pc-mingw32-gcc.exe";
   begin
     return Files.Exists (Location & Files.Separator & Gcc_32);
   end Is_Size_32;
+
+
+  function Tools_Location_Of (Compiler    : String;
+                              Global_Used : in out Boolean) return String is
+    Global_Tools : constant String := Text.String_Of (The_Global_Tools_Directory);
+    Actual_Tools : constant String := System_Drive & Files.Separator & Compiler & Files.Separator  & "bin";
+  begin
+    if Global_Tools /= "" and then Global_Tools /= Actual_Tools and then
+      Is_Size_32 (Global_Tools) = Is_Size_32 (Actual_Tools)
+    then
+      Global_Used := True;
+      return Global_Tools;
+    else
+      return Actual_Tools;
+    end if;
+  end Tools_Location_Of;
+
+
+  function Exists (Compiler : String) return Boolean is
+  begin
+    return Files.Directory_Exists (Tools_Location_Of (Compiler, Global_Tools_In_Use));
+  end Exists;
+
+
+  function Defined_Compiler (Item : String) return Boolean is
+  begin
+    Global_Tools_In_Use := False;
+    declare
+      The_Directory : constant String := Tools_Location_Of (Item, Global_Tools_In_Use);
+    begin
+      if Files.Directory_Exists (The_Directory) then
+        Has_Second_Tools := False;
+        Text.Clear (The_Tools_Directories(Size_32));
+        Text.Clear (The_Tools_Directories(Size_64));
+        Define_Tools_Directory (The_Directory);
+        return True;
+      end if;
+    end;
+    return False;
+  end Defined_Compiler;
 
 
   function Directories_Area return String is
@@ -219,35 +230,46 @@ package body Ada_95.Build is
 
   function Defined_Compilers (First  : String;
                               Second : String) return Boolean is
-    First_Location : constant String := Tools_Location_Of (First);
   begin
-    if Tools_Have_Default then
-      return True;
-    end if;
-    Text.Clear (The_Tools_Directory);
-    Text.Clear (The_Tools_Directories(Size_32));
-    Text.Clear (The_Tools_Directories(Size_64));
-    Has_Second_Tools := False;
-    if Files.Directory_Exists (First_Location) then
-      if Second = "" then
-        if Set_Tools (First_Location) then
-          return True;
-        end if;
-      end if;
-      declare
-        Second_Location : constant String := Tools_Location_Of (Second);
-      begin
-        if Files.Directory_Exists (Second_Location) then
-          if Set_Tools (First_Location) and then Set_Tools (Second_Location) then
-            Has_Second_Tools := True;
-            The_Tools_Kind := Size_64;
+    Global_Tools_In_Use := False;
+    declare
+      First_Location : constant String := Tools_Location_Of (First, Global_Tools_In_Use);
+    begin
+      Text.Clear (The_Tools_Directory);
+      Text.Clear (The_Tools_Directories(Size_32));
+      Text.Clear (The_Tools_Directories(Size_64));
+      Has_Second_Tools := False;
+      if Files.Directory_Exists (First_Location) then
+        if Second = "" then
+          if Set_Tools (First_Location) then
             return True;
           end if;
         end if;
-      end;
-    end if;
+        declare
+          Second_Location : constant String := Tools_Location_Of (Second, Global_Tools_In_Use);
+        begin
+          if Files.Directory_Exists (Second_Location) then
+            if Set_Tools (First_Location) and then Set_Tools (Second_Location) then
+              Has_Second_Tools := True;
+              The_Tools_Kind := Size_64;
+              return True;
+            end if;
+          end if;
+        end;
+      end if;
+    end;
     return False;
   end Defined_Compilers;
+
+
+  procedure Define_Global_Tools_Directory (Item : String) is
+  begin
+    Log.Write ("||| Global Tools Directory: " & Item);
+    The_Global_Tools_Directory := Text.String_Of (File.Normalized (Item));
+  end Define_Global_Tools_Directory;
+
+
+  function Global_Tools_Used return Boolean is (Global_Tools_In_Use);
 
 
   procedure Define_Tools_Directory (Item : String) is
@@ -256,15 +278,10 @@ package body Ada_95.Build is
     The_Tools_Directory := Text.String_Of (File.Normalized (Item));
   end Define_Tools_Directory;
 
+
+  function Has_Global_Tools_Directory return Boolean is (not Text.Is_Null (The_Global_Tools_Directory));
+
   function Has_Tools_Directory return Boolean is (not Text.Is_Null (The_Tools_Directory));
-
-
-  procedure Set_Tools_Default is
-  begin
-    Log.Write ("||| Tools have default");
-    Tools_Have_Default := True;
-  end Set_Tools_Default;
-
 
   function Has_Tools_Directories return Boolean is (not Text.Is_Null (The_Tools_Directories(The_Tools_Kind)));
 
@@ -279,17 +296,17 @@ package body Ada_95.Build is
       return Text.String_Of (The_Tools_Directory);
     elsif Has_Tools_Directories then
       return Text.String_Of (The_Tools_Directories(The_Tools_Kind));
+    elsif Has_Global_Tools_Directory then
+      return Text.String_Of (The_Global_Tools_Directory);
     else
       raise Program_Error;
     end if;
   end Tools_Directory;
 
-  function Tools_Default_Set return Boolean is (Tools_Have_Default);
-
 
   function Tools_Defined return Boolean is
   begin
-    return Has_Tools_Directory or Has_Tools_Directories;
+    return Has_Global_Tools_Directory or Has_Tools_Directory or Has_Tools_Directories;
   end Tools_Defined;
 
 

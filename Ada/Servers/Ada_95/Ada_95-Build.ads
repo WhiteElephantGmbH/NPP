@@ -67,13 +67,13 @@ package Ada_95.Build is
 
   function Tools_Defined return Boolean;
 
+  procedure Define_Global_Tools_Directory (Item : String);
+
+  function Global_Tools_Used return Boolean;
+
   procedure Define_Tools_Directory (Item : String);
 
-  procedure Set_Tools_Default;
-
   function Tools_Directory return String;
-
-  function Tools_Default_Set return Boolean;
 
   function Tools_Kind_Image return String;
 

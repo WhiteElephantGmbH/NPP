@@ -121,7 +121,7 @@ package body Project.Gpr is
     Put ("");
     Put ("   package Compiler is");
     Put ("      for Default_Switches (""ada"") use");
-    Put ("         (""-O1"", ""-gnatQ"", ""-gnata"", ""-gnato"", ""-g"", ""-gnat12"",");
+    Put ("         (""-O1"", ""-gnatQ"", ""-gnata"", ""-gnato"", ""-g"", ""-" & Ada_Version & """,");
     Put ("          ""-gnatwceGhijkmopruvz.c.N.p.t.w.x"", ""-gnatykmpM120"");");
     Put ("   end Compiler;");
     Put ("");

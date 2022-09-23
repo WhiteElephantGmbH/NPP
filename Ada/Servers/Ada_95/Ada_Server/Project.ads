@@ -55,6 +55,8 @@ package Project is
 
   function Directory return String;
 
+  function Ada_Version return String;
+
   function Modifier_Tool return String;
 
   function Modifier_Parameters return String;

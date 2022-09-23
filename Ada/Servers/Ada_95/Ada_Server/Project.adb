@@ -28,6 +28,8 @@ package body Project is
 
   Body_Extension : constant String := ".adb";
 
+  Default_Ada_Version : constant String := "gnat2012";
+
   use type Strings.Item;
   Leaf_Directory_Exceptions : constant Strings.Item := "$Osx" + "$Linux" + Build.Sub_Directories;
 
@@ -57,6 +59,8 @@ package body Project is
   The_Product_Sub_Path   : Text.String;
   The_Promotion_Areas    : Text.String;
   The_Library_Path       : Text.String;
+
+  The_Ada_Version : Text.String;
 
   The_Modifier_Tool       : Text.String;
   The_Modifier_Parameters : Text.String;
@@ -88,6 +92,7 @@ package body Project is
     Text.Clear (The_Product_Sub_Path);
     Text.Clear (The_Promotion_Areas);
     Text.Clear (The_Library_Path);
+    Text.Clear (The_Ada_Version);
     Text.Clear (The_Modifier_Tool);
     Text.Clear (The_Modifier_Parameters);
     Text.Clear (The_Actual_Tools_Directory);
@@ -133,6 +138,8 @@ package body Project is
   function Actual return String is (Text.String_Of (The_Actual_Project));
 
   function Name return String is (Text.String_Of (The_Project_Name));
+
+  function Ada_Version return String is (Text.String_Of (The_Ada_Version));
 
   function Modifier_Tool return String is (Text.String_Of (The_Modifier_Tool));
 
@@ -571,6 +578,22 @@ package body Project is
     end Define_Location;
 
 
+    procedure Define_Ada_Version is
+
+      The_Version : constant String := Text.Trimmed (Element_For (Application => "Ada", Key => "Version"));
+
+    begin
+     if The_Version = "" then
+       The_Ada_Version := Text.String_Of (Default_Ada_Version);
+     else
+       The_Ada_Version := Text.Lowercase_Of (The_Version);
+       if not (Ada_Version in "gnat83" | "gnat95" | "gnat05" | "gnat2005" | "gnat12" | "gnat2012" | "gnat2022") then
+         Set_Error ("Ada version " & The_Version & " unknown - latest supported version: gnat2022");
+       end if;
+     end if;
+    end Define_Ada_Version;
+
+
     procedure Define_Modifier is
 
       Modifier  : constant String := Element_Of (Application => "Product", Key => "Modifier", Must_Exist => False);
@@ -761,6 +784,7 @@ package body Project is
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
+    Define_Ada_Version;
     Define_Modifier;
     declare
       Case_Update : constant String := Element_Of (Key => "Case_Update", Application => "Style", Must_Exist => False);

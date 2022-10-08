@@ -162,7 +162,8 @@ package body Ada_95.Build is
   function Tools_Location_Of (Compiler    : String;
                               Global_Used : in out Boolean) return String is
     Global_Tools : constant String := Text.String_Of (The_Global_Tools_Directory);
-    Actual_Tools : constant String := System_Drive & Files.Separator & Compiler & Files.Separator  & "bin";
+    Actual_Tools : constant String := Files.Original_Name_Of
+                                        (System_Drive & Files.Separator & Compiler & Files.Separator  & "bin");
   begin
     if Global_Tools /= "" and then Global_Tools /= Actual_Tools and then
       Is_Size_32 (Global_Tools) = Is_Size_32 (Actual_Tools)
@@ -263,9 +264,10 @@ package body Ada_95.Build is
 
 
   procedure Define_Global_Tools_Directory (Item : String) is
+    Original_Name : constant String := Files.Original_Name_Of (Item);
   begin
-    Log.Write ("||| Global Tools Directory: " & Item);
-    The_Global_Tools_Directory := Text.String_Of (File.Normalized (Item));
+    Log.Write ("||| Global Tools Directory: " & Original_Name);
+    The_Global_Tools_Directory := Text.String_Of (Original_Name);
   end Define_Global_Tools_Directory;
 
 

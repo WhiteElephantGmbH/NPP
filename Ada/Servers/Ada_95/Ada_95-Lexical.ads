@@ -69,6 +69,7 @@ package Ada_95.Lexical is
     Is_Protected,
     Is_Abs,
     Is_Rem,
+    Is_Parallel,
     Is_Separate,
     Is_Tagged,
     Is_Abort,

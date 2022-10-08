@@ -508,6 +508,7 @@ package body Ada_95.Token.Parser is
     --    | case_statement
     --    | loop_statement
     --    | block_statement
+    --    | parallel_block_statement
     --    | accept_statement
     --    | select_statement
     --
@@ -1480,6 +1481,22 @@ package body Ada_95.Token.Parser is
     --      end [[parent_unit_name.]identifier]
     --
     procedure Package_Specification (Self : Data.Unit_Handle);
+
+
+    -- parallel_block_statement ::=
+    --      parallel [(chunk_specification)] [aspect_specification] do
+    --        sequence_of_statements
+    --      and
+    --        sequence_of_statements
+    --      {and
+    --        sequence_of_statements}
+    --      end do;
+    --
+    --    chunk_specification ::=
+    --         integer_simple_expression
+    --       | defining_identifier in discrete_subtype_definition
+    --
+    procedure Parallel_Block_Statement (Scope : Data.Unit_Handle);
 
 
     -- parameter_association ::=
@@ -9971,6 +9988,40 @@ package body Ada_95.Token.Parser is
     end While_Loop_Statement;
 
 
+    -- parallel_block_statement ::=
+    --      parallel [(chunk_specification)] [aspect_specification] do
+    --        sequence_of_statements
+    --      and
+    --        sequence_of_statements
+    --      {and
+    --        sequence_of_statements}
+    --      end do;
+    --
+    --    chunk_specification ::=
+    --         integer_simple_expression
+    --       | defining_identifier in discrete_subtype_definition
+    --
+    procedure Parallel_Block_Statement (Scope : Data.Unit_Handle) is
+      The_Type : Data_Handle;
+    begin
+      Get_Next_Token;
+      if not Element_Is (Lexical.Is_Do) then
+        The_Type := Expression ((Scope, null));
+        Conditional_Aspect_Specification ((Scope, The_Type));
+        Get_Element (Lexical.Is_Do);
+      end if;
+      Sequence_Of_Statements (Scope);
+      Get_Element (Lexical.Is_And);
+      Sequence_Of_Statements (Scope);
+      while Element_Is (Lexical.Is_And) loop
+        Sequence_Of_Statements (Scope);
+      end loop;
+      Get_Element (Lexical.Is_End);
+      Get_Element (Lexical.Is_Do);
+      Get_Element (Lexical.Semicolon);
+    end Parallel_Block_Statement;
+
+
     -- raise_expression ::=
     --      raise exception_name [with string_expression]
     --
@@ -10325,6 +10376,7 @@ package body Ada_95.Token.Parser is
     --            | case_statement
     --            | loop_statement
     --            | block_statement
+    --            | parallel_block_statement
     --            | accept_statement
     --            | select_statement
     --
@@ -10379,6 +10431,8 @@ package body Ada_95.Token.Parser is
           While_Loop_Statement (Scope);
         when Lexical.Is_Begin | Lexical.Is_Declare =>
           Block_Statement (Scope);
+        when Lexical.Is_Parallel =>
+          Parallel_Block_Statement (Scope);
         when Lexical.Is_Select =>
           Select_Statement (Scope);
         when Lexical.Is_Pragma =>

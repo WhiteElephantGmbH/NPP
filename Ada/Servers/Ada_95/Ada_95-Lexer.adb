@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -69,6 +69,8 @@ package body Ada_95.Lexer is
                             Symbol_Apostrophe,
                             Symbol_Left_Parenthesis,
                             Symbol_Right_Parenthesis,
+                            Symbol_Left_Bracket,
+                            Symbol_Right_Bracket,
                             Symbol_Plus,
                             Symbol_Minus,
                             Symbol_Asterisk,
@@ -91,7 +93,6 @@ package body Ada_95.Lexer is
 
   Token_Start : constant Token_Start_Map := (Lowercase_Letter_Range => Name_Start,
                                              Uppercase_Letter_Range => Name_Start,
-                                             Left_Bracket           => Name_Start,
                                              Special_Letter_Range_1 => Name_Start,
                                              Special_Letter_Range_2 => Name_Start,
                                              Special_Letter_Range_3 => Name_Start,
@@ -104,6 +105,8 @@ package body Ada_95.Lexer is
                                              Part_Separator         => Symbol_Underscore,
                                              Ampersand              => Symbol_Ampersand,
                                              Apostrophe             => Symbol_Apostrophe,
+                                             Left_Bracket           => Symbol_Left_Bracket,
+                                             Right_Bracket          => Symbol_Right_Bracket,
                                              Left_Parenthesis       => Symbol_Left_Parenthesis,
                                              Right_Parenthesis      => Symbol_Right_Parenthesis,
                                              Plus                   => Symbol_Plus,
@@ -123,7 +126,7 @@ package body Ada_95.Lexer is
                                              others                 => Unknown);
 
 
-  type Name_Continuation_Kind is (Alpha_Numeric, Bracket_Notation, Name_Separator, Separator);
+  type Name_Continuation_Kind is (Alpha_Numeric, Name_Separator, Separator);
 
   type Name_Continuation_Map is array (Character) of Name_Continuation_Kind;
 
@@ -133,7 +136,6 @@ package body Ada_95.Lexer is
                                                          Special_Letter_Range_2 => Alpha_Numeric,
                                                          Special_Letter_Range_3 => Alpha_Numeric,
                                                          Number_Range           => Alpha_Numeric,
-                                                         Left_Bracket           => Bracket_Notation,
                                                          Part_Separator         => Name_Separator,
                                                          others                 => Separator);
 
@@ -197,26 +199,13 @@ package body Ada_95.Lexer is
         raise Error_Detected;
       end Add_Error;
 
-      procedure Handle_Bracket_Notation is
-      begin
-        while The_Index < Last loop
-          The_Index := The_Index + 1;
-          exit when Line(The_Index) = Right_Bracket;
-        end loop;
-      end Handle_Bracket_Notation;
-
       procedure Handle_Name is
         The_Position : Token.Column_Position := The_Index;
       begin
-        if Line(The_Index) = Left_Bracket then
-          Handle_Bracket_Notation;
-        end if;
         while The_Index < Last loop
           case Name_Continuation (Line(The_Index + 1)) is
           when Alpha_Numeric =>
             The_Index := The_Index + 1;
-          when Bracket_Notation =>
-            Handle_Bracket_Notation;
           when Name_Separator =>
             Name.Add (String(Line(The_Position .. The_Index)));
             if The_Position > The_Index then
@@ -678,6 +667,12 @@ package body Ada_95.Lexer is
           when Symbol_Ampersand =>
             The_Index := The_Index + 1;
             Symbol.Add (Lexical.Ampersand);
+          when Symbol_Left_Bracket =>
+            The_Index := The_Index + 1;
+            Symbol.Add (Lexical.Left_Bracket);
+          when Symbol_Right_Bracket =>
+            The_Index := The_Index + 1;
+            Symbol.Add (Lexical.Right_Bracket);
           when Symbol_Left_Parenthesis =>
             The_Index := The_Index + 1;
             Symbol.Add (Lexical.Left_Parenthesis);

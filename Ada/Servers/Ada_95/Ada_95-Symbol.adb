@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -33,6 +33,8 @@ package body Ada_95.Symbol is
     when Lexical.Minus             => return "-";
     when Lexical.Asterisk          => return "*";
     when Lexical.Slash             => return "/";
+    when Lexical.Left_Bracket      => return "[";
+    when Lexical.Right_Bracket     => return "]";
     when Lexical.Left_Parenthesis  => return "(";
     when Lexical.Right_Parenthesis => return ")";
     when Lexical.Exponentiation    => return "**";

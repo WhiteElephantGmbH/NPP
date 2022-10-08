@@ -33,6 +33,7 @@ package body Ada_95.Token.Parser is
 
   type Simple_Expression_Element is
     (Allocator,
+     Aggregate,
      Aggregate_Or_Expression, -- Expression in parenthesis
      Is_Identifier,
      Operator,
@@ -53,6 +54,7 @@ package body Ada_95.Token.Parser is
 
   Next_Simple_Expression_Data : constant Simple_Expression_Data :=
     (S_0    => (Lexical.Plus | Lexical.Minus                                       => (S_1,   Operator),
+                Lexical.Left_Bracket                                               => (F_111, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_111, Is_Integer_Literal),
@@ -63,7 +65,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_112, Operator),
                 others                                                             => (S_0,   Unexpected)),
 
-     S_1    => (Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
+     S_1    => (Lexical.Left_Bracket                                               => (F_111, Aggregate),
+                Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_111, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_111, Is_Real_Literal),
@@ -78,7 +81,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
                 others                                                             => (S_0,   Unknown)),
 
-     F_112  => (Lexical.Left_Parenthesis                                           => (T_11,  Aggregate_Or_Expression),
+     F_112  => (Lexical.Left_Bracket                                               => (T_11,  Aggregate),
+                Lexical.Left_Parenthesis                                           => (T_11,  Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (T_11,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_11,  Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (T_11,  Is_Real_Literal),
@@ -91,7 +95,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
                 others                                                             => (S_0,   Unknown)),
 
-     T_12   => (Lexical.Left_Parenthesis                                           => (F_121, Aggregate_Or_Expression),
+     T_12   => (Lexical.Left_Bracket                                               => (F_121, Aggregate),
+                Lexical.Left_Parenthesis                                           => (F_121, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_121, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_121, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_121, Is_Real_Literal),
@@ -106,7 +111,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
                 others                                                             => (S_0,   Unknown)),
 
-     S_2    => (Lexical.Left_Parenthesis                                           => (F_211, Aggregate_Or_Expression),
+     S_2    => (Lexical.Left_Bracket                                               => (F_211, Aggregate),
+                Lexical.Left_Parenthesis                                           => (F_211, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_211, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_211, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_211, Is_Real_Literal),
@@ -121,7 +127,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
                 others                                                             => (S_0,   Unknown)),
 
-     F_212  => (Lexical.Left_Parenthesis                                           => (T_21,  Aggregate_Or_Expression),
+     F_212  => (Lexical.Left_Bracket                                               => (T_21,  Aggregate),
+                Lexical.Left_Parenthesis                                           => (T_21,  Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (T_21,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_21,  Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (T_21,  Is_Real_Literal),
@@ -134,7 +141,8 @@ package body Ada_95.Token.Parser is
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
                 others                                                             => (S_0,   Unknown)),
 
-     T_22   => (Lexical.Left_Parenthesis                                           => (F_221, Aggregate_Or_Expression),
+     T_22   => (Lexical.Left_Bracket                                               => (F_221, Aggregate),
+                Lexical.Left_Parenthesis                                           => (F_221, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_221, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_221, Is_Integer_Literal),
                 Lexical.Real_Literal                                               => (F_221, Is_Real_Literal),
@@ -3128,6 +3136,8 @@ package body Ada_95.Token.Parser is
             The_Type := Data.Predefined_Root_String;
           end if;
           Get_Next_Token;
+        when Aggregate =>
+          The_Type := Aggregate (Within);
         when Aggregate_Or_Expression =>
           if Next_Element_Ahead_Is (Lexical.Is_Raise) then
             Get_Next_Token;
@@ -3359,8 +3369,10 @@ package body Ada_95.Token.Parser is
     --
     function Aggregate (Within : Data.Context) return Data_Handle is
 
-      The_Result_Type   : Data_Handle := Within.Sub_Type;
-      The_Instantiation : Data.Instantiation_Handle := null;
+      The_Result_Type     : Data_Handle := Within.Sub_Type;
+      The_Instantiation   : Data.Instantiation_Handle := null;
+      Termination_Element : Lexical.Element;
+
 
       -- array_aggregate ::=
       --       positional_array_aggregate
@@ -3396,10 +3408,12 @@ package body Ada_95.Token.Parser is
               if not Element_Is (Lexical.Unconstrained) then
                 Dummy := Expression ((Within.Scope, The_Type));
               end if;
-            else
-              Get_Element (Lexical.Left_Parenthesis);
+            elsif Element_Is (Lexical.Left_Parenthesis) then
               Array_Aggregate (Definition, Index + 1);
               Get_Element (Lexical.Right_Parenthesis);
+            elsif Element_Is (Lexical.Left_Bracket) then
+              Array_Aggregate (Definition, Index + 1);
+              Get_Element (Lexical.Right_Bracket);
             end if;
           end Component;
 
@@ -3445,9 +3459,10 @@ package body Ada_95.Token.Parser is
                 case Token_Element is
                 when Lexical.Comma =>
                   Get_Next_Token;
-                when Lexical.Right_Parenthesis =>
-                  return;
                 when others =>
+                  if Token_Element = Termination_Element then
+                    return;
+                  end if;
                   Not_Implemented ("associated array_aggregate (unknown)");
                 end case;
                 if Element_Is (Lexical.Is_Others) then
@@ -3466,9 +3481,10 @@ package body Ada_95.Token.Parser is
                 case Token_Element is
                 when Lexical.Comma =>
                   Get_Next_Token;
-                when Lexical.Right_Parenthesis =>
-                  return;
                 when others =>
+                  if Token_Element = Termination_Element then
+                    return;
+                  end if;
                   Not_Implemented ("array_aggregate (unknown)");
                 end case;
                 if Element_Is (Lexical.Is_Others) then
@@ -3654,8 +3670,6 @@ package body Ada_95.Token.Parser is
              | Lexical.Is_With
           =>
             Get_Next_Token;
-          when Lexical.Right_Parenthesis =>
-            exit;
           when Lexical.Is_If =>
             The_Result_Type := If_Expression (Within);
             --TEST----------------------------------------
@@ -3681,6 +3695,7 @@ package body Ada_95.Token.Parser is
             --------------------------------------
             exit;
           when others =>
+            exit when Token_Element = Termination_Element;
             Not_Implemented ("Aggregate: " & Image_Of (The_Token.all));
           end case;
         end loop;
@@ -3689,6 +3704,18 @@ package body Ada_95.Token.Parser is
       The_Base_Type : Data_Handle;
 
     begin --Aggregate
+      case Token_Element is
+      when Lexical.Left_Parenthesis =>
+        Termination_Element := Lexical.Right_Parenthesis;
+      when Lexical.Left_Bracket =>
+        if Next_Element_Ahead_Is (Lexical.Right_Bracket) then
+          Get_Next_Token;
+          return The_Result_Type;
+        end if;
+        Termination_Element := Lexical.Right_Bracket;
+      when others =>
+        raise Program_Error;
+      end case;
       Get_Next_Token;
       if Within.Sub_Type = null or else
         not ((Within.Sub_Type.all in Data.Type_Declaration'class) or
@@ -3720,7 +3747,7 @@ package body Ada_95.Token.Parser is
             The_Type    : Data_Handle;
           begin
             The_Type := Expression (Within); -- qualified expresssion
-            if (The_Type /= null) and then Element_Is (Lexical.Right_Parenthesis) then
+            if (The_Type /= null) and then Element_Is (Termination_Element) then
               --TEST--------------------------------------------------------------------------
               --Write_Log ("-> Qualified Expression");
               --Write_Log ("  Result Type Name: " & Data.Full_Name_Of (The_Type));
@@ -3823,7 +3850,7 @@ package body Ada_95.Token.Parser is
       if Element_Is (Lexical.Range_Delimiter) then
         Unknown_Aggregate;
       end if;
-      Get_Element (Lexical.Right_Parenthesis);
+      Get_Element (Termination_Element);
       return The_Result_Type;
     end Aggregate;
 
@@ -5788,6 +5815,8 @@ package body Ada_95.Token.Parser is
                     The_Declaration := Data.Type_Handle(The_Declaration).Parent_Type;
                     Handle_Attribute (Context   => (Scope, The_Declaration),
                                       Component => The_Declaration);
+                  elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                    Dummy := Aggregate ((Within.Scope, The_Declaration));
                   elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                     Dummy := Aggregate ((Within.Scope, The_Declaration));
                   else
@@ -5813,6 +5842,8 @@ package body Ada_95.Token.Parser is
               when Lexical.Apostrophe =>
                 if Next_Element_Ahead_Is (Lexical.Attribute) then
                   Handle_Attribute (Component => The_Declaration);
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else
@@ -5864,6 +5895,8 @@ package body Ada_95.Token.Parser is
                   The_Declaration := Declaration.Item;
                   if Element_Ahead_Is (Lexical.Attribute) then
                     null;
+                  elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                    Dummy := Aggregate ((Within.Scope, The_Declaration));
                   elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                     Dummy := Aggregate ((Within.Scope, The_Declaration));
                   else
@@ -5883,6 +5916,8 @@ package body Ada_95.Token.Parser is
               when Lexical.Apostrophe =>
                 if Next_Element_Ahead_Is (Lexical.Attribute) then
                   Handle_Attribute;
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else
@@ -5908,6 +5943,8 @@ package body Ada_95.Token.Parser is
                 when Lexical.Apostrophe =>
                   if Next_Element_Ahead_Is (Lexical.Attribute) then
                     Handle_Attribute (Component => The_Declaration);
+                  elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                    Dummy := Aggregate ((Within.Scope, The_Declaration));
                   elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                     Dummy := Aggregate ((Within.Scope, The_Declaration));
                   else
@@ -5945,6 +5982,8 @@ package body Ada_95.Token.Parser is
               when Lexical.Apostrophe =>
                 if Next_Element_Ahead_Is (Lexical.Attribute) then
                   Handle_Attribute;
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else
@@ -5978,6 +6017,8 @@ package body Ada_95.Token.Parser is
                       Handle_Attribute (Component => The_Declaration);
                     end if;
                   end;
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else
@@ -6006,6 +6047,8 @@ package body Ada_95.Token.Parser is
                 if Next_Element_Ahead_Is (Lexical.Attribute) then
                   Handle_Attribute (Context   => (Scope, The_Declaration),
                                     Component => The_Declaration);
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else
@@ -6034,6 +6077,8 @@ package body Ada_95.Token.Parser is
                     else
                       Handle_Attribute;
                     end if;
+                  elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                    Dummy := Aggregate ((Within.Scope, The_Declaration));
                   elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                     Dummy := Aggregate ((Within.Scope, The_Declaration));
                   else
@@ -6154,6 +6199,8 @@ package body Ada_95.Token.Parser is
               when Lexical.Apostrophe =>
                 if Next_Element_Ahead_Is (Lexical.Attribute) then
                   Handle_Attribute;
+                elsif Next_Element_Ahead_Is (Lexical.Left_Bracket) then
+                  Dummy := Aggregate ((Within.Scope, The_Declaration));
                 elsif Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
                   Dummy := Aggregate ((Within.Scope, The_Declaration));
                 else

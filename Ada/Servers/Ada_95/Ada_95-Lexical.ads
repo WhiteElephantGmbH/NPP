@@ -99,6 +99,8 @@ package Ada_95.Lexical is
     Minus,
     Asterisk,
     Slash,
+    Left_Bracket,
+    Right_Bracket,
     Left_Parenthesis,
     Right_Parenthesis,
     Exponentiation,

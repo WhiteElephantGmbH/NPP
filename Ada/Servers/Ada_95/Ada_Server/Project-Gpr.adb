@@ -20,8 +20,9 @@ package body Project.Gpr is
 
   function Filename return String is
 
-    Project_Name : constant String := Name;
-    Gpr_Name     : constant String := Project_Name & File_Extension;
+    Project_Name  : constant String := Name;
+    Gpr_Name      : constant String := Project_Name & File_Extension;
+    Configuration : constant String := Language_Folder & "Gnat.adc";
 
     function Interface_Name return String is
     begin
@@ -114,6 +115,9 @@ package body Project.Gpr is
     Put ("");
     Put ("   package Builder is");
     Put ("      for Default_Switches (""ada"") use (""-s"", ""-g"");");
+    if File.Exists (Configuration) then
+      Put ("      for Global_Configuration_Pragmas use """ & Configuration & """;");
+    end if;
     if not Product_Is_Dll then
       Put ("      for Executable (""" & Program_Unit_Name & """) use """ & Project_Name & """;");
     end if;

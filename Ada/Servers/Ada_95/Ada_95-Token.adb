@@ -915,7 +915,7 @@ package body Ada_95.Token is
   The_Comment_Count      : Counter;
   The_Comment_List       : Comment_List (1 .. Max_Comment_List_Length);
 
-  The_Parenthesis_Nesting_Level : Integer;
+  The_Nesting_Level : Integer;
 
   The_List : Sequence;
 
@@ -1006,7 +1006,7 @@ package body Ada_95.Token is
     Last_Position := 1;
     The_Line_Count := 0;
     The_Comment_Count := 0;
-    The_Parenthesis_Nesting_Level := 0;
+    The_Nesting_Level := 0;
     Special_Comments_Allowed := True;
     The_List := Sequence'(First       => Start_Object,
                           Last        => Start_Object,
@@ -1148,7 +1148,7 @@ package body Ada_95.Token is
         when Lexical.Is_Pragma =>
           In_Pragma_Call := True;
         when Lexical.Is_With =>
-          if (Is_In_Unit or Is_Generic_Formal_Type) and The_Parenthesis_Nesting_Level = 0 then
+          if (Is_In_Unit or Is_Generic_Formal_Type) and The_Nesting_Level = 0 then
             Aspect_Allowed := True;
             Aspect_Enabled := True;
           end if;
@@ -1287,10 +1287,10 @@ package body Ada_95.Token is
                               Column   => The_Position,
                               Element  => Item));
     case Item is
-    when Lexical.Left_Parenthesis | Lexical.Association | Lexical.Apostrophe =>
+    when Lexical.Left_Bracket | Lexical.Left_Parenthesis | Lexical.Association | Lexical.Apostrophe =>
       In_Pragma_Call := False;
-      if Item = Lexical.Left_Parenthesis then
-        The_Parenthesis_Nesting_Level := The_Parenthesis_Nesting_Level + 1;
+      if Item in Lexical.Left_Bracket | Lexical.Left_Parenthesis then
+        The_Nesting_Level := The_Nesting_Level + 1;
       end if;
       Last_Was_Apostrophe := Item = Lexical.Apostrophe;
       if Last_String /= null then
@@ -1305,10 +1305,10 @@ package body Ada_95.Token is
           end if;
         end;
       end if;
-    when Lexical.Right_Parenthesis =>
-      The_Parenthesis_Nesting_Level := The_Parenthesis_Nesting_Level - 1;
+    when Lexical.Right_Bracket | Lexical.Right_Parenthesis =>
+      The_Nesting_Level := The_Nesting_Level - 1;
     when Lexical.Comma =>
-      if Aspect_Enabled and The_Parenthesis_Nesting_Level = 0 then
+      if Aspect_Enabled and The_Nesting_Level = 0 then
         Aspect_Allowed := True;
       end if;
     when Lexical.Semicolon =>

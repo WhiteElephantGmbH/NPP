@@ -63,6 +63,8 @@ package Project is
 
   function Language_Directory return String;
 
+  function Language_Folder return String;
+
   function Has_New_Resource return Boolean;
 
   function Promotion_Areas return String;

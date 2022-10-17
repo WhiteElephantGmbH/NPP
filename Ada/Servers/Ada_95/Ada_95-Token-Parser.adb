@@ -5114,6 +5114,9 @@ package body Ada_95.Token.Parser is
             The_Parent_Class := Data.Parent_Type_Of (The_Parameter_Type, The_Instantiation);
           end if;
         end if;
+        if Element_Is (Lexical.Apostrophe) then -- qualified_expression
+          Dummy := Aggregate ((Scope, The_Type));
+        end if;
         if Element_Is (Lexical.Range_Delimiter) then
           Dummy := Expression ((Scope, The_Type));
           The_Parent_Class := null;
@@ -7347,6 +7350,11 @@ package body Ada_95.Token.Parser is
             Dummy := Simple_Expression ((Scope, The_Subtype));
           else
             Conditional_Constraint ((Scope, The_Subtype));
+          end if;
+        elsif Element_Is (Lexical.Apostrophe) then -- qualified_expression
+          Dummy := Aggregate ((Scope, The_Subtype));
+          if Element_Is (Lexical.Range_Delimiter) then
+            Dummy := Simple_Expression ((Scope, The_Subtype));
           end if;
         else
           The_Token := The_Actual_Token;

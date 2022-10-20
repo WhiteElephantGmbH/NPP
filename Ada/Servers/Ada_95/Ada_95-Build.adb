@@ -31,7 +31,7 @@ package body Ada_95.Build is
   Has_Second_Tools            : Boolean;
   The_Libraries               : String_List.Item;
   The_Resource                : Text.String;
-  The_Interface               : Text.String;
+  The_Interface               : String_List.Item;
   Library_Check               : Library_Check_Function;
 
 
@@ -55,7 +55,7 @@ package body Ada_95.Build is
     Text.Clear (The_Company);
     Text.Clear (The_Description);
     Text.Clear (The_Resource);
-    Text.Clear (The_Interface);
+    String_List.Clear (The_Interface);
     String_List.Clear (The_Libraries);
   end Initialize;
 
@@ -109,12 +109,12 @@ package body Ada_95.Build is
   end Application_Kind_Image;
 
 
-  procedure Define_Interface (Item : String) is
+  procedure Define_Interface (Item : String_List.Item) is
   begin
-    The_Interface := Text.String_Of (Item);
+    The_Interface := Item;
   end Define_Interface;
 
-  function Actual_Interface return String is (Text.String_Of (The_Interface));
+  function Actual_Interface return String_List.Item is (The_Interface);
 
 
   procedure Define (Item : Version) is

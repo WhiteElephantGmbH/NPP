@@ -50,9 +50,9 @@ package Ada_95.Build is
 
   function Is_Dll return Boolean;
 
-  procedure Define_Interface (Item : String);
+  procedure Define_Interface (Item : String_List.Item);
 
-  function Actual_Interface return String;
+  function Actual_Interface return String_List.Item;
 
   procedure Define (Item : Version);
 

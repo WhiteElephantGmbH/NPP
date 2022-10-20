@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                           (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -205,6 +205,8 @@ package body Build_Parser is
                   end if;
                 end Define_Icon;
 
+                use type String_List.Item;
+
               begin
                 exit  when Attribute_Name = ")" or else Association /= "=>";
                 if Attribute_Name = "Compiler" then
@@ -218,7 +220,7 @@ package body Build_Parser is
                 elsif Attribute_Name = "Libraries" then
                   Define_Libraries;
                 elsif Attribute_Name = "Interface" then
-                  Build.Define_Interface (Attribute);
+                  Build.Define_Interface (+Attribute);
                 elsif Attribute_Name = "Resource" then
                   Define_Resource;
                 elsif Attribute_Name = "Version" then

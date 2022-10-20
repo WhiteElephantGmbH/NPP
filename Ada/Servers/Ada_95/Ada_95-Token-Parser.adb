@@ -3938,7 +3938,6 @@ package body Ada_95.Token.Parser is
         Argument_Handle     : Lexical_Handle := The_Token;
         String_Token        : Lexical_Handle;
         Icon_True_Handle    : Lexical_Handle;
-        Interface_Token     : Lexical_Handle;
         Icon_Defined        : Boolean := False;
         Kind_Defined        : Boolean := False;
         Version_Defined     : Boolean := False;
@@ -4109,8 +4108,8 @@ package body Ada_95.Token.Parser is
 
         package Library_List is new Indefinite_Doubly_Linked_Lists (Library_Info);
 
-        The_Library_List : Library_List.Item;
-        The_Libraries    : String_List.Item;
+        The_Library_List   : Library_List.Item;
+        The_Libraries      : String_List.Item;
 
         procedure Parse_Libraries is
         begin
@@ -4170,15 +4169,42 @@ package body Ada_95.Token.Parser is
         end Define_Libraries;
 
         procedure Define_Interface is
-          Id_Handle : constant Lexical_Handle := The_Token;
-          The_Unit  : constant Data_Handle := Name_Of (Scope);
+
+          The_Interface_Unit : Data_Handle;
+
+          function Image_Of_Unit return String is
+            Actual_Token : constant Lexical_Handle := The_Token;
+          begin
+            The_Token := String_Token;
+            declare
+              Image : constant String := Token.Image_Of (Unit_Name, '.');
+            begin
+              The_Token := Actual_Token;
+              return Image;
+            end;
+          end Image_Of_Unit;
+
+          The_Interface : String_List.Item;
+
         begin
-          Interface_Token := Id_Handle;
-          if The_Unit = null or else Data_Kind_Of (The_Unit.all) /= Is_Package_Specification then
-            Report_Error (Error.Interface_Specification_Expected, Interface_Token);
-          else
-            Build.Define_Interface (Image_Of (The_Actual_Identifier.all));
-          end if;
+          loop
+            String_Token := The_Token;
+            The_Interface_Unit := Name_Of (Scope);
+            if The_Interface_Unit = null or else Data_Kind_Of (The_Interface_Unit.all) /= Is_Package_Specification then
+              Report_Error (Error.Interface_Specification_Expected, String_Token);
+            else
+              declare
+                Unit_Image : constant String := Image_Of_Unit;
+              begin
+                if The_Interface.Contains (Unit_Image) then
+                  Report_Error (Error.Already_Defined, String_Token);
+                end if;
+                The_Interface.Append (Image_Of_Unit);
+              end;
+            end if;
+            exit when not Element_Is (Lexical.Plus);
+          end loop;
+          Build.Define_Interface (The_Interface);
           Interface_Defined := True;
         end Define_Interface;
 
@@ -4239,7 +4265,7 @@ package body Ada_95.Token.Parser is
         if Build.Is_Dll then
           Check (Interface_Defined, Error.Interface_Not_Defined);
         elsif Interface_Defined then
-          Report_Error (Error.Only_For_Dlls, Interface_Token);
+          Report_Error (Error.Only_For_Dlls, String_Token);
         end if;
         Build_Parameters_Defined := True;
       end Handle_Build_Parameters;

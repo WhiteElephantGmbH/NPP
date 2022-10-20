@@ -27,9 +27,9 @@ package body Project.Gpr is
     function Interface_Name return String is
     begin
       if Build.Is_Defined then
-        return Build.Actual_Interface;
+        return '"' & Strings.Data_Of (Build.Actual_Interface, Separator => """, """) & '"';
       else
-        return Legacy_Interface_Name;
+        return '"' & Legacy_Interface_Name & '"';
       end if;
     end Interface_Name;
 
@@ -93,7 +93,7 @@ package body Project.Gpr is
     end loop;
     Put ("");
     if Product_Is_Dll then
-      Put ("   for Library_Interface use (""" & Interface_Name & """);");
+      Put ("   for Library_Interface use (" & Interface_Name & ");");
       Put ("");
     end if;
     Put ("   for Object_Dir use """ & Object_Area & """;");

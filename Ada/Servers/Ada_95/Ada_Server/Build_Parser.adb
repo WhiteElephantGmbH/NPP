@@ -10,6 +10,7 @@ with File;
 with Log;
 with Project;
 with String_List;
+with Text;
 
 package body Build_Parser is
 
@@ -69,6 +70,8 @@ package body Build_Parser is
         case The_Line(Start_Index) is
         when ')' =>
           return ")";
+        when '+' =>
+          return "+";
         when '=' =>
           case Next_Character is
           when '>' =>
@@ -87,7 +90,7 @@ package body Build_Parser is
           end loop;
         when others =>
           case Next_Character is
-          when ')' => -- keep as token
+          when '+' | ')' => -- keep as token
             The_Index := The_Index - 1;
             return The_Line(Start_Index .. The_Index - 1);
           when ' ' | '(' | ',' | ';' =>
@@ -122,12 +125,28 @@ package body Build_Parser is
       while Found ("pragma") loop
         declare
           Pragma_Name : constant String := Next_Token;
+          The_Name    : Text.String;
+
+          function Actual_Name return String is
+          begin
+            if Text.Is_Null (The_Name) then
+              return Next_Token;
+            else
+              declare
+                Name : constant String := Text.String_Of (The_Name);
+              begin
+                Text.Clear (The_Name);
+                return Name;
+              end;
+            end if;
+          end Actual_Name;
+
         begin
           if Pragma_Name = "Build" then
             Build.Define;
             loop
               declare
-                Attribute_Name : constant String := Next_Token;
+                Attribute_Name : constant String := Actual_Name;
                 Association    : constant String := Next_Token;
                 Attribute      : constant String := Next_Token;
 
@@ -176,6 +195,25 @@ package body Build_Parser is
                   Build.Define_Libraries (The_Libraries);
                 end Define_Libraries;
 
+                procedure Define_Interface is
+                  The_Interface : String_List.Item;
+                begin
+                  The_Interface.Append (Attribute);
+                  loop
+                    declare
+                      Token : constant String := Next_Token;
+                    begin
+                      if Token = "+" then
+                        The_Interface.Append (Next_Token);
+                      else
+                        The_Name := Text.String_Of (Token);
+                        exit;
+                      end if;
+                    end;
+                  end loop;
+                  Build.Define_Interface (The_Interface);
+                end Define_Interface;
+
                 procedure Define_Resource is
                 begin
                   if not Build.Defined_Resource (Attribute) then
@@ -205,10 +243,8 @@ package body Build_Parser is
                   end if;
                 end Define_Icon;
 
-                use type String_List.Item;
-
               begin
-                exit  when Attribute_Name = ")" or else Association /= "=>";
+                exit when Attribute_Name = ")" or else Association /= "=>";
                 if Attribute_Name = "Compiler" then
                   Define_Compiler;
                 elsif Attribute_Name = "Compilers" then
@@ -219,8 +255,8 @@ package body Build_Parser is
                   Define_Kind;
                 elsif Attribute_Name = "Libraries" then
                   Define_Libraries;
-                elsif Attribute_Name = "Interface" then
-                  Build.Define_Interface (+Attribute);
+                elsif Attribute_Name = "Use_Interface" then
+                  Define_Interface;
                 elsif Attribute_Name = "Resource" then
                   Define_Resource;
                 elsif Attribute_Name = "Version" then

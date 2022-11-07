@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -76,10 +76,8 @@ package body Client is
   begin
     if Npp.Plugin.All_Files_Saved then
       delay 1.0; -- wait for files to be written
-      return True;
     end if;
-    Show_Error ("Not all files saved");
-    return False;
+    return True;
   end All_Saved;
 
 

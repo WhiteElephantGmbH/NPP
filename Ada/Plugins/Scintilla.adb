@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -73,6 +73,7 @@ package body Scintilla is
   SCI_GOTOPOS                   : constant := 2025;
   SCI_LINEFROMPOSITION          : constant := 2166;
   SCI_SETCARETLINEVISIBLE       : constant := 2096;
+  SCI_SETCARETLINEBACK          : constant := 2098;
   SCI_SETCARETLINEVISIBLEALWAYS : constant := 2655;
   SCI_SETEDGECOLUMN             : constant := 2361;
   SCI_STYLECLEARALL             : constant := 2050;
@@ -134,7 +135,9 @@ package body Scintilla is
 
 
   procedure Show_Cursor_Line (Handle : Object) is
+    Background_Color : constant Win.COLORREF := Win.RGB (Red => 230, Green => 230, Blue => 255);
   begin
+    Execute (Handle, SCI_SETCARETLINEBACK, Win.WPARAM(Background_Color));
     Execute (Handle, SCI_SETCARETLINEVISIBLEALWAYS, Win.WPARAM(SCI_TRUE));
     Execute (Handle, SCI_SETCARETLINEVISIBLE, Win.WPARAM(SCI_TRUE));
   end Show_Cursor_Line;

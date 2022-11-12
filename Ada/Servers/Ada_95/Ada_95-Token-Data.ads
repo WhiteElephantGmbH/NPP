@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                      (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                           *
+-- *                      (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                           *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -844,17 +844,21 @@ package Ada_95.Token.Data is
   overriding
   function Data_Kind_Of (Item : Incomplete_Type) return Data_Kind;
 
-  type Private_Type is new Type_Declaration with record
-    Discriminants : List.Item;
+  type Private_Aspect is abstract tagged null record;
+
+  type Private_Aspect_Handle is access Private_Aspect'class;
+
+  type Iterable_Aspects is new Private_Aspect with record
+    Iterable_First       : Identifier_Handle;
+    Iterable_Next        : Identifier_Handle;
+    Iterable_Has_Element : Identifier_Handle;
+    Iterable_Element     : Identifier_Handle;
   end record;
 
-  overriding
-  function Data_Kind_Of (Item : Private_Type) return Data_Kind;
+  type Iterable_Aspect_Handle is access all Iterable_Aspects;
+  for Iterable_Aspect_Handle'storage_pool use Memory.Pool.all;
 
-  type Private_Type_Handle is access all Private_Type'class;
-  for Private_Type_Handle'storage_pool use Memory.Pool.all;
-
-  type Iterator_Aspects is record
+  type Iterator_Aspects is new Private_Aspect with record
     Constant_Indexing : Identifier_Handle;
     Variable_Indexing : Identifier_Handle;
     Default_Iterator  : Identifier_Handle;
@@ -864,8 +868,18 @@ package Ada_95.Token.Data is
   type Iterator_Aspect_Handle is access all Iterator_Aspects;
   for Iterator_Aspect_Handle'storage_pool use Memory.Pool.all;
 
+  type Private_Type is new Type_Declaration with record
+    Aspects       : Private_Aspect_Handle;
+    Discriminants : List.Item;
+  end record;
+
+  overriding
+  function Data_Kind_Of (Item : Private_Type) return Data_Kind;
+
+  type Private_Type_Handle is access all Private_Type'class;
+  for Private_Type_Handle'storage_pool use Memory.Pool.all;
+
   type Tagged_Private_Type is new Private_Type with record
-    Aspects    : Iterator_Aspect_Handle;
     Methods    : List.Item;
     Interfaces : List.Item;
   end record;

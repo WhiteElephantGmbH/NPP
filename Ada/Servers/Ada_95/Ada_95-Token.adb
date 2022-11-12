@@ -905,6 +905,7 @@ package body Ada_95.Token is
   Is_Generic_Formal_Type : Boolean;
   Aspect_Enabled         : Boolean;
   Aspect_Allowed         : Boolean;
+  Is_In_Iterable_Aspect  : Boolean;
   Last_Was_Apostrophe    : Boolean;
   Next_Is_Identifier     : Boolean;
   In_Pragma_Call         : Boolean;
@@ -979,7 +980,9 @@ package body Ada_95.Token is
   begin
     Append (Item);
     Has_Tokens := True;
-    Aspect_Allowed := False;
+    if not Is_In_Iterable_Aspect then
+      Aspect_Allowed := False;
+    end if;
     Last_Was_Apostrophe := False;
     Next_Is_Identifier := False;
     The_Last_String := null;
@@ -999,6 +1002,7 @@ package body Ada_95.Token is
     Last_Was_Apostrophe := False;
     Aspect_Allowed := False;
     Aspect_Enabled := False;
+    Is_In_Iterable_Aspect := False;
     Next_Is_Identifier := False;
     In_Pragma_Call := False;
     The_Last_String := null;
@@ -1157,12 +1161,23 @@ package body Ada_95.Token is
         end case;
       end;
     elsif Aspect_Allowed and then Lexical.Is_Aspect (Item.Key) then
-      Append_Object (Aspect'(Id         => Item,
-                             Next       => null,
-                             Previous   => The_List.Last,
-                             Column     => The_Position,
-                             Element    => Lexical.Aspect,
-                             Designator => Lexical.Aspect_Of (Item.Key)));
+      declare
+        Aspect_Item : constant Lexical.Aspect_Id := Lexical.Aspect_Of (Item.Key);
+        use type Lexical.Aspect_Id;
+      begin
+        Append_Object (Aspect'(Id         => Item,
+                               Next       => null,
+                               Previous   => The_List.Last,
+                               Column     => The_Position,
+                               Element    => Lexical.Aspect,
+                               Designator => Aspect_Item));
+        if Aspect_Item = Lexical.Is_Iterable then
+          Is_In_Iterable_Aspect := True;
+          Aspect_Allowed := True;
+        else
+          Aspect_Allowed := False;
+        end if;
+      end;
     elsif In_Pragma_Call and then Lexical.Is_Pragma_Id (Item.Key) then
       Append_Object (Pragma_Identifier'(Id         => Item,
                                         Next       => null,
@@ -1308,11 +1323,12 @@ package body Ada_95.Token is
     when Lexical.Right_Bracket | Lexical.Right_Parenthesis =>
       The_Nesting_Level := The_Nesting_Level - 1;
     when Lexical.Comma =>
-      if Aspect_Enabled and The_Nesting_Level = 0 then
+      if Aspect_Enabled and (The_Nesting_Level = 0 or Is_In_Iterable_Aspect) then
         Aspect_Allowed := True;
       end if;
     when Lexical.Semicolon =>
       Aspect_Enabled := False;
+      Is_In_Iterable_Aspect := False;
       In_Pragma_Call := False;
       if Is_Generic_Formal_Type then
         Is_Generic_Formal_Type := False;

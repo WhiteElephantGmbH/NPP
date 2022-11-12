@@ -2573,7 +2573,7 @@ package body Ada_95.Token.Parser is
 
     begin
       loop
-        The_Last := The_Last + 1;
+        The_Last := @ + 1;
         The_Aspects(The_Last).Mark := Aspect_Mark;
         if Element_Is (Lexical.Association) then
           case The_Aspects(The_Last).Mark is
@@ -2592,6 +2592,16 @@ package body Ada_95.Token.Parser is
                 Id.Data := Data.Predefined_Name;
               end if;
             end;
+          when Lexical.Is_Iterable =>
+            Get_Element (Lexical.Left_Parenthesis);
+            loop
+              The_Aspects(The_Last).Mark := Aspect_Mark;
+              Get_Element (Lexical.Association);
+              The_Aspects(The_Last).Definition := Actual_Identifier;
+              exit when not Element_Is (Lexical.Comma);
+              The_Last := @ + 1;
+            end loop;
+            Get_Element (Lexical.Right_Parenthesis);
           when Lexical.Is_Abstract_State
              | Lexical.Is_Global
              | Lexical.Is_Initializes
@@ -5644,17 +5654,35 @@ package body Ada_95.Token.Parser is
 
         function Handled_Aspect_Indexing return Boolean is
           Saved_Token : Token.Lexical_Handle;
-          use type Data.Iterator_Aspect_Handle;
         begin
           if The_Declaration.all in Data.Tagged_Private_Type'class then
             declare
-              Aspects : constant Data.Iterator_Aspect_Handle := Data.Tagged_Private_Handle(The_Declaration).Aspects;
+              Aspects : constant Data.Iterator_Aspect_Handle
+                := Data.Iterator_Aspect_Handle(Data.Tagged_Private_Handle(The_Declaration).Aspects);
+              use type Data.Iterator_Aspect_Handle;
             begin
               if Aspects /= null and then Aspects.Constant_Indexing.Data /= null
                 and then Aspects.Constant_Indexing.Data.all in Data.Subprogram_Declaration'class
               then
                 Saved_Token := The_Token;
                 if Found_Method (Aspects.Constant_Indexing, Aspects.Constant_Indexing.Data) then
+                  return True;
+                else
+                  The_Token := Saved_Token;
+                end if;
+              end if;
+            end;
+          elsif The_Declaration.all in Data.Private_Type'class then
+            declare
+              Aspects : constant Data.Iterable_Aspect_Handle
+                := Data.Iterable_Aspect_Handle(Data.Private_Type_Handle(The_Declaration).Aspects);
+              use type Data.Iterable_Aspect_Handle;
+            begin
+              if Aspects /= null and then Aspects.Iterable_First.Data /= null
+                and then Aspects.Iterable_First.Data.all in Data.Subprogram_Declaration'class
+              then
+                Saved_Token := The_Token;
+                if Found_Method (Aspects.Iterable_First, Aspects.Iterable_First.Data) then
                   return True;
                 else
                   The_Token := Saved_Token;
@@ -7117,6 +7145,11 @@ package body Ada_95.Token.Parser is
           -----------------------------------------------------------
           Get_Next_Token;
         end loop;
+      exception
+      when others =>
+        --TEST--------------------------------
+        Write_Log ("%%% SKIP TOKEN Failed");
+        --------------------------------------
       end Skip_To_End_Of_Name;
 
       use type Data.Unit_Handle;

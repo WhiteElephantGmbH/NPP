@@ -143,7 +143,6 @@ package Ada_95.Lexical is
     -- single attributes
 
     Is_Image, -- used as Single_Attribute'first
-    Is_First,
     Is_Last,
     Is_Length,
     Is_Value,
@@ -201,6 +200,7 @@ package Ada_95.Lexical is
 
     Is_Address,
     Is_Alignment,
+    Is_First,
     Is_Input,
     Is_Output,
     Is_Read,
@@ -306,6 +306,7 @@ package Ada_95.Lexical is
 
     Is_Address,
     Is_Alignment,
+    Is_First,
     Is_Input,
     Is_Output,
     Is_Read,
@@ -320,6 +321,7 @@ package Ada_95.Lexical is
     Is_Coding,
     Is_Depends,
     Is_Dimension,
+    Is_Element,
     Is_Ghost,
     Is_Global,
     Is_Initializes,
@@ -327,6 +329,7 @@ package Ada_95.Lexical is
     Is_Iterable,
     Is_Layout,
     Is_Mechanism,
+    Is_Next,
     Is_Post,
     Is_Pre,
     Is_Predicate,
@@ -389,6 +392,7 @@ package Ada_95.Lexical is
     Is_Exclusive_Functions,
     Is_Extensions_Visible,
     Is_External_Name,
+    Is_Has_Element,
     Is_Implicit_Dereference,
     Is_Initial_Condition,
     Is_Integer_Literal,

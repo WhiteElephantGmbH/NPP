@@ -1171,7 +1171,7 @@ package body Ada_95.Token is
                                Column     => The_Position,
                                Element    => Lexical.Aspect,
                                Designator => Aspect_Item));
-        if Aspect_Item = Lexical.Is_Iterable then
+        if Aspect_Item in Lexical.Is_Aggregate | Lexical.Is_Iterable then
           Is_In_Iterable_Aspect := True;
           Aspect_Allowed := True;
         else

@@ -2592,7 +2592,7 @@ package body Ada_95.Token.Parser is
                 Id.Data := Data.Predefined_Name;
               end if;
             end;
-          when Lexical.Is_Iterable =>
+          when Lexical.Is_Iterable | Lexical.Is_Aggregate =>
             Get_Element (Lexical.Left_Parenthesis);
             loop
               The_Aspects(The_Last).Mark := Aspect_Mark;
@@ -3840,7 +3840,9 @@ package body Ada_95.Token.Parser is
             when Is_Enumeration_Type =>
               Enumeration_Aggregate (The_Base_Type);
             when Is_Record_Type =>
-              Record_Component_Association_List (Data.Record_Handle(The_Base_Type));
+              if not Is_Extension_Aggregate (Data.Record_Handle(The_Base_Type)) then
+                Record_Component_Association_List (Data.Record_Handle(The_Base_Type));
+              end if;
             when Is_Object =>
               Not_Implemented ("Aggregate of private OBJECT: " & Image_Of (The_Token.all));
             when others =>
@@ -5657,9 +5659,8 @@ package body Ada_95.Token.Parser is
         begin
           if The_Declaration.all in Data.Tagged_Private_Type'class then
             declare
-              Aspects : constant Data.Iterator_Aspect_Handle
-                := Data.Iterator_Aspect_Handle(Data.Tagged_Private_Handle(The_Declaration).Aspects);
-              use type Data.Iterator_Aspect_Handle;
+              Aspects : constant Data.Iterable_Aspect_Handle := Data.Tagged_Private_Handle(The_Declaration).Aspects;
+              use type Data.Iterable_Aspect_Handle;
             begin
               if Aspects /= null and then Aspects.Constant_Indexing.Data /= null
                 and then Aspects.Constant_Indexing.Data.all in Data.Subprogram_Declaration'class
@@ -5673,9 +5674,9 @@ package body Ada_95.Token.Parser is
               end if;
             end;
           elsif The_Declaration.all in Data.Private_Type'class then
+            --!!!???
             declare
-              Aspects : constant Data.Iterable_Aspect_Handle
-                := Data.Iterable_Aspect_Handle(Data.Private_Type_Handle(The_Declaration).Aspects);
+              Aspects : constant Data.Iterable_Aspect_Handle := Data.Private_Type_Handle(The_Declaration).Aspects;
               use type Data.Iterable_Aspect_Handle;
             begin
               if Aspects /= null and then Aspects.Iterable_First.Data /= null

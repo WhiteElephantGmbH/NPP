@@ -844,32 +844,27 @@ package Ada_95.Token.Data is
   overriding
   function Data_Kind_Of (Item : Incomplete_Type) return Data_Kind;
 
-  type Private_Aspect is abstract tagged null record;
-
-  type Private_Aspect_Handle is access Private_Aspect'class;
-
-  type Iterable_Aspects is new Private_Aspect with record
+  type Iterable_Aspects is record
+    Empty                : Identifier_Handle;
+    Add_Named            : Identifier_Handle;
+    Add_Unnamed          : Identifier_Handle;
+    New_Indexed          : Identifier_Handle;
+    Assign_Indexed       : Identifier_Handle;
     Iterable_First       : Identifier_Handle;
     Iterable_Next        : Identifier_Handle;
     Iterable_Has_Element : Identifier_Handle;
     Iterable_Element     : Identifier_Handle;
+    Constant_Indexing    : Identifier_Handle;
+    Variable_Indexing    : Identifier_Handle;
+    Default_Iterator     : Identifier_Handle;
+    Iterator_Element     : Identifier_Handle;
   end record;
 
   type Iterable_Aspect_Handle is access all Iterable_Aspects;
   for Iterable_Aspect_Handle'storage_pool use Memory.Pool.all;
 
-  type Iterator_Aspects is new Private_Aspect with record
-    Constant_Indexing : Identifier_Handle;
-    Variable_Indexing : Identifier_Handle;
-    Default_Iterator  : Identifier_Handle;
-    Iterator_Element  : Identifier_Handle;
-  end record;
-
-  type Iterator_Aspect_Handle is access all Iterator_Aspects;
-  for Iterator_Aspect_Handle'storage_pool use Memory.Pool.all;
-
   type Private_Type is new Type_Declaration with record
-    Aspects       : Private_Aspect_Handle;
+    Aspects       : Iterable_Aspect_Handle;
     Discriminants : List.Item;
   end record;
 

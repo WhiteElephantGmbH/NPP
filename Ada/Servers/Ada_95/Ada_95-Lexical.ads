@@ -322,6 +322,7 @@ package Ada_95.Lexical is
     Is_Depends,
     Is_Dimension,
     Is_Element,
+    Is_Empty,
     Is_Ghost,
     Is_Global,
     Is_Initializes,
@@ -375,6 +376,9 @@ package Ada_95.Lexical is
     -- compound aspects
 
     Is_Abstract_State, -- use as Compound_Aspect'first
+    Is_Add_Named,
+    Is_Add_Unnamed,
+    Is_Assign_Indexed,
     Is_Async_Readers,
     Is_Async_Writers,
     Is_Constant_After_Elaboration,
@@ -400,6 +404,7 @@ package Ada_95.Lexical is
     Is_Link_Name,
     Is_Linker_Section,
     Is_Lock_Free,
+    Is_New_Indexed,
     Is_No_Tagged_Streams,
     Is_No_Task_Parts,
     Is_Part_Of,

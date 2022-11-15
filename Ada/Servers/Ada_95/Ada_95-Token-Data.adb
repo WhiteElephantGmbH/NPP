@@ -1887,51 +1887,90 @@ package body Ada_95.Token.Data is
 
   procedure Handle_Aspects (Profile : Subprogram_Profile;
                             Unit    : Unit_Handle) with Inline is
+
+    procedure Handle_Iterable (Aspects : Iterable_Aspect_Handle) is
+    begin
+      if not Is_Null (Aspects.Element) and then
+        Aspects.Element = Unit.Location
+      then
+        Aspects.Element.Data := Data_Handle(Unit);
+        Unit.Is_Used := True;
+      elsif not Is_Null (Aspects.Has_Element) and then
+        Aspects.Has_Element = Unit.Location
+      then
+        Aspects.Has_Element.Data := Data_Handle(Unit);
+        Unit.Is_Used := True;
+      elsif not Is_Null (Aspects.First) and then
+        Aspects.First = Unit.Location
+      then
+        Aspects.First.Data := Data_Handle(Unit);
+        Unit.Is_Used := True;
+      elsif not Is_Null (Aspects.Next) and then
+        Aspects.Next = Unit.Location
+      then
+        Aspects.Next.Data := Data_Handle(Unit);
+        Unit.Is_Used := True;
+      end if;
+    end Handle_Iterable;
+
     use type List.Elements_Access;
-  begin
-    if Profile.Parameters /= null then
+
+  begin -- Handle_Aspects
+   if Profile.Parameters /= null then
       declare
         First_Type : constant Data_Handle := Object_Handle(Profile.Parameters(Profile.Parameters'first)).Object_Type;
       begin
-        if not Is_Null (First_Type) and then First_Type.all in Tagged_Private_Type'class then
-          declare
-            Handle  : constant Private_Type_Handle := Private_Type_Handle(First_Type);
-            Aspects : constant Iterable_Aspect_Handle := Handle.Aspects;
-          begin
-            if Aspects /= null then
-              if not Is_Null (Aspects.Constant_Indexing) and then
-                Aspects.Constant_Indexing = Unit.Location
-              then
-                Aspects.Constant_Indexing.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Variable_Indexing) and then
-                Aspects.Variable_Indexing  = Unit.Location
-              then
-                Aspects.Variable_Indexing.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Default_Iterator) and then
-                Aspects.Default_Iterator = Unit.Location
-              then
-                Aspects.Default_Iterator.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Add_Named) and then
-                Aspects.Add_Named = Unit.Location
-              then
-                Aspects.Add_Named.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Add_Unnamed) and then
-                Aspects.Add_Unnamed = Unit.Location
-              then
-                Aspects.Add_Unnamed.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Assign_Indexed) and then
-                Aspects.Assign_Indexed = Unit.Location
-              then
-                Aspects.Assign_Indexed.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
+        if not Is_Null (First_Type) then
+         if First_Type.all in Private_Type'class then
+            declare
+              Handle  : constant Private_Type_Handle := Private_Type_Handle(First_Type);
+              Aspects : constant Private_Aspect_Handle := Handle.Aspects;
+            begin
+              if Aspects /= null then
+                if not Is_Null (Aspects.Iterator.Constant_Indexing) and then
+                  Aspects.Iterator.Constant_Indexing = Unit.Location
+                then
+                  Aspects.Iterator.Constant_Indexing.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                elsif not Is_Null (Aspects.Iterator.Variable_Indexing) and then
+                  Aspects.Iterator.Variable_Indexing  = Unit.Location
+                then
+                  Aspects.Iterator.Variable_Indexing.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                elsif not Is_Null (Aspects.Iterator.Default_Iterator) and then
+                  Aspects.Iterator.Default_Iterator = Unit.Location
+                then
+                  Aspects.Iterator.Default_Iterator.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                elsif not Is_Null (Aspects.Aggregate.Add_Named) and then
+                  Aspects.Aggregate.Add_Named = Unit.Location
+                then
+                  Aspects.Aggregate.Add_Named.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                elsif not Is_Null (Aspects.Aggregate.Add_Unnamed) and then
+                  Aspects.Aggregate.Add_Unnamed = Unit.Location
+                then
+                  Aspects.Aggregate.Add_Unnamed.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                elsif not Is_Null (Aspects.Aggregate.Assign_Indexed) and then
+                  Aspects.Aggregate.Assign_Indexed = Unit.Location
+                then
+                  Aspects.Aggregate.Assign_Indexed.Data := Data_Handle(Unit);
+                  Unit.Is_Used := True;
+                end if;
+                Handle_Iterable (Aspects.Iterable);
               end if;
-            end if;
-          end;
+            end;
+          elsif First_Type.all in Record_Type'class then
+           declare
+              Handle  : constant Record_Handle := Record_Handle(First_Type);
+              Aspects : constant Iterable_Aspect_Handle := Handle.Aspects;
+            begin
+              if Aspects /= null then
+                Handle_Iterable (Aspects);
+              end if;
+            end;
+          end if;
         end if;
       end;
     elsif Profile.Result_Type /= null then
@@ -1941,18 +1980,18 @@ package body Ada_95.Token.Data is
         if Result_Type.all in Private_Type'class then
           declare
             Handle  : constant Private_Type_Handle := Private_Type_Handle(Result_Type);
-            Aspects : constant Iterable_Aspect_Handle := Handle.Aspects;
+            Aspects : constant Private_Aspect_Handle := Handle.Aspects;
           begin
             if Handle.Aspects /= null then
-              if not Is_Null (Aspects.Empty) and then
-                Aspects.Empty = Unit.Location
+              if not Is_Null (Aspects.Aggregate.Empty) and then
+                Aspects.Aggregate.Empty = Unit.Location
               then
-                Aspects.Empty.Data := Data_Handle(Unit);
+                Aspects.Aggregate.Empty.Data := Data_Handle(Unit);
                 Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.New_Indexed) and then
-                Aspects.New_Indexed = Unit.Location
+              elsif not Is_Null (Aspects.Aggregate.New_Indexed) and then
+                Aspects.Aggregate.New_Indexed = Unit.Location
               then
-                Aspects.New_Indexed.Data := Data_Handle(Unit);
+                Aspects.Aggregate.New_Indexed.Data := Data_Handle(Unit);
                 Unit.Is_Used := True;
               end if;
             end if;
@@ -2960,20 +2999,24 @@ package body Ada_95.Token.Data is
   function New_Function_Expression_Declaration (Id      : Identifier_Handle;
                                                 Parent  : Unit_Handle;
                                                 Profile : Subprogram_Profile) return Unit_Handle is
+    The_Unit : Unit_Handle;
+
   begin
-    --TEST---------------------------------------------------------------------
-    Write_Log ("*** new Function_Expression_Declaration " & Image_Of (Id.all));
-    ---------------------------------------------------------------------------
-    return Declared_Subprogram (Id   => Id,
-                                To   => Parent,
-                                Item => new Subprogram_Body'(Location      => Id,
-                                                             Is_Used       => False,
-                                                             Parent        => Parent,
-                                                             Used_Packages => null,
-                                                             Specification => null,
-                                                             Profile       => Profile,
-                                                             Overload      => null,
-                                                             Declarations  => Tree.Empty));
+    --TEST-----------------------------------------------------------------------
+    --Write_Log ("*** new Function_Expression_Declaration " & Image_Of (Id.all));
+    -----------------------------------------------------------------------------
+    The_Unit := Declared_Subprogram (Id   => Id,
+                                     To   => Parent,
+                                     Item => new Subprogram_Body'(Location      => Id,
+                                                                  Is_Used       => False,
+                                                                  Parent        => Parent,
+                                                                  Used_Packages => null,
+                                                                  Specification => null,
+                                                                  Profile       => Profile,
+                                                                  Overload      => null,
+                                                                  Declarations  => Tree.Empty));
+    Handle_Aspects (Profile, The_Unit);
+    return The_Unit;
   end New_Function_Expression_Declaration;
 
 
@@ -3379,24 +3422,6 @@ package body Ada_95.Token.Data is
         Set_Used (Item);
         Id.Data := The_Data;
         Set_Used (The_Data);
-        if Private_Type_Handle(The_Data).Aspects /= null then
-          declare
-            Aspects : constant Iterable_Aspect_Handle := Private_Type_Handle(The_Data).Aspects;
-          begin
-            if not Is_Null (Aspects.Iterable_Element) then
-              Aspects.Iterable_Element.Data := Declaration_From (Specification, Aspects.Iterable_Element);
-            end if;
-            if not Is_Null (Aspects.Iterable_Has_Element) then
-              Aspects.Iterable_Has_Element.Data := Declaration_From (Specification, Aspects.Iterable_Has_Element);
-            end if;
-            if not Is_Null (Aspects.Iterable_First) then
-              Aspects.Iterable_First.Data := Declaration_From (Specification, Aspects.Iterable_First);
-            end if;
-            if not Is_Null (Aspects.Iterable_Next) then
-              Aspects.Iterable_Next.Data := Declaration_From (Specification, Aspects.Iterable_Next);
-            end if;
-          end;
-        end if;
       end if;
     end if;
   end Update_Private_Type;
@@ -3585,7 +3610,8 @@ package body Ada_95.Token.Data is
                                                      Discriminants => Discriminants,
                                                      Components    => List.Empty,
                                                      Methods       => List.Empty,
-                                                     Interfaces    => Interfaces);
+                                                     Interfaces    => Interfaces,
+                                                     Aspects       => null);
       else
         --TEST------------------------------------------------------------
         --Write_Log ("*** new Abstract_Record_Type " & Image_Of (Id.all));
@@ -3595,7 +3621,8 @@ package body Ada_95.Token.Data is
                                               Parent        => Parent,
                                               Parent_Type   => Ancestor,
                                               Discriminants => Discriminants,
-                                              Components    => List.Empty);
+                                              Components    => List.Empty,
+                                              Aspects       => null);
       end if;
     else
       if Is_Tagged or else Is_Tagged_Type (Ancestor)  then
@@ -3609,7 +3636,8 @@ package body Ada_95.Token.Data is
                                             Discriminants => Discriminants,
                                             Components    => List.Empty,
                                             Methods       => List.Empty,
-                                            Interfaces    => Interfaces);
+                                            Interfaces    => Interfaces,
+                                            Aspects       => null);
       else
         --TEST---------------------------------------------------
         --Write_Log ("*** new Record_Type " & Image_Of (Id.all));
@@ -3619,7 +3647,8 @@ package body Ada_95.Token.Data is
                                      Parent        => Parent,
                                      Parent_Type   => Ancestor,
                                      Discriminants => Discriminants,
-                                     Components    => List.Empty);
+                                     Components    => List.Empty,
+                                     Aspects       => null);
       end if;
     end if;
     return Declared_Type (Id   => Id,
@@ -3868,7 +3897,16 @@ package body Ada_95.Token.Data is
 
   procedure Add_Iterator_Aspects (To      : Data_Handle;
                                   Aspects : Aspect_Specification) is
-  begin
+
+    function New_Iterable_Aspects return Iterable_Aspect_Handle is
+    begin
+      return new Iterable_Aspects'(Element     => Aspect_For (Lexical.Is_Element, Aspects),
+                                   Has_Element => Aspect_For (Lexical.Is_Has_Element, Aspects),
+                                   First       => Aspect_For (Lexical.Is_First, Aspects),
+                                   Next        => Aspect_For (Lexical.Is_Next, Aspects));
+    end New_Iterable_Aspects;
+
+  begin -- Add_Iterator_Aspects
     if To /= null then
       --TEST--------------------------------------------------------------------
       --Write_Log ("*** add Iterator_Aspects to " & Image_Of (To.Location.all));
@@ -3878,21 +3916,22 @@ package body Ada_95.Token.Data is
           declare
             Item_Handle : constant Private_Type_Handle := Private_Type_Handle(To);
           begin
-            Item_Handle.Aspects := new Iterable_Aspects'
-              (Empty                => Aspect_For (Lexical.Is_Empty, Aspects),
-               Add_Named            => Aspect_For (Lexical.Is_Add_Named, Aspects),
-               Add_Unnamed          => Aspect_For (Lexical.Is_Add_Unnamed, Aspects),
-               New_Indexed          => Aspect_For (Lexical.Is_New_Indexed, Aspects),
-               Assign_Indexed       => Aspect_For (Lexical.Is_Assign_Indexed, Aspects),
-               Iterable_Element     => Aspect_For (Lexical.Is_Element, Aspects),
-               Iterable_Has_Element => Aspect_For (Lexical.Is_Has_Element, Aspects),
-               Iterable_First       => Aspect_For (Lexical.Is_First, Aspects),
-               Iterable_Next        => Aspect_For (Lexical.Is_Next, Aspects),
-               Iterator_Element     => Aspect_For (Lexical.Is_Iterator_Element, Aspects),
-               Constant_Indexing    => Aspect_For (Lexical.Is_Constant_Indexing, Aspects),
-               Variable_Indexing    => Aspect_For (Lexical.Is_Variable_Indexing, Aspects),
-               Default_Iterator     => Aspect_For (Lexical.Is_Default_Iterator, Aspects));
+            Item_Handle.Aspects := new Private_Aspects'
+              (Aggregate => (Empty          => Aspect_For (Lexical.Is_Empty, Aspects),
+                             Add_Named      => Aspect_For (Lexical.Is_Add_Named, Aspects),
+                             Add_Unnamed    => Aspect_For (Lexical.Is_Add_Unnamed, Aspects),
+                             New_Indexed    => Aspect_For (Lexical.Is_New_Indexed, Aspects),
+                             Assign_Indexed => Aspect_For (Lexical.Is_Assign_Indexed, Aspects)),
+               Iterator => (Element           => Aspect_For (Lexical.Is_Iterator_Element, Aspects),
+                            Constant_Indexing => Aspect_For (Lexical.Is_Constant_Indexing, Aspects),
+                            Variable_Indexing => Aspect_For (Lexical.Is_Variable_Indexing, Aspects),
+                            Default_Iterator  => Aspect_For (Lexical.Is_Default_Iterator, Aspects)),
+               Iterable => New_Iterable_Aspects);
           end;
+        end if;
+      elsif To.all in Record_Type'class then
+        if Aspects /= No_Aspects then
+          Record_Handle(To).Aspects := New_Iterable_Aspects;
         end if;
       end if;
     end if;
@@ -5078,6 +5117,10 @@ package body Ada_95.Token.Data is
   begin
     if Strings.Location_Of ("Unused", Image) /= Strings.Not_Found then
       return True;
+    elsif Strings.Location_Of ("Ignored", Image) /= Strings.Not_Found then
+      return True;
+    elsif Strings.Location_Of ("Dummy", Image) /= Strings.Not_Found then
+      return True;
     elsif The_Data /= null and then The_Data.all in Parameter'class then
       return Is_Marked ("UP", Annotation);
     else
@@ -5433,55 +5476,59 @@ package body Ada_95.Token.Data is
       if The_Type.all in Private_Type'class then
         if The_Type.all in Tagged_Private_Type'class then
           declare
-            Aspects : constant Iterable_Aspect_Handle := Private_Type_Handle(The_Type).Aspects;
+            Aspects : constant Private_Aspect_Handle := Private_Type_Handle(The_Type).Aspects;
           begin
             if Aspects = null then
               The_Type := Tagged_Private_Handle(The_Type).Parent_Type;
-            elsif Is_Null (Aspects.Iterator_Element) then
+            elsif Is_Null (Aspects.Iterator.Element) then
               exit;
             else
-              The_Type := Aspects.Iterator_Element.Data;
+              The_Type := Aspects.Iterator.Element.Data;
               Element_Found := True;
             end if;
           end;
         else -- not tagged private
           declare
-            Aspects : constant Iterable_Aspect_Handle := Private_Type_Handle(The_Type).Aspects;
+            Aspects : constant Private_Aspect_Handle := Private_Type_Handle(The_Type).Aspects;
           begin
             if Aspects = null then
               The_Type := Private_Type_Handle(The_Type).Parent_Type;
-            elsif Is_Null (Aspects.Iterable_Element) then
+            elsif Is_Null (Aspects.Iterable.Element) then
               exit;
             else
-              The_Type := Aspects.Iterable_Element.Data;
+              The_Type := Aspects.Iterable.Element.Data;
               Element_Found := True;
             end if;
           end;
         end if;
-        if Is_Null (The_Type) then
-          exit;
-        elsif The_Type.all in Formal_Type'class then
-          The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
-                                             Item_Instantiation(Item).Instantiation);
-          exit when Is_Null (The_Type);
-        end if;
-        if Element_Found then
-          return The_Type;
-        end if;
-      elsif The_Type.all in Array_Type'class then
-        return Array_Handle(The_Type).Definition.Component_Type;
-      elsif The_Type.all in Tagged_Record_Type'class then
+      elsif The_Type.all in Record_Type'class then
         declare
-          The_Location : constant Identifier_Handle := Tagged_Record_Handle(The_Type).Location;
+          Aspects : constant Iterable_Aspect_Handle := Record_Handle(The_Type).Aspects;
         begin
-          if not Is_Null (The_Location) and then The_Type /= The_Location.Data then
-            The_Type := The_Location.Data;
-          else
+          if Aspects = null then
+            The_Type := Record_Handle(The_Type).Parent_Type;
+          elsif Is_Null (Aspects.Element) then
             exit;
+          else
+            The_Type := Aspects.Element.Data;
+            Element_Found := True;
           end if;
         end;
+      elsif The_Type.all in Array_Type'class then
+        The_Type := Array_Handle(The_Type).Definition.Component_Type;
+        Element_Found := True;
       else
         Write_Log ("%%% Iterable_Type_Of - unknown type: " & Ada.Tags.External_Tag (The_Type.all'tag));
+        return The_Type;
+      end if;
+      if Is_Null (The_Type) then
+        exit;
+      elsif The_Type.all in Formal_Type'class and then Item.all in Instantiated_Item'class then
+        The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
+                                           Item_Instantiation(Item).Instantiation);
+        exit when Is_Null (The_Type);
+      end if;
+      if Element_Found then
         return The_Type;
       end if;
     end loop;

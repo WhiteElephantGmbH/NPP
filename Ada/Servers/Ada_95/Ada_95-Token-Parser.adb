@@ -5659,31 +5659,14 @@ package body Ada_95.Token.Parser is
         begin
           if The_Declaration.all in Data.Tagged_Private_Type'class then
             declare
-              Aspects : constant Data.Iterable_Aspect_Handle := Data.Tagged_Private_Handle(The_Declaration).Aspects;
-              use type Data.Iterable_Aspect_Handle;
+              Aspects : constant Data.Private_Aspect_Handle := Data.Tagged_Private_Handle(The_Declaration).Aspects;
+              use type Data.Private_Aspect_Handle;
             begin
-              if Aspects /= null and then Aspects.Constant_Indexing.Data /= null
-                and then Aspects.Constant_Indexing.Data.all in Data.Subprogram_Declaration'class
+              if Aspects /= null and then Aspects.Iterator.Constant_Indexing.Data /= null
+                and then Aspects.Iterator.Constant_Indexing.Data.all in Data.Subprogram_Declaration'class
               then
                 Saved_Token := The_Token;
-                if Found_Method (Aspects.Constant_Indexing, Aspects.Constant_Indexing.Data) then
-                  return True;
-                else
-                  The_Token := Saved_Token;
-                end if;
-              end if;
-            end;
-          elsif The_Declaration.all in Data.Private_Type'class then
-            --!!!???
-            declare
-              Aspects : constant Data.Iterable_Aspect_Handle := Data.Private_Type_Handle(The_Declaration).Aspects;
-              use type Data.Iterable_Aspect_Handle;
-            begin
-              if Aspects /= null and then Aspects.Iterable_First.Data /= null
-                and then Aspects.Iterable_First.Data.all in Data.Subprogram_Declaration'class
-              then
-                Saved_Token := The_Token;
-                if Found_Method (Aspects.Iterable_First, Aspects.Iterable_First.Data) then
+                if Found_Method (Aspects.Iterator.Constant_Indexing, Aspects.Iterator.Constant_Indexing.Data) then
                   return True;
                 else
                   The_Token := Saved_Token;
@@ -7035,33 +7018,33 @@ package body Ada_95.Token.Parser is
         loop
           case Token_Element is
           when Lexical.Is_If =>
-            --TEST-------------------------------
-            Write_Log ("%%% SKIP if expression");
-            -------------------------------------
+            --TEST---------------------------------
+            --Write_Log ("%%% SKIP if expression");
+            ---------------------------------------
             Dummy := If_Expression (Within);
             The_Expected_Type := Separator;
             The_Count := The_Count - 1;
             exit when (The_Count = 0);
           when Lexical.Is_Case =>
-            --TEST---------------------------------
-            Write_Log ("%%% SKIP case expression");
-            --------------------------------------
+            --TEST-----------------------------------
+            --Write_Log ("%%% SKIP case expression");
+            -----------------------------------------
             Dummy := Case_Expression (Within);
             The_Expected_Type := Separator;
             The_Count := The_Count - 1;
             exit when (The_Count = 0);
           when Lexical.Is_For =>
-            --TEST---------------------------------------
-            Write_Log ("%%% SKIP quantified expression");
-            ---------------------------------------------
+            --TEST-----------------------------------------
+            --Write_Log ("%%% SKIP quantified expression");
+            -----------------------------------------------
            Dummy := Quantified_Expression (Within);
             The_Expected_Type := Separator;
             The_Count := The_Count - 1;
             exit when (The_Count = 0);
           when Lexical.Is_Declare =>
-            --TEST------------------------------------
-            Write_Log ("%%% SKIP declare expression");
-            ------------------------------------------
+            --TEST--------------------------------------
+            --Write_Log ("%%% SKIP declare expression");
+            --------------------------------------------
             Dummy := Declare_Expression (Within);
             The_Expected_Type := Separator;
             The_Count := The_Count - 1;
@@ -7078,11 +7061,11 @@ package body Ada_95.Token.Parser is
             The_Expected_Type := Separator;
           when Lexical.Period =>
             exit when The_Expected_Type = Item;
-            --TEST-----------------------------------------------------
-            if The_Expected_Type = Start then
-              Write_Log ("%%% START SKIP");
-            end if;
-            -----------------------------------------------------------
+            --TEST-----------------------------
+            --if The_Expected_Type = Start then
+            --  Write_Log ("%%% START SKIP");
+            --end if;
+            -----------------------------------
             The_Expected_Type := Item;
           when Lexical.Is_Abs
              | Lexical.Is_New
@@ -7128,11 +7111,11 @@ package body Ada_95.Token.Parser is
             end if;
           when Lexical.Left_Parenthesis =>
             The_Count := The_Count + 1;
-            --TEST-----------------------------------------------------
-            if The_Expected_Type = Start then
-              Write_Log ("%%% START SKIP");
-            end if;
-            -----------------------------------------------------------
+            --TEST-----------------------------
+            --if The_Expected_Type = Start then
+            --  Write_Log ("%%% START SKIP");
+            --end if;
+            -----------------------------------
             The_Expected_Type := Item;
           when Lexical.Right_Parenthesis =>
             exit when The_Count = 0 or (The_Expected_Type = Item);
@@ -7142,14 +7125,14 @@ package body Ada_95.Token.Parser is
             exit;
           end case;
           --TEST-----------------------------------------------------
-          Write_Log ("%%% SKIP TOKEN " & Image_Of (The_Token.all));
+          --Write_Log ("%%% SKIP TOKEN " & Image_Of (The_Token.all));
           -----------------------------------------------------------
           Get_Next_Token;
         end loop;
       exception
       when others =>
         --TEST--------------------------------
-        Write_Log ("%%% SKIP TOKEN Failed");
+          Write_Log ("%%% SKIP TOKEN Failed");
         --------------------------------------
       end Skip_To_End_Of_Name;
 
@@ -9020,7 +9003,7 @@ package body Ada_95.Token.Parser is
           The_Actual_Record_Definition := Data.Record_Handle(The_Type);
           Data.Record_Handle(The_Type).Components := Components;
           The_Actual_Record_Definition := null;
-          Conditional_Aspect_Specification ((Scope, The_Type));
+          Data.Add_Iterator_Aspects (The_Type, Aspect_Specification ((Scope, The_Type)));
         end Record_Definition;
 
 

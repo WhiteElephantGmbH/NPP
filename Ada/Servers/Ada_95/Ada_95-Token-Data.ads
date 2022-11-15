@@ -780,9 +780,20 @@ package Ada_95.Token.Data is
   type Interface_Handle is access all Interface_Type'class;
   for Interface_Handle'storage_pool use Memory.Pool.all;
 
+  type Iterable_Aspects is record
+    First       : Identifier_Handle;
+    Next        : Identifier_Handle;
+    Has_Element : Identifier_Handle;
+    Element     : Identifier_Handle;
+  end record;
+
+  type Iterable_Aspect_Handle is access all Iterable_Aspects;
+  for Iterable_Aspect_Handle'storage_pool use Memory.Pool.all;
+
   type Record_Type is new Type_Declaration with record
     Discriminants : List.Item;
     Components    : List.Item;
+    Aspects       : Iterable_Aspect_Handle;
   end record;
 
   overriding
@@ -844,28 +855,33 @@ package Ada_95.Token.Data is
   overriding
   function Data_Kind_Of (Item : Incomplete_Type) return Data_Kind;
 
-  type Iterable_Aspects is record
-    Empty                : Identifier_Handle;
-    Add_Named            : Identifier_Handle;
-    Add_Unnamed          : Identifier_Handle;
-    New_Indexed          : Identifier_Handle;
-    Assign_Indexed       : Identifier_Handle;
-    Iterable_First       : Identifier_Handle;
-    Iterable_Next        : Identifier_Handle;
-    Iterable_Has_Element : Identifier_Handle;
-    Iterable_Element     : Identifier_Handle;
-    Constant_Indexing    : Identifier_Handle;
-    Variable_Indexing    : Identifier_Handle;
-    Default_Iterator     : Identifier_Handle;
-    Iterator_Element     : Identifier_Handle;
+  type Aggregate_Aspects is record
+    Empty          : Identifier_Handle;
+    Add_Named      : Identifier_Handle;
+    Add_Unnamed    : Identifier_Handle;
+    New_Indexed    : Identifier_Handle;
+    Assign_Indexed : Identifier_Handle;
   end record;
 
-  type Iterable_Aspect_Handle is access all Iterable_Aspects;
-  for Iterable_Aspect_Handle'storage_pool use Memory.Pool.all;
+  type Iterator_Aspects is record
+    Constant_Indexing : Identifier_Handle;
+    Variable_Indexing : Identifier_Handle;
+    Default_Iterator  : Identifier_Handle;
+    Element           : Identifier_Handle;
+  end record;
+
+  type Private_Aspects is record
+    Iterable  : Iterable_Aspect_Handle;
+    Iterator  : Iterator_Aspects;
+    Aggregate : Aggregate_Aspects;
+  end record;
+
+  type Private_Aspect_Handle is access all Private_Aspects;
+  for Private_Aspect_Handle'storage_pool use Memory.Pool.all;
 
   type Private_Type is new Type_Declaration with record
-    Aspects       : Iterable_Aspect_Handle;
     Discriminants : List.Item;
+    Aspects       : Private_Aspect_Handle;
   end record;
 
   overriding

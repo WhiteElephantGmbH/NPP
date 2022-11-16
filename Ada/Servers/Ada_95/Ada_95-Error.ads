@@ -41,8 +41,7 @@ package Ada_95.Error is
      Number_With_Double_Underscore,
      Real_Base_Not_Allowed,
 
-     Function_Expression_Not_Allowed_In_Body, -- Incorrect_Style'first
-     Goto_Label_Not_Allowed,
+     Goto_Label_Not_Allowed, -- Incorrect_Style'first
      Goto_Not_Allowed,
      Incorrect_Identifier,
      Missing_Exception_Handler,
@@ -80,7 +79,7 @@ package Ada_95.Error is
 
      Not_Implemented);
 
-  subtype Incorrect_Style is Kind range Function_Expression_Not_Allowed_In_Body .. Suspicious_Form_Of_Entry_Call;
+  subtype Incorrect_Style is Kind range Goto_Label_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
 
   subtype In_Semantic is Kind range Ada_Project_Path_Missing .. Version_Number_Out_Of_Range;
 

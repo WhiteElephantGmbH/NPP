@@ -5626,30 +5626,35 @@ package body Ada_95.Token.Parser is
 
         function Found_Method (Item       : Identifier_Handle;
                                The_Method : Data_Handle) return Boolean is
-          Profile : constant Data.Subprogram_Profile := Data.Subprogram_Declaration_Handle(The_Method).Profile;
-          use type Data.Declaration_Handle;
         begin
-          --TEST------------------------------------------------------------------------------------------
-          --Write_Log ("Check Method " & Image_Of (Item.all) & " with " & Data.Full_Name_Of (The_Method));
-          --Write_Log ("      Result " & Data.Full_Name_Of (Within.Sub_Type));
-          ------------------------------------------------------------------------------------------------
           if Item /= The_Method.Location then
             return False;
           end if;
-          if Found_Method_Parameters (Within.Scope, Profile, The_Instantiation) then
-            if Profile.Result_Type /= null and then
-              Data.Subprogram_Declaration_Handle(The_Method).Overload /= null and then
-              Within.Sub_Type /= null and then not Is_Null (Within.Sub_Type.Location)
-            then
-              if not Data.Matches (Within.Sub_Type, Profile.Result_Type, The_Instantiation) then
-                return False;
+          declare
+            Profile : constant Data.Subprogram_Profile := Data.Profile_Of (Data.Declaration_Handle(The_Method));
+            use type Data.Declaration_Handle;
+          begin
+            --TEST------------------------------------------------------------------------------------------
+            --Write_Log ("Check Method " & Image_Of (Item.all) & " with " & Data.Full_Name_Of (The_Method));
+            --Write_Log ("      Result " & Data.Full_Name_Of (Within.Sub_Type));
+            ------------------------------------------------------------------------------------------------
+            if Found_Method_Parameters (Within.Scope, Profile, The_Instantiation) then
+              if The_Method.all in Data.Subprogram_Declaration'class then
+                if Profile.Result_Type /= null and then
+                  Data.Subprogram_Declaration_Handle(The_Method).Overload /= null and then
+                  Within.Sub_Type /= null and then not Is_Null (Within.Sub_Type.Location)
+                then
+                  if not Data.Matches (Within.Sub_Type, Profile.Result_Type, The_Instantiation) then
+                    return False;
+                  end if;
+                end if;
               end if;
+              Item.Data := The_Method;
+              Data.Declaration_Handle(The_Method).Is_Used := True;
+              The_Declaration := Profile.Result_Type;
+              return True;
             end if;
-            Item.Data := The_Method;
-            Data.Declaration_Handle(The_Method).Is_Used := True;
-            The_Declaration := Profile.Result_Type;
-            return True;
-          end if;
+          end;
           return False;
         end Found_Method;
 
@@ -6035,7 +6040,32 @@ package body Ada_95.Token.Parser is
                 if (The_Declaration.all in Data.Private_Type'class) or
                    (The_Declaration.all in Data.Private_Extension_Type'class)
                 then
-                  The_Declaration := null;
+                  if The_Declaration /= null then
+                    if The_Declaration.all in Ada_95.Token.Data.Tagged_Private_Type'class then
+                      if Next_Element_Ahead_Is (Lexical.Identifier) then
+                        declare
+                          The_Actual_Method : constant Identifier_Handle := Actual_Identifier;
+                        begin
+                          Lookup_Method:
+                          loop
+                            --TEST-------------------------------------------------------------------------
+                            --Write_Log ("Find Method " & Image_Of (The_Actual_Method.all));
+                            --Write_Log ("   The_Type " & Ada.Tags.External_Tag (The_Declaration.all'tag));
+                            -------------------------------------------------------------------------------
+                            for The_Method of Data.Tagged_Private_Handle(The_Declaration).Methods loop
+                              exit Lookup_Method when Found_Method (The_Actual_Method, The_Method);
+                            end loop;
+                            The_Declaration := null;
+                            exit Lookup_Method;
+                          end loop Lookup_Method;
+                        end;
+                      else
+                        The_Declaration := null;
+                      end if;
+                    else
+                      The_Declaration := null;
+                    end if;
+                  end if;
                 end if;
               when Lexical.Left_Parenthesis =>
                 if not Handled_Aspect_Indexing then
@@ -8047,15 +8077,9 @@ package body Ada_95.Token.Parser is
 
     function Expression_Function (The_Identifier : Identifier_Handle;
                                   Scope          : Data.Unit_Handle;
-                                  Profile        : Data.Subprogram_Profile;
-                                  Profile_Token  : Lexical_Handle;
-                                  Is_Basic       : Boolean := True) return Data.Unit_Handle is
+                                  Profile        : Data.Subprogram_Profile) return Data.Unit_Handle is
       The_Unit : Data.Unit_Handle;
-      use type Data.List.Elements_Access;
     begin
-      if not Is_Basic and Profile.Parameters /= null then
-        Conditional_Style_Error (Error.Function_Expression_Not_Allowed_In_Body, Profile_Token);
-      end if;
       The_Unit := Data.New_Function_Expression_Declaration (The_Identifier, Scope, Profile);
       case Token_Element is
       when Lexical.Is_Declare =>
@@ -8081,7 +8105,6 @@ package body Ada_95.Token.Parser is
                                               Is_Function   : Boolean := False;
                                               Is_Overriding : Boolean := False) with Inline is
       The_Identifier : constant Identifier_Handle := Next_Declaring_Identifier;
-      Profile_Token  : constant Lexical_Handle := The_Token;
       Profile        : constant Data.Subprogram_Profile := Subprogram_Profile (Scope, Is_Function);
       Unused_Unit    : Data.Unit_Handle;
     begin
@@ -8089,7 +8112,7 @@ package body Ada_95.Token.Parser is
       when Lexical.Is_Is =>
         if Is_Function and then Next_Element_Ahead_Is (Lexical.Left_Parenthesis) then
           Get_Next_Token;
-          Unused_Unit := Expression_Function (The_Identifier, Scope, Profile, Profile_Token);
+          Unused_Unit := Expression_Function (The_Identifier, Scope, Profile);
           Get_Element (Lexical.Semicolon);
         else
           Subprogram_Body (Data.New_Subprogram_Body (The_Identifier, Scope, Profile), Is_Overriding);
@@ -8540,7 +8563,6 @@ package body Ada_95.Token.Parser is
         else
           declare
 
-            Profile_Token     : constant Lexical_Handle := The_Token;
             Profile           : constant Data.Subprogram_Profile := Subprogram_Profile (Scope, Is_Function);
             Found_Declaration : constant Boolean := Found_Subprogram_Declaration;
             The_Unit          :          Data.Unit_Handle;
@@ -8550,7 +8572,7 @@ package body Ada_95.Token.Parser is
             when Lexical.Is_With =>
               if Found_Declaration then
                 if Element_Is (Lexical.Left_Parenthesis) then
-                  The_Unit := Expression_Function (The_Identifier, Scope, Profile, Profile_Token, Is_Basic);
+                  The_Unit := Expression_Function (The_Identifier, Scope, Profile);
                 else
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
                   Aspect_Specification ((The_Unit, null), (1 => The_Identifier));
@@ -8571,7 +8593,7 @@ package body Ada_95.Token.Parser is
                  Next_Element_Ahead_Is (Lexical.Left_Parenthesis)
               then
                 if Element_Is (Lexical.Left_Parenthesis) then
-                  The_Unit := Expression_Function (The_Identifier, Scope, Profile, Profile_Token, Is_Basic);
+                  The_Unit := Expression_Function (The_Identifier, Scope, Profile);
                 else
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
                   Data.Declaration_Handle(The_Unit).Is_Used := True;

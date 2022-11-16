@@ -2020,7 +2020,7 @@ package body Ada_95.Token.Data is
 
     use type List.Elements_Access;
 
-  begin
+  begin -- Handle_Methods
     if Profile.Parameters /= null and then Profile.Parameters'length > 0 then
       declare
         The_Parameter : constant Data_Handle := Profile.Parameters(Profile.Parameters'first);
@@ -3016,6 +3016,7 @@ package body Ada_95.Token.Data is
                                                                   Overload      => null,
                                                                   Declarations  => Tree.Empty));
     Handle_Aspects (Profile, The_Unit);
+    Handle_Methods (Profile, The_Unit);
     return The_Unit;
   end New_Function_Expression_Declaration;
 
@@ -5506,7 +5507,13 @@ package body Ada_95.Token.Data is
           Aspects : constant Iterable_Aspect_Handle := Record_Handle(The_Type).Aspects;
         begin
           if Aspects = null then
-            The_Type := Record_Handle(The_Type).Parent_Type;
+            if not Is_Null (Record_Handle(The_Type).Parent_Type) then
+              The_Type := Record_Handle(The_Type).Parent_Type;
+            elsif not Is_Null (The_Type.Location) then
+              The_Type := The_Type.Location.Data; -- type from public part
+            else
+              exit;
+            end if;
           elsif Is_Null (Aspects.Element) then
             exit;
           else
@@ -5517,6 +5524,8 @@ package body Ada_95.Token.Data is
       elsif The_Type.all in Array_Type'class then
         The_Type := Array_Handle(The_Type).Definition.Component_Type;
         Element_Found := True;
+      elsif The_Type.all in Derived_Type'class then
+        The_Type := Type_Handle(The_Type).Parent_Type;
       else
         Write_Log ("%%% Iterable_Type_Of - unknown type: " & Ada.Tags.External_Tag (The_Type.all'tag));
         return The_Type;

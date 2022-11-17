@@ -1890,24 +1890,16 @@ package body Ada_95.Token.Data is
 
     procedure Handle_Iterable (Aspects : Iterable_Aspect_Handle) is
     begin
-      if not Is_Null (Aspects.Element) and then
-        Aspects.Element = Unit.Location
-      then
+      if not Is_Null (Aspects.Element) and then Aspects.Element = Unit.Location then
         Aspects.Element.Data := Data_Handle(Unit);
         Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.Has_Element) and then
-        Aspects.Has_Element = Unit.Location
-      then
+      elsif not Is_Null (Aspects.Has_Element) and then Aspects.Has_Element = Unit.Location then
         Aspects.Has_Element.Data := Data_Handle(Unit);
         Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.First) and then
-        Aspects.First = Unit.Location
-      then
+      elsif not Is_Null (Aspects.First) and then Aspects.First = Unit.Location then
         Aspects.First.Data := Data_Handle(Unit);
         Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.Next) and then
-        Aspects.Next = Unit.Location
-      then
+      elsif not Is_Null (Aspects.Next) and then Aspects.Next = Unit.Location then
         Aspects.Next.Data := Data_Handle(Unit);
         Unit.Is_Used := True;
       end if;
@@ -5463,6 +5455,7 @@ package body Ada_95.Token.Data is
 
   function Iterable_Type_Of (Item : Data_Handle) return Data_Handle is
     The_Type      : Data_Handle := Item;
+    Aspect_Found  : Boolean := False;
     Element_Found : Boolean := False;
   begin
     while not Is_Null (The_Type) loop
@@ -5485,7 +5478,7 @@ package body Ada_95.Token.Data is
               exit;
             else
               The_Type := Aspects.Iterator.Element.Data;
-              Element_Found := True;
+              Aspect_Found := True;
             end if;
           end;
         else -- not tagged private
@@ -5498,7 +5491,7 @@ package body Ada_95.Token.Data is
               exit;
             else
               The_Type := Aspects.Iterable.Element.Data;
-              Element_Found := True;
+              Aspect_Found := True;
             end if;
           end;
         end if;
@@ -5518,7 +5511,7 @@ package body Ada_95.Token.Data is
             exit;
           else
             The_Type := Aspects.Element.Data;
-            Element_Found := True;
+            Aspect_Found := True;
           end if;
         end;
       elsif The_Type.all in Array_Type'class then
@@ -5530,14 +5523,22 @@ package body Ada_95.Token.Data is
         Write_Log ("%%% Iterable_Type_Of - unknown type: " & Ada.Tags.External_Tag (The_Type.all'tag));
         return The_Type;
       end if;
-      if Is_Null (The_Type) then
-        exit;
-      elsif The_Type.all in Formal_Type'class and then Item.all in Instantiated_Item'class then
+      exit when Is_Null (The_Type);
+      if The_Type.all in Formal_Type'class and then Item.all in Instantiated_Item'class then
         The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
                                            Item_Instantiation(Item).Instantiation);
         exit when Is_Null (The_Type);
       end if;
       if Element_Found then
+        return The_Type;
+      elsif Aspect_Found then
+        declare
+          Result_Type : constant Data_Handle := Data.Profile_Of (Data.Declaration_Handle(The_Type)).Result_Type;
+        begin
+          if not Is_Null (Result_Type) then
+            The_Type := Result_Type;
+          end if;
+        end;
         return The_Type;
       end if;
     end loop;

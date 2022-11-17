@@ -1797,7 +1797,7 @@ package body Ada_95.Token.Data is
   end Parent_Of;
 
 
-  function "=" (Left, Right : Subprogram_Profile) return Boolean with Inline is
+  function "=" (Left, Right : Subprogram_Profile) return Boolean is
     use type List.Elements_Access;
   begin
     if Type_Of (Left.Result_Type) /= Type_Of (Right.Result_Type) then

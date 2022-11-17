@@ -2892,7 +2892,6 @@ package body Ada_95.Token.Parser is
       when others =>
         Syntax_Error;
       end case;
-      return null;
     end Access_Definition_Part;
 
 

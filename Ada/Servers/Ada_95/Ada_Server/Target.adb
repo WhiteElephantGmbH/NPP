@@ -122,7 +122,6 @@ package body Target is
       if Error_Text /= "" then
         Log_Error (Error_Text);
         Promotion.Set_Error (Error_Text);
-        return;
       end if;
     end;
   exception

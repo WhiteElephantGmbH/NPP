@@ -222,6 +222,8 @@ package Ada_95.Token.Data is
     Result_Type : Data_Handle;
   end record;
 
+  function "=" (Left, Right : Subprogram_Profile) return Boolean with Inline;
+
   ----------------------------------------------------------------------------------------------------------------------
 
   type Package_Specification is new Unit_Declaration with record

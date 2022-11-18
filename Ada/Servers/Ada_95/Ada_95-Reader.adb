@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,18 +10,6 @@ with Container.List;
 with Log;
 
 package body Ada_95.Reader is
-
-  function "<" (Left, Right : Element) return Boolean is
-  begin
-    raise Program_Error;
-    return False;
-  end "<";
-
-  function "=" (Left, Right : Element) return Boolean is
-  begin
-    raise Program_Error;
-    return False;
-  end "=";
 
   package Elements is new Container.List (Element);
 

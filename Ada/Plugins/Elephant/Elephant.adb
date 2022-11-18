@@ -22,7 +22,7 @@ pragma Build (Description   => "Elephant Nodepad++ Plugin",
               Kind          => Dll,
               Use_Interface => Elephant_Interface,
               Resource      => "Bit_Maps",
-              Compiler      => "GNATPRO\22.2");
+              Compiler      => "GNATPRO\23.0");
 
 procedure Elephant is
 begin

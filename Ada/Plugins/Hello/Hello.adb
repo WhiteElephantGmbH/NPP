@@ -22,7 +22,7 @@ pragma Build (Description   => "Hello Nodepad++ Plugin",
               Kind          => Dll,
               Use_Interface => Hello_Interface,
               Resource      => "Bitmap",
-              Compiler      => "GNATPRO\22.2");
+              Compiler      => "GNATPRO\23.0");
 
 procedure Hello is
 begin

@@ -8,7 +8,7 @@ pragma Build (Description => "Ada Renamer",
               Version     => (45, 1, 0 ,4),
               Kind        => Console,
               Icon        => False,
-              Compiler    => "GNATPRO\22.2");
+              Compiler    => "GNATPRO\23.0");
 
 with Work;
 

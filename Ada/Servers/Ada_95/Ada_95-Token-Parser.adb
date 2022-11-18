@@ -6252,6 +6252,11 @@ package body Ada_95.Token.Parser is
                             end if;
                             The_Instantiation := Data.Item_Instantiation(The_Type).Instantiation;
                             The_Type := Data.Item_Instantiation(The_Type).Item;
+                            if The_Type /= null and then The_Type.all in Data.Record_Type'class then
+                              The_Declaration := Data.Component_Choice_Of (The_Actual_Identifier,
+                                                                           Data.Record_Handle(The_Type));
+                              exit when The_Declaration /= null;
+                            end if;
                           else
                             The_Declaration := The_Type;
                             exit;
@@ -8082,15 +8087,15 @@ package body Ada_95.Token.Parser is
       The_Unit := Data.New_Function_Expression_Declaration (The_Identifier, Scope, Profile);
       case Token_Element is
       when Lexical.Is_Declare =>
-        Dummy := Declare_Expression ((The_Unit, null));
+        Dummy := Declare_Expression ((The_Unit, Profile.Result_Type));
       when Lexical.Is_If =>
-        Dummy := If_Expression ((The_Unit, null));
+        Dummy := If_Expression ((The_Unit, Profile.Result_Type));
       when Lexical.Is_Case =>
-        Dummy := Case_Expression ((The_Unit, null));
+        Dummy := Case_Expression ((The_Unit, Profile.Result_Type));
       when Lexical.Is_For =>
-        Dummy := Quantified_Expression ((The_Unit, null));
+        Dummy := Quantified_Expression ((The_Unit, Profile.Result_Type));
       when others =>
-        Dummy := Expression ((The_Unit, null));
+        Dummy := Expression ((The_Unit, Profile.Result_Type));
       end case;
       Get_Element (Lexical.Right_Parenthesis);
       if Token_Element = Lexical.Is_With then
@@ -9144,6 +9149,12 @@ package body Ada_95.Token.Parser is
             Ancestor       : constant Data_Handle := Subtype_Indication_Part ((Scope, null));
             The_Interfaces : Data.List.Item;
           begin
+            --TEST----------------------------------------------------------------------------------
+            --if Ancestor /= null then
+            --  Write_Log ("Derived_Type - Ancestor : " & Image_Of (Ancestor.Location.all));
+            --  Write_Log ("                   TYPE : " & Ada.Tags.External_Tag (Ancestor.all'tag));
+            --end if;
+            ----------------------------------------------------------------------------------------
             if Element_Is (Lexical.Is_And) then
               The_Interfaces := Interface_List (Scope);
             end if;

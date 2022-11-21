@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                           (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -81,10 +81,6 @@ package body Project.Resource is
     begin
       return Unix_Style_Of (Folder & Name & ".ico");
     end Icon_Name;
-
-    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
-    Product_Name          : constant String := Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
-    Product_Version       : constant String := Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
 
     Actual_Year : constant Ada.Calendar.Year_Number := Ada.Calendar.Year (Ada.Calendar.Clock);
 
@@ -220,7 +216,7 @@ package body Project.Resource is
                             Defined := Build.Defined_Compiler ("GNAT\" & Strings.Trimmed (The_Year'img));
                           end;
                         elsif Compiler = "GNATPRO" then
-                          Defined := Build.Defined_Compiler ("GNATPRO\7.3.1");
+                          Defined := Build.Defined_Compiler ("GNATPRO\" & Legacy_Product_Version);
                         end if;
                         if not Defined then
                           Set_Error ("Unknown compiler: " & Compiler & " in " & Filename);

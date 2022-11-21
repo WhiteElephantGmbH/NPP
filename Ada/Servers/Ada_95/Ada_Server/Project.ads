@@ -93,6 +93,8 @@ package Project is
 
 private
 
+  Legacy_Product_Version : constant String := "7.3.1";
+
   Object_Area : constant String := "objects";
 
   function Object_Folder return String;
@@ -105,7 +107,9 @@ private
 
   function Target_Folder return String;
 
-  function Tools_Directory return String;
+  function Product_Name return String;
+
+  function Product_Version return String;
 
   function Legacy_Interface_Name return String;
 

@@ -139,8 +139,6 @@ package body Project is
 
   function Name return String is (Text.String_Of (The_Project_Name));
 
-  function Ada_Version return String is (Text.String_Of (The_Ada_Version));
-
   function Modifier_Tool return String is (Text.String_Of (The_Modifier_Tool));
 
   function Modifier_Parameters return String is (Text.String_Of (The_Modifier_Parameters));
@@ -158,6 +156,30 @@ package body Project is
   function Product return String is (Product_Directory & Product_Sub_Path & Files.Separator & Name & Product_Extension);
 
   function Legacy_Interface_Name return String is (Name & "_Interface");
+
+
+  function Ada_Version return String is
+  begin
+    if Product_Version = Legacy_Product_Version then
+      return Default_Ada_Version;
+    else
+      return Text.String_Of (The_Ada_Version);
+    end if;
+  end Ada_Version;
+
+
+  function Product_Name return String is
+    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
+  begin
+    return Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
+  end Product_Name;
+
+
+  function Product_Version return String is
+    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
+  begin
+    return Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
+  end Product_Version;
 
 
   function Has_Legacy_Interface_In (The_Path : String) return Boolean is

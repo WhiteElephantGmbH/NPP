@@ -1885,8 +1885,30 @@ package body Ada_95.Token.Data is
   end Set_Profile_Used;
 
 
+  procedure Handle_Aspects (Id : Identifier_Handle) is
+
+    The_Object : constant Object_Handle := Object_Handle(Id.Data);
+    The_Handle : constant Data_Handle := The_Object.Object_Type;
+
+  begin
+    if The_Handle /= null and then The_Handle.all in Private_Type'class then
+      declare
+        Handle  : constant Private_Type_Handle := Private_Type_Handle(The_Handle);
+        Aspects : constant Private_Aspect_Handle := Handle.Aspects;
+      begin
+        if Handle.Aspects /= null then
+          if not Is_Null (Aspects.Aggregate.Empty) and then Aspects.Aggregate.Empty = The_Object.Location then
+            Aspects.Aggregate.Empty.Data := Id.Data;
+            The_Object.Is_Used := True;
+          end if;
+        end if;
+      end;
+    end if;
+  end Handle_Aspects;
+
+
   procedure Handle_Aspects (Profile : Subprogram_Profile;
-                            Unit    : Unit_Handle) with Inline is
+                            Unit    : Unit_Handle) is
 
     procedure Handle_Iterable (Aspects : Iterable_Aspect_Handle) is
     begin
@@ -1995,7 +2017,7 @@ package body Ada_95.Token.Data is
 
 
   procedure Handle_Methods (Profile : Subprogram_Profile;
-                            Unit    : Unit_Handle) with Inline is
+                            Unit    : Unit_Handle) is
 
     The_Type : Data_Handle;
 
@@ -4230,7 +4252,7 @@ package body Ada_95.Token.Data is
       return null;
     end Incomplete_Data_For;
 
-  begin
+  begin --New_Constants
     --TEST------------------------------------------------------
     --Write_Log ("*** new Constants: " & Image_Of (Names, ','));
     ------------------------------------------------------------
@@ -4264,6 +4286,7 @@ package body Ada_95.Token.Data is
                                                      Is_Class_Wide => Is_Class_Wide,
                                                      Has_Default   => Has_Default,
                                                      Complete_Data => null));
+        Handle_Aspects (Names(The_Index));
       end if;
     end loop;
   end New_Constants;

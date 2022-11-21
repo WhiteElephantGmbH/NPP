@@ -16,23 +16,23 @@ package body Ada_95.Build is
 
   type Directories is array (Tools_Kind) of Text.String;
 
-  The_Project_Folder          : Text.String;
-  Build_Defined               : Boolean;
-  Use_Icon                    : Boolean;
-  The_Version                 : Version;
-  The_Kind                    : Kind;
-  The_Company                 : Text.String;
-  The_Description             : Text.String;
+  The_Project_Folder         : Text.String;
+  Build_Defined              : Boolean;
+  Use_Icon                   : Boolean;
+  The_Version                : Version;
+  The_Kind                   : Kind;
+  The_Company                : Text.String;
+  The_Description            : Text.String;
   The_Global_Tools_Directory : Text.String;
   Global_Tools_In_Use        : Boolean;
-  The_Tools_Directory         : Text.String;
-  The_Tools_Kind              : Tools_Kind;
-  The_Tools_Directories       : Directories;
-  Has_Second_Tools            : Boolean;
-  The_Libraries               : String_List.Item;
-  The_Resource                : Text.String;
-  The_Interface               : String_List.Item;
-  Library_Check               : Library_Check_Function;
+  The_Tools_Directory        : Text.String;
+  The_Tools_Kind             : Tools_Kind;
+  The_Tools_Directories      : Directories;
+  Has_Second_Tools           : Boolean;
+  The_Libraries              : String_List.Item;
+  The_Resource               : Text.String;
+  The_Interface              : String_List.Item;
+  Library_Check              : Library_Check_Function;
 
 
   procedure Initialize (Filename   : String;

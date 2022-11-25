@@ -171,14 +171,22 @@ package body Project is
   function Product_Name return String is
     Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
   begin
-    return Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
+    if Tools_Directory_Parts.Count >= 2 then
+      return Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
+    else
+      return "";
+    end if;
   end Product_Name;
 
 
   function Product_Version return String is
     Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
   begin
-    return Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
+    if Tools_Directory_Parts.Count >= 2 then
+      return Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
+    else
+      return "";
+    end if;
   end Product_Version;
 
 

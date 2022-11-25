@@ -301,7 +301,7 @@ package body Ada_95.Build is
     elsif Has_Global_Tools_Directory then
       return Text.String_Of (The_Global_Tools_Directory);
     else
-      raise Program_Error;
+      return "";
     end if;
   end Tools_Directory;
 

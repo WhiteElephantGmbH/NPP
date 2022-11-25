@@ -5,7 +5,7 @@
 pragma Style_White_Elephant;
 
 pragma Build (Description => "Ada Server for NP++ Elephant Plugin",
-              Version     => (45, 1, 0, 37),
+              Version     => (45, 1, 0, 38),
               Kind        => Windows,
               Compiler    => "GNATPRO\23.0");
 

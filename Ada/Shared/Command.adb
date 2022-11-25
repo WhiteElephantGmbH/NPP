@@ -237,8 +237,10 @@ package body Command is
     Log.Write ("&&& Server Closed");
   exception
   when Os.Pipe.Broken =>
+    Os.Pipe.Close (The_Pipe);
     Log.Write ("&&& Client Terminated");
   when Item: others =>
+    Os.Pipe.Close (The_Pipe);
     Log.Write ("!!! Command.Serve", Item);
   end Serve;
 

@@ -86,6 +86,13 @@ package body Server is
   end Set_Message;
 
 
+  procedure Set_Error (Item : String) is
+  begin
+    Log.Write ("!!! " & Item);
+    Set_Message (Item);
+  end Set_Error;
+
+
   function Language_Of (Name : String) return String is
     Last : Natural := Natural'first;
   begin
@@ -124,7 +131,7 @@ package body Server is
     begin
       Os.Process.Create (Os.Application.Origin_Folder & '\' & Language_Server, Pipe_Name);
       delay 0.5;  -- Wait for server to start
-      for Unused_Count in 1..4 loop
+      for Unused_Count in 1..3 loop
         begin  -- Attempt to connect to server
           Os.Pipe.Open (The_Pipe => The_Pipe,
                         Name     => Pipe_Name,
@@ -144,7 +151,7 @@ package body Server is
               Log.Write ("- Project not Opened using: " & Name);
               return False;
             else
-              Set_Message (Project_Not_Opened & "protocol error (wrong Confirmation)");
+              Set_Error (Project_Not_Opened & "protocol error (wrong Confirmation)");
             end if;
           end if;
           exit;
@@ -155,16 +162,19 @@ package body Server is
         end;
       end loop;
       delay Termination_Time;
-      Set_Message (Project_Not_Opened & Language_Server & " not connected!");
+      Set_Error (Project_Not_Opened & Language_Server & " not connected!");
     exception
     when Os.Process.Creation_Failure =>
-      Set_Message (Project_Not_Opened & Language_Server & " missing!");
+      Set_Error (Project_Not_Opened & Language_Server & " missing!");
     when Os.Pipe.Name_In_Use =>
-      Set_Message (Project_Not_Opened & Language_Server & " in use!");
+      Set_Error (Project_Not_Opened & Language_Server & " in use!");
+    when Os.Pipe.Broken =>
+      Set_Error (Project_Not_Opened & Language_Server & " broken!");
     when Occurence: others =>
       Set_Message (Project_Not_Opened & "internal error");
       Log.Write ("! " & Project_Not_Opened, Occurence);
     end;
+    Os.Pipe.Close (The_Pipe);
     return False;
   end Project_Opened;
 

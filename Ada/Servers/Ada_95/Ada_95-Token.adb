@@ -1327,8 +1327,10 @@ package body Ada_95.Token is
         Aspect_Allowed := True;
       end if;
     when Lexical.Semicolon =>
-      Aspect_Enabled := False;
-      Is_In_Iterable_Aspect := False;
+      if The_Nesting_Level = 0 then
+        Aspect_Enabled := False;
+        Is_In_Iterable_Aspect := False;
+      end if;
       In_Pragma_Call := False;
       if Is_Generic_Formal_Type then
         Is_Generic_Formal_Type := False;

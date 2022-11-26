@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -34,6 +34,8 @@ package body Ada_95.Lexical is
   Last_Compound_Aspect     : Name_Key;
   First_Compound_Pragma    : Name_Key;
   Last_Compound_Pragma     : Name_Key;
+
+  Preelaborable_Initialization_Key : Name_Key; -- used in attributes, aspects and pragmas
 
   The_Name_Key : Name_Key;
   The_Base_Key : Name_Key;
@@ -129,6 +131,9 @@ package body Ada_95.Lexical is
         Name.Complete_Compound;
         The_Compound_Key := The_Name_Key;
         The_Name_Key := The_Next_Name_Key;
+        if Id = Is_Preelaborable_Initialization then
+          Preelaborable_Initialization_Key := The_Compound_Key;
+        end if;
       end;
     end loop;
 
@@ -249,6 +254,8 @@ package body Ada_95.Lexical is
       return True;
     elsif Key >= First_Compound_Pragma and Key <= Last_Compound_Pragma then
       return True;
+    elsif Key = Preelaborable_Initialization_Key then
+      return True;
     end if;
     return False;
   end Is_Pragma_Id;
@@ -256,7 +263,9 @@ package body Ada_95.Lexical is
 
   function Pragma_Id_Of (Key : Name_Key) return Pragma_Id  is
   begin
-    if Key <= Last_Single_Pragma then
+    if Key = Preelaborable_Initialization_Key then
+      return Is_Preelaborable_Initialization;
+    elsif Key <= Last_Single_Pragma then
       return Pragma_Id'val (Key - First_Single_Pragma);
     else
       return Pragma_Id'val (Key - First_Compound_Pragma + Single_Pragma'pos(Single_Pragma'last) + 1);

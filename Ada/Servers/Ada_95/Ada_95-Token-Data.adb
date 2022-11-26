@@ -2318,6 +2318,7 @@ package body Ada_95.Token.Data is
 
 
   procedure Add_Library_Package_Body (Self : Unit_Handle) is
+    The_Specification : Unit_Declaration_Handle;
   begin
     Self.Location.Data := Data_Handle(Self);
     if Self.all in Package_Subunit'class then
@@ -2328,6 +2329,26 @@ package body Ada_95.Token.Data is
       --TEST-----------------------------------------------------------------------
         Write_Log ("*** add Library_Package_Body " & Image_Of (Self.Location.all));
       -----------------------------------------------------------------------------
+      if Library_Body_Handle(Self).Specification /= null then
+        The_Specification := Library_Body_Handle(Self).Specification;
+        while The_Specification /= null loop
+          declare
+            Private_Part : constant Block_Handle := Package_Specification_Handle(The_Specification).Private_Part;
+          begin
+            if Private_Part /= null and then Private_Part.Used_Packages /= null then
+              if Self.Used_Packages = null then
+                Self.Used_Packages := new List.Item;
+              end if;
+              Self.Used_Packages.Append (List.Copy_Of(Private_Part.Used_Packages.all));
+            end if;
+          end;
+          if The_Specification.Parent /= null and then The_Specification.Parent.all in Unit_Declaration'class then
+            The_Specification := Unit_Declaration_Handle(The_Specification.Parent);
+          else
+            exit;
+          end if;
+        end loop;
+      end if;
     end if;
   end Add_Library_Package_Body;
 
@@ -2729,7 +2750,9 @@ package body Ada_95.Token.Data is
   function New_Package_Body (Id          : Identifier_Handle;
                              Parent      : Unit_Handle;
                              Is_Separate : Boolean := False) return Unit_Handle is
-    Self : Unit_Body_Handle;
+    Self              : Unit_Body_Handle;
+    The_Body          : Unit_Handle;
+    The_Specification : Unit_Declaration_Handle;
   begin
     if Is_Separate then
       --TEST-------------------------------------------------------------
@@ -2743,7 +2766,7 @@ package body Ada_95.Token.Data is
                                          Declarations  => Tree.Empty);
     else
       --TEST----------------------------------------------------
-      --Write_Log ("*** new Package_Body " & Image_Of (Id.all));
+      Write_Log ("*** new Package_Body " & Image_Of (Id.all));
       ----------------------------------------------------------
       Self := new Package_Body'(Location      => Id,
                                 Is_Used       => True,
@@ -2752,9 +2775,34 @@ package body Ada_95.Token.Data is
                                 Specification => null,
                                 Declarations  => Tree.Empty);
     end if;
-    return Declared_Body (Id   => Id,
-                          To   => Parent,
-                          Item => Self);
+    The_Body := Declared_Body (Id   => Id,
+                               To   => Parent,
+                               Item => Self);
+    The_Specification := Self.Specification;
+    while The_Specification /= null loop
+      if The_Specification.Used_Packages /= null then
+        if Self.Used_Packages = null then
+          Self.Used_Packages := new List.Item;
+        end if;
+        Self.Used_Packages.Append (List.Copy_Of(The_Specification.Used_Packages.all));
+      end if;
+      declare
+        Private_Part : constant Block_Handle := Package_Specification_Handle(The_Specification).Private_Part;
+      begin
+        if Private_Part /= null and then Private_Part.Used_Packages /= null then
+          if Self.Used_Packages = null then
+            Self.Used_Packages := new List.Item;
+          end if;
+          Self.Used_Packages.Append (List.Copy_Of(Private_Part.Used_Packages.all));
+        end if;
+      end;
+      if The_Specification.Parent /= null and then The_Specification.Parent.all in Unit_Declaration'class then
+        The_Specification := Unit_Declaration_Handle(The_Specification.Parent);
+      else
+        exit;
+      end if;
+    end loop;
+    return The_Body;
   end New_Package_Body;
 
   ----------------------------------------------------------------------------------------------------------------------

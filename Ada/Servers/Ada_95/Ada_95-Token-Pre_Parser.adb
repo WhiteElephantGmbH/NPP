@@ -248,7 +248,6 @@ package body Ada_95.Token.Pre_Parser is
       end Get_Name;
 
     begin -- Get_Unit_Names
-      Get_Next_Token;
       Get_Name;
       while Element_Is (Lexical.Comma) loop
         Get_Name;
@@ -467,8 +466,16 @@ package body Ada_95.Token.Pre_Parser is
         exit;
       when Lexical.Is_Pragma =>
         Pragma_Call;
-      when Lexical.Is_With | Lexical.Is_Use =>
+      when Lexical.Is_With =>
+        Get_Next_Token;
         Get_Unit_Names;
+      when Lexical.Is_Use =>
+        Get_Next_Token;
+        if Element_Is (Lexical.Is_Type) then
+          Find (Lexical.Semicolon);
+        else
+          Get_Unit_Names;
+        end if;
       when others =>
         Syntax_Error;
       end case;

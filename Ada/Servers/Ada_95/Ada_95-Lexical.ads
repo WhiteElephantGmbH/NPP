@@ -143,6 +143,7 @@ package Ada_95.Lexical is
     -- single attributes
 
     Is_Image, -- used as Single_Attribute'first
+    Is_Initialized,
     Is_Last,
     Is_Length,
     Is_Value,
@@ -288,6 +289,7 @@ package Ada_95.Lexical is
     Is_External_Tag,
     Is_Machine_Radix,
     Is_Object_Size,
+    Is_Preelaborable_Initialization,
     Is_Put_Image,
     Is_Scalar_Storage_Order,
     Is_Storage_Pool,
@@ -369,6 +371,7 @@ package Ada_95.Lexical is
     Is_External_Tag,
     Is_Machine_Radix,
     Is_Object_Size,
+    Is_Preelaborable_Initialization,
     Is_Put_Image,
     Is_Scalar_Storage_Order,
     Is_Storage_Pool,
@@ -417,6 +420,7 @@ package Ada_95.Lexical is
     Is_Refined_Global,
     Is_Refined_Post,
     Is_Refined_State,
+    Is_Relaxed_Initialization,
     Is_Remote_Access_Type,
     Is_Simple_Storage_Pool,
     Is_Simple_Storage_Pool_Type,
@@ -443,7 +447,6 @@ package Ada_95.Lexical is
     Is_Independent_Components,
     Is_Inline_Always,
     Is_No_Elaboration_Code_All,
-    Is_Preelaborable_Initialization,
     Is_Pure_Function,
     Is_Relative_Deadline,
     Is_Remote_Call_Interface,
@@ -522,7 +525,6 @@ package Ada_95.Lexical is
     Is_Independent_Components,
     Is_Inline_Always,
     Is_No_Elaboration_Code_All,
-    Is_Preelaborable_Initialization,
     Is_Pure_Function,
     Is_Relative_Deadline,
     Is_Remote_Call_Interface,
@@ -583,7 +585,9 @@ package Ada_95.Lexical is
     Is_Task_Dispatching_Policy,
     Is_Unevaluated_Use_Of_Old,
     Is_Unimplemented_Unit,
-    Is_Weak_External);
+    Is_Weak_External, -- used as Compound_Pragma'last
+
+    Is_Preelaborable_Initialization); -- shared with attributes and aspects
 
   for Pragma_Id'size use 8;
 
@@ -593,7 +597,7 @@ package Ada_95.Lexical is
 
   subtype Obsolescent_Compound_Pragma is Pragma_Id range Is_Atomic_Components .. Is_No_Return;
 
-  subtype Compound_Pragma is Pragma_Id range Is_Ada_05 .. Pragma_Id'last;
+  subtype Compound_Pragma is Pragma_Id range Is_Ada_05 .. Is_Weak_External;
 
   subtype Style_Pragma is Pragma_Id range Is_Style_None .. Is_Style_White_Elephant;
 

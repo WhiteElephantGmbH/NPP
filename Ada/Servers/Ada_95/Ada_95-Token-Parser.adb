@@ -1251,7 +1251,14 @@ package body Ada_95.Token.Parser is
 
     -- iteration_scheme ::=
     --      while condition
-    --    | for for_loop_condition
+    --    | for iterator_specification
+    --    | for loop_parameter_specification
+    --
+    -- coded in Loop_Statement
+
+
+    -- iterator_filter ::=
+    --      when condition
     --
     -- coded in Loop_Statement
 
@@ -1324,6 +1331,12 @@ package body Ada_95.Token.Parser is
     --    | xor
     --
     -- coded in Simple_Expression
+
+
+    -- loop_parameter_specification ::=
+    --      defining_Identifier in [reverse] discrete_suptype_definition [iterator_filter]
+    --
+    -- coded in For_Loop_Condition
 
 
     -- loop_statement ::=
@@ -2603,9 +2616,13 @@ package body Ada_95.Token.Parser is
             end loop;
             Get_Element (Lexical.Right_Parenthesis);
           when Lexical.Is_Abstract_State
+             | Lexical.Is_Annotate
+             | Lexical.Is_Default_Initial_Condition
              | Lexical.Is_Global
              | Lexical.Is_Initializes
+             | Lexical.Is_Initial_Condition
              | Lexical.Is_Integer_Literal
+             | Lexical.Is_Part_Of
              | Lexical.Is_Post
              | Lexical.Is_Pre
              | Lexical.Is_Put_Image
@@ -3859,6 +3876,9 @@ package body Ada_95.Token.Parser is
         end if;
       end if;
       if Element_Is (Lexical.Range_Delimiter) then
+        --TEST----------------------------------------------
+        --Write_Log ("-> AGGREGATE OF UNKNOWN AFTER RANGE");
+        ----------------------------------------------------
         Unknown_Aggregate;
       end if;
       Get_Element (Termination_Element);
@@ -4339,7 +4359,7 @@ package body Ada_95.Token.Parser is
     --
     procedure Condition (Scope : Data.Unit_Handle) is
     begin
-      Dummy := Expression ((Scope, null));
+      Dummy := Expression ((Scope, Data.Predefined_Boolean));
     end Condition;
 
 
@@ -7182,6 +7202,10 @@ package body Ada_95.Token.Parser is
       --else
       --  Write_Log ("        - SUBTYPE: " & Ada.Tags.External_Tag (Sub_Type.all'tag));
       --end if;
+      --Write_Log ("        - Procedure_Allowed     : " & Procedure_Allowed'image);
+      --Write_Log ("        - No_Association        : " & No_Association'image);
+      --Write_Log ("        - Is_Subtype_Mark       : " & Is_Subtype_Mark'image);
+      --Write_Log ("        - Is_Subtype_Indication : " & Is_Subtype_Indication'image);
       --Increment_Log_Indent;
       ---------------------------------------------------------------------------------
       if Element_Is (Lexical.Target_Name) then
@@ -8072,7 +8096,7 @@ package body Ada_95.Token.Parser is
       if The_Unit = null then
         Get_Element (Lexical.Semicolon);
         return;
-      elsif The_Unit.all in Data.Unit_Type'class then
+      elsif The_Unit.all in Data.Unit_Type'class and then The_Token.all in Identifier'class then
         Data.New_Subprogram_Renaming (Id, Scope, Profile, Data.Unit_Handle(The_Unit), Identifier_Handle(The_Token));
       end if;
       Get_Next_Element (Lexical.Semicolon);
@@ -8584,7 +8608,9 @@ package body Ada_95.Token.Parser is
                 Get_Element (Lexical.Semicolon);
               else
                 if Is_Basic then
-                  Syntax_Error;
+                  The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
+                  Aspect_Specification ((The_Unit, null), (1 => The_Identifier));
+                  Get_Element (Lexical.Semicolon);
                 else
                   The_Unit := Data.New_Subprogram_Body (The_Identifier, Scope, Profile);
                   Aspect_Specification ((The_Unit, null));
@@ -9989,7 +10015,7 @@ package body Ada_95.Token.Parser is
     -- for_loop_condition := loop_parameter_specification | iterator_specification
     --
     --    loop_parameter_specification ::=
-    --         defining_identifier in [reverse] discrete_subtype_definition
+    --         defining_identifier in [reverse] discrete_subtype_definition [iterator_filter]
     --
     --    iterator_specification ::=
     --         defining_identifier in [reverse] iterator_name
@@ -10020,6 +10046,9 @@ package body Ada_95.Token.Parser is
                          Is_Class_Wide => False,
                          Has_Default   => True,
                          Parent        => Scope);
+        if Element_Is (Lexical.Is_When) then
+          Condition (Scope);
+        end if;
       when others =>
         Syntax_Error;
       end case;

@@ -455,6 +455,9 @@ package Ada_95.Token.Data is
     Resource : Resource_Handle;
   end record;
 
+  type Library_Body_Handle is access all Library_Package_Body'class;
+  for Library_Body_Handle'storage_pool use Memory.Pool.all;
+
   overriding
   function Resource (Item : Library_Package_Body) return Resource_Handle;
 

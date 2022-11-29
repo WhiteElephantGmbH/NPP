@@ -2342,7 +2342,7 @@ package body Ada_95.Token.Data is
               Self.Used_Packages.Append (List.Copy_Of(Private_Part.Used_Packages.all));
             end if;
           end;
-          if The_Specification.Parent /= null and then The_Specification.Parent.all in Unit_Declaration'class then
+          if The_Specification.Parent /= null and then The_Specification.Parent.all in Package_Specification'class then
             The_Specification := Unit_Declaration_Handle(The_Specification.Parent);
           else
             exit;
@@ -5575,6 +5575,7 @@ package body Ada_95.Token.Data is
               The_Type := Record_Handle(The_Type).Parent_Type;
             elsif not Is_Null (The_Type.Location) then
               The_Type := The_Type.Location.Data; -- type from public part
+              exit when The_Type = The_Type.Location.Data; -- exit when self
             else
               exit;
             end if;

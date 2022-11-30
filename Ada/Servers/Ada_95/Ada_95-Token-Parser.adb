@@ -3740,7 +3740,7 @@ package body Ada_95.Token.Parser is
         end if;
         Termination_Element := Lexical.Right_Bracket;
       when others =>
-        raise Program_Error;
+        Syntax_Error;
       end case;
       Get_Next_Token;
       if Within.Sub_Type = null or else
@@ -6147,7 +6147,7 @@ package body Ada_95.Token.Parser is
               when Lexical.Left_Parenthesis =>
                 Handle_Type_Conversion;
               when Lexical.Period =>
-                Log.Write ("%%% Legacy ?");
+                Log.Write ("--- Unexpected Period");
                 The_Declaration := null;
               when others =>
                 exit;
@@ -6302,7 +6302,16 @@ package body Ada_95.Token.Parser is
                   Syntax_Error;
                 end if;
               when Lexical.Left_Parenthesis =>
-                Conditional_Constraint ((Scope, The_Declaration));
+                if not Is_Component or else Data.Has_Discriminats (The_Declaration) then
+                  Conditional_Constraint ((Scope, The_Declaration)); -- or type conversion;
+                else
+                  declare
+                    The_Type : constant Data_Handle := Data.Iterable_Type_Of (The_Declaration);
+                  begin
+                    Conditional_Constraint ((Scope, The_Declaration));
+                    The_Declaration := The_Type;
+                  end;
+                end if;
               when others =>
                 exit;
               end case;

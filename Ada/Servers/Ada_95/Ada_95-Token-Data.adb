@@ -1336,7 +1336,17 @@ package body Ada_95.Token.Data is
         begin
           while The_Subprogram /= null loop
             if not (The_Subprogram.all in Used_Subprogram'class) then
-              New_Used_Subprogram (The_Subprogram, To);
+              declare
+                The_Item : constant Data_Handle := Declaration_From (To, The_Subprogram.Location);
+              begin
+                if not Is_Null (The_Item) and then not (The_Item.all in Unit_Type'class) then
+                  Log.Write ("%%% no override of " & Image_Of (The_Subprogram.Location.all)
+                           & " by use " & Full_Name_Of (Item));
+                  exit;
+                else
+                  New_Used_Subprogram (The_Subprogram, To);
+                end if;
+              end;
             end if;
             The_Subprogram := Overload_Of (The_Subprogram);
           end loop;
@@ -3160,10 +3170,7 @@ package body Ada_95.Token.Data is
     Declare_Item (To         => The_Scope.all,
                   Item       => Data_Handle(The_Subprogram),
                   The_Cursor => The_Cursor);
-    if The_Cursor = null then
-      Log.Write ("%%% Declare_Item is null procedure for " & Full_Name_Of (Data_Handle(The_Scope)));
-      return;
-    elsif not Is_Subprogram (The_Cursor.all) then
+    if The_Cursor = null or else not Is_Subprogram (The_Cursor.all) then
       return;
     end if;
     if Declaration_Handle(The_Cursor.all) /= The_Subprogram then
@@ -3537,7 +3544,12 @@ package body Ada_95.Token.Data is
   begin
     Declare_Item (Id, To, Item, The_Cursor);
     if The_Cursor.all /= Item then
-      Complete_Type (Id, Item, The_Cursor);
+      if The_Cursor.all.all in Used_Subprogram'class then
+        The_Cursor.all := Item;
+        Log.Write ("%%% the used subprogram " & Image_Of (Id.all) & " is hidden in " & Full_Name_Of (Data_Handle(To)));
+      else
+        Complete_Type (Id, Item, The_Cursor);
+      end if;
     elsif To.all in Private_Block then
       Update_Private_Type (Id, To, Item);
     elsif Item.all in Record_Type'class then
@@ -5122,6 +5134,11 @@ package body Ada_95.Token.Data is
             ------------------------
             return True;
           end if;
+        elsif Parameter_Type.all in Formal_Type'class and then Profile_Parameter_Type.all in Formal_Type'class then
+          --TEST-------------------------
+          --Write_Log ("MATCHED Formal");
+          -------------------------------
+          return True ;
         else
           if Profile_Parameter.Is_Class_Wide then
             --TEST---------------------------------------------------------------------------------
@@ -5528,14 +5545,24 @@ package body Ada_95.Token.Data is
     The_Type      : Data_Handle := Item;
     Aspect_Found  : Boolean := False;
     Element_Found : Boolean := False;
+    The_Instantiations      : array (1..16) of Instantiation_Handle;
+    The_Index : Natural := 0;
   begin
     while not Is_Null (The_Type) loop
       if The_Type.all in Instantiated_Type'class then
+        if Item_Instantiation(The_Type).Instantiation /= null then
+          The_Index := @ + 1;
+          The_Instantiations(The_Index) := Item_Instantiation(The_Type).Instantiation;
+        end if;
         The_Type := Item_Instantiation(The_Type).Item;
         exit when Is_Null (The_Type);
       end if;
       --TEST---------------------------------------------------------------------
-      --Log.Write ("Iterable Name: " & Image_Of(The_Type.Location.all));
+      --if Is_Null (The_Type.Location) then
+      --  Log.Write ("Iterable Name: NONE");
+      --else
+      --  Log.Write ("Iterable Name: " & Image_Of(The_Type.Location.all));
+      --end if;
       --Log.Write ("Iterable Type: " & Ada.Tags.External_Tag (The_Type.all'tag));
       ---------------------------------------------------------------------------
       if The_Type.all in Private_Type'class then
@@ -5545,12 +5572,15 @@ package body Ada_95.Token.Data is
           begin
             if Aspects = null then
               The_Type := Tagged_Private_Handle(The_Type).Parent_Type;
-            elsif Is_Null (Aspects.Iterator.Element) then
-              exit;
-            else
+            elsif not Is_Null (Aspects.Iterator.Element) then
               The_Type := Aspects.Iterator.Element.Data;
               Aspect_Found := True;
-            end if;
+            elsif Aspects.Iterable /= null and then not Is_Null (Aspects.Iterable.Element) then
+              The_Type := Aspects.Iterable.Element.Data;
+              Aspect_Found := True;
+            else
+              exit;
+           end if;
           end;
         else -- not tagged private
           declare
@@ -5568,22 +5598,32 @@ package body Ada_95.Token.Data is
         end if;
       elsif The_Type.all in Record_Type'class then
         declare
-          Aspects : constant Iterable_Aspect_Handle := Record_Handle(The_Type).Aspects;
+          Aspects  : constant Iterable_Aspect_Handle := Record_Handle(The_Type).Aspects;
+          Old_Type : Data_Handle;
+          function Address_Of is new Ada.Unchecked_Conversion (Data_Handle, System.Address);
+          use type System.Address;
         begin
-          if Aspects = null then
-            if not Is_Null (Record_Handle(The_Type).Parent_Type) then
-              The_Type := Record_Handle(The_Type).Parent_Type;
-            elsif not Is_Null (The_Type.Location) then
+          if Aspects /= null and then not Is_Null (Aspects.Element) then
+            The_Type := Aspects.Element.Data;
+            Aspect_Found := True;
+          else
+            if not Is_Null (The_Type.Location) then
+              Old_Type := The_Type;
               The_Type := The_Type.Location.Data; -- type from public part
-              exit when The_Type = The_Type.Location.Data; -- exit when self
+              if Address_Of (Old_Type) = Address_Of (The_Type) or else The_Type.all in Incomplete_Type'class then
+                -- if self or incomplete type
+                The_Type := Old_Type;
+                if not Is_Null (Record_Handle(The_Type).Parent_Type) then
+                  The_Type := Record_Handle(The_Type).Parent_Type;
+                else
+                  exit;
+                end if;
+              end if;
+            elsif not Is_Null (Record_Handle(The_Type).Parent_Type) then
+              The_Type := Record_Handle(The_Type).Parent_Type;
             else
               exit;
             end if;
-          elsif Is_Null (Aspects.Element) then
-            exit;
-          else
-            The_Type := Aspects.Element.Data;
-            Aspect_Found := True;
           end if;
         end;
       elsif The_Type.all in Array_Type'class then
@@ -5591,19 +5631,28 @@ package body Ada_95.Token.Data is
         Element_Found := True;
       elsif The_Type.all in Derived_Type'class then
         The_Type := Type_Handle(The_Type).Parent_Type;
+      elsif The_Type.all in Formal_Type'class then
+        if Item.all in Instantiated_Item'class then
+          The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
+                                             Item_Instantiation(Item).Instantiation);
+        else
+          The_Type := Formal_Handle(The_Type).Declaration;
+        end if;
       else
-        Write_Log ("%%% Iterable_Type_Of - unknown type: " & Ada.Tags.External_Tag (The_Type.all'tag));
-        return The_Type;
+        Write_Log ("%%% Iterable " & Image_Of (Item.Location.all) & ": " & Ada.Tags.External_Tag (The_Type.all'tag));
+        exit;
       end if;
       exit when Is_Null (The_Type);
-      if The_Type.all in Formal_Type'class and then Item.all in Instantiated_Item'class then
-        The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
-                                           Item_Instantiation(Item).Instantiation);
-        exit when Is_Null (The_Type);
-      end if;
       if Element_Found then
         return The_Type;
       elsif Aspect_Found then
+        while The_Index > 0 loop
+          if The_Type.all in Formal_Type'class then
+            The_Type := Actual_Declaration_Of (Formal_Handle(The_Type),
+                                               The_Instantiations(The_Index));
+          end if;
+          The_Index := @ - 1;
+        end loop;
         declare
           Result_Type : constant Data_Handle := Data.Profile_Of (Data.Declaration_Handle(The_Type)).Result_Type;
         begin
@@ -5614,7 +5663,7 @@ package body Ada_95.Token.Data is
         return The_Type;
       end if;
     end loop;
-    Write_Log ("%%% Iterable_Type_Of - no iterator element type");
+    Write_Log ("%%% Iterable - no iterator element type");
     return Item;
   end Iterable_Type_Of;
 
@@ -6047,6 +6096,13 @@ package body Ada_95.Token.Data is
   when Constraint_Error =>
     return null;
   end Discriminant_Type_Of;
+
+
+  function Has_Discriminats (The_Type : Data_Handle) return Boolean is
+    use type List.Item;
+  begin
+    return not Is_Null (The_Type) and then Discriminants_From (The_Type) /= List.Empty;
+  end Has_Discriminats;
 
 
   function Entry_With (Item  : Identifier_Handle;

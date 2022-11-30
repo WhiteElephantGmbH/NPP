@@ -1575,7 +1575,7 @@ package Ada_95.Token.Data is
 
   function Range_Type_Of (Item : Data_Handle) return Data_Handle with Inline;
 
-  function Iterable_Type_Of (Item : Data_Handle) return Data_Handle with Inline;
+  function Iterable_Type_Of (Item : Data_Handle) return Data_Handle;
 
   function Parent_Type_Of (Item              :     Data_Handle;
                            The_Instantiation : out Instantiation_Handle) return Type_Handle with Inline;
@@ -1622,6 +1622,8 @@ package Ada_95.Token.Data is
 
   function Discriminant_Type_Of (The_Position : Positive;
                                  The_Type     : Data_Handle) return Data_Handle;
+
+  function Has_Discriminats (The_Type : Data_Handle) return Boolean;
 
   function Entry_Of (Item  : Identifier_Handle;
                      Scope : Unit_Handle) return Unit_Handle;

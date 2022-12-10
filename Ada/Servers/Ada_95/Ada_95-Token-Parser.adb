@@ -5686,7 +5686,9 @@ package body Ada_95.Token.Parser is
               Aspects : constant Data.Private_Aspect_Handle := Data.Tagged_Private_Handle(The_Declaration).Aspects;
               use type Data.Private_Aspect_Handle;
             begin
-              if Aspects /= null and then Aspects.Iterator.Constant_Indexing.Data /= null
+              if Aspects /= null and then
+                not Is_Null (Aspects.Iterator.Constant_Indexing) and then
+                Aspects.Iterator.Constant_Indexing.Data /= null
                 and then Aspects.Iterator.Constant_Indexing.Data.all in Data.Subprogram_Declaration'class
               then
                 Saved_Token := The_Token;
@@ -9177,7 +9179,6 @@ package body Ada_95.Token.Parser is
         --      [abstract] new ancestor_subtype_indication with private ;
         --
         procedure Derived_Type_Definition (Is_Abstract : Boolean := False) is
-          Is_Unreferenced : Boolean := False;
         begin
           Get_Next_Token;
           declare
@@ -9203,27 +9204,28 @@ package body Ada_95.Token.Parser is
                                                              From_Type     => Ancestor,
                                                              Discriminants => The_Discriminants,
                                                              Interfaces    => The_Interfaces);
-                Conditional_Aspect_Specification ((Scope, The_Type));
-                return;
+                Data.Add_Iterator_Aspects (The_Type, Aspect_Specification ((Scope, The_Type)));
               when Lexical.Is_Null =>
                 Null_Record_Definition (Is_Abstract => Is_Abstract,
                                         Is_Tagged   => True,
                                         Ancestor    => Ancestor,
                                         Interfaces  => The_Interfaces);
-                return;
               when Lexical.Is_Record =>
                 Record_Definition (Is_Abstract => Is_Abstract,
                                    Is_Tagged   => True,
                                    Ancestor    => Ancestor,
                                    Interfaces  => The_Interfaces);
-                return;
               when others =>
-                Continue_Aspect_Specification ((Scope, The_Type), Is_Unreferenced);
+                The_Type := Data.New_Derived_Type (Id        => Defining_Identifier,
+                                                   Parent    => Scope,
+                                                   From_Type => Ancestor);
+                Data.Add_Iterator_Aspects (The_Type, Aspects_Elements ((Scope, The_Type)));
               end case;
+            else
+              The_Type := Data.New_Derived_Type (Id        => Defining_Identifier,
+                                                 Parent    => Scope,
+                                                 From_Type => Ancestor);
             end if;
-            The_Type := Data.New_Derived_Type (Id        => Defining_Identifier,
-                                               Parent    => Scope,
-                                               From_Type => Ancestor);
           end;
         end Derived_Type_Definition;
 

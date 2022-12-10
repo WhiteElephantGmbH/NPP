@@ -850,7 +850,23 @@ package Ada_95.Token.Data is
 
   type Protected_Subprogram_Access_Type is new Subprogram_Access_Type with null record;
 
-  type Derived_Type is new Type_Declaration with null record;
+  type Aggregate_Aspects is record
+    Empty          : Identifier_Handle;
+    Add_Named      : Identifier_Handle;
+    Add_Unnamed    : Identifier_Handle;
+    New_Indexed    : Identifier_Handle;
+    Assign_Indexed : Identifier_Handle;
+  end record;
+
+  type Aggregate_Aspect_Handle is access all Aggregate_Aspects;
+  for Aggregate_Aspect_Handle'storage_pool use Memory.Pool.all;
+
+  type Derived_Type is new Type_Declaration with record
+    Aggregate : Aggregate_Aspect_Handle;
+  end record;
+
+  type Derived_Type_Handle is access all Derived_Type'class;
+  for Derived_Type_Handle'storage_pool use Memory.Pool.all;
 
   overriding
   function Data_Kind_Of (Item : Derived_Type) return Data_Kind;
@@ -859,14 +875,6 @@ package Ada_95.Token.Data is
 
   overriding
   function Data_Kind_Of (Item : Incomplete_Type) return Data_Kind;
-
-  type Aggregate_Aspects is record
-    Empty          : Identifier_Handle;
-    Add_Named      : Identifier_Handle;
-    Add_Unnamed    : Identifier_Handle;
-    New_Indexed    : Identifier_Handle;
-    Assign_Indexed : Identifier_Handle;
-  end record;
 
   type Iterator_Aspects is record
     Constant_Indexing : Identifier_Handle;
@@ -878,7 +886,7 @@ package Ada_95.Token.Data is
   type Private_Aspects is record
     Iterable  : Iterable_Aspect_Handle;
     Iterator  : Iterator_Aspects;
-    Aggregate : Aggregate_Aspects;
+    Aggregate : Aggregate_Aspect_Handle;
   end record;
 
   type Private_Aspect_Handle is access all Private_Aspects;

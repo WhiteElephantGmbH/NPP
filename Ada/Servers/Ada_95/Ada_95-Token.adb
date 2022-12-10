@@ -1156,6 +1156,9 @@ package body Ada_95.Token is
             Aspect_Allowed := True;
             Aspect_Enabled := True;
           end if;
+        when Lexical.Is_Record =>
+          Aspect_Allowed := False;
+          Aspect_Enabled := False;
         when others =>
           null;
         end case;

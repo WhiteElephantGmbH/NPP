@@ -1322,11 +1322,14 @@ package body Ada_95.Token.Data is
   end Add_Imports;
 
 
-  procedure New_Used_Subprogram (Item  : Declaration_Handle;
-                                 Scope : Unit_Handle);
+  procedure New_Used_Subprogram (Item     : Declaration_Handle;
+                                 Scope    : Unit_Handle;
+                                 Instance : Instantiation_Handle);
 
   procedure Add_Use (Item : Data_Handle;
                      To   : Unit_Handle) is
+
+    The_Instantiation : Instantiation_Handle;
 
     procedure Visit (Cursor : Tree.Cursor) is
     begin
@@ -1344,7 +1347,7 @@ package body Ada_95.Token.Data is
                            & " by use " & Full_Name_Of (Item));
                   exit;
                 else
-                  New_Used_Subprogram (The_Subprogram, To);
+                  New_Used_Subprogram (The_Subprogram, To, The_Instantiation);
                 end if;
               end;
             end if;
@@ -1367,6 +1370,16 @@ package body Ada_95.Token.Data is
     To.Used_Packages.Append (Item);
     if Item.all in Package_Specification'class then
       Add_Subprograms (Package_Specification_Handle(Item).Declarations);
+    elsif Item.all in Instantiated_Item'class then
+       declare
+        Instance : constant Item_Instantiation := Item_Instantiation(Item);
+        Unit     : constant Data_Handle := Instance.Item;
+      begin
+        if Unit.all in Package_Specification'class then
+          The_Instantiation := Instance.Instantiation;
+          Add_Subprograms (Package_Specification_Handle(Unit).Declarations);
+        end if;
+      end;
     end if;
   end Add_Use;
 
@@ -1896,23 +1909,26 @@ package body Ada_95.Token.Data is
 
 
   procedure Handle_Aspects (Id : Identifier_Handle) is
-
     The_Object : constant Object_Handle := Object_Handle(Id.Data);
     The_Handle : constant Data_Handle := The_Object.Object_Type;
-
+    Aggregate  : Aggregate_Aspect_Handle;
   begin
-    if The_Handle /= null and then The_Handle.all in Private_Type'class then
-      declare
-        Handle  : constant Private_Type_Handle := Private_Type_Handle(The_Handle);
-        Aspects : constant Private_Aspect_Handle := Handle.Aspects;
-      begin
-        if Handle.Aspects /= null then
-          if not Is_Null (Aspects.Aggregate.Empty) and then Aspects.Aggregate.Empty = The_Object.Location then
-            Aspects.Aggregate.Empty.Data := Id.Data;
-            The_Object.Is_Used := True;
+    if The_Handle /= null then
+      if The_Handle.all in Private_Type'class then
+        declare
+          Aspects : constant Private_Aspect_Handle := Private_Type_Handle(The_Handle).Aspects;
+        begin
+          if Aspects /= null then
+            Aggregate := Aspects.Aggregate;
           end if;
-        end if;
-      end;
+        end;
+      elsif The_Handle /= null and then The_Handle.all in Derived_Type'class then
+        Aggregate := Derived_Type_Handle(The_Handle).Aggregate;
+      end if;
+      if Aggregate /= null and then not Is_Null (Aggregate.Empty) and then Aggregate.Empty = The_Object.Location then
+        Aggregate.Empty.Data := Id.Data;
+        The_Object.Is_Used := True;
+      end if;
     end if;
   end Handle_Aspects;
 
@@ -1920,32 +1936,73 @@ package body Ada_95.Token.Data is
   procedure Handle_Aspects (Profile : Subprogram_Profile;
                             Unit    : Unit_Handle) is
 
+    procedure Handle_Aggregate (Aggregate : Aggregate_Aspect_Handle) is
+    begin
+      if Aggregate /= null then
+        if not Is_Null (Aggregate.Add_Named) and then
+          Aggregate.Add_Named = Unit.Location
+        then
+          Aggregate.Add_Named.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aggregate.Add_Unnamed) and then
+          Aggregate.Add_Unnamed = Unit.Location
+        then
+          Aggregate.Add_Unnamed.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aggregate.Assign_Indexed) and then
+          Aggregate.Assign_Indexed = Unit.Location
+        then
+          Aggregate.Assign_Indexed.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        end if;
+      end if;
+    end Handle_Aggregate;
+
+    procedure Handle_Aggregate_Result (Aggregate : Aggregate_Aspect_Handle) is
+    begin
+      if Aggregate /= null then
+        if not Is_Null (Aggregate.Empty) and then
+          Aggregate.Empty = Unit.Location
+        then
+          Aggregate.Empty.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aggregate.New_Indexed) and then
+          Aggregate.New_Indexed = Unit.Location
+        then
+          Aggregate.New_Indexed.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        end if;
+      end if;
+    end Handle_Aggregate_Result;
+
     procedure Handle_Iterable (Aspects : Iterable_Aspect_Handle) is
     begin
-      if not Is_Null (Aspects.Element) and then Aspects.Element = Unit.Location then
-        Aspects.Element.Data := Data_Handle(Unit);
-        Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.Has_Element) and then Aspects.Has_Element = Unit.Location then
-        Aspects.Has_Element.Data := Data_Handle(Unit);
-        Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.First) and then Aspects.First = Unit.Location then
-        Aspects.First.Data := Data_Handle(Unit);
-        Unit.Is_Used := True;
-      elsif not Is_Null (Aspects.Next) and then Aspects.Next = Unit.Location then
-        Aspects.Next.Data := Data_Handle(Unit);
-        Unit.Is_Used := True;
+      if Aspects /= null then
+        if not Is_Null (Aspects.Element) and then Aspects.Element = Unit.Location then
+          Aspects.Element.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aspects.Has_Element) and then Aspects.Has_Element = Unit.Location then
+          Aspects.Has_Element.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aspects.First) and then Aspects.First = Unit.Location then
+          Aspects.First.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        elsif not Is_Null (Aspects.Next) and then Aspects.Next = Unit.Location then
+          Aspects.Next.Data := Data_Handle(Unit);
+          Unit.Is_Used := True;
+        end if;
       end if;
     end Handle_Iterable;
 
     use type List.Elements_Access;
 
   begin -- Handle_Aspects
-   if Profile.Parameters /= null then
+    if Profile.Parameters /= null then
       declare
         First_Type : constant Data_Handle := Object_Handle(Profile.Parameters(Profile.Parameters'first)).Object_Type;
       begin
         if not Is_Null (First_Type) then
-         if First_Type.all in Private_Type'class then
+          if First_Type.all in Private_Type'class then
             declare
               Handle  : constant Private_Type_Handle := Private_Type_Handle(First_Type);
               Aspects : constant Private_Aspect_Handle := Handle.Aspects;
@@ -1966,34 +2023,16 @@ package body Ada_95.Token.Data is
                 then
                   Aspects.Iterator.Default_Iterator.Data := Data_Handle(Unit);
                   Unit.Is_Used := True;
-                elsif not Is_Null (Aspects.Aggregate.Add_Named) and then
-                  Aspects.Aggregate.Add_Named = Unit.Location
-                then
-                  Aspects.Aggregate.Add_Named.Data := Data_Handle(Unit);
-                  Unit.Is_Used := True;
-                elsif not Is_Null (Aspects.Aggregate.Add_Unnamed) and then
-                  Aspects.Aggregate.Add_Unnamed = Unit.Location
-                then
-                  Aspects.Aggregate.Add_Unnamed.Data := Data_Handle(Unit);
-                  Unit.Is_Used := True;
-                elsif not Is_Null (Aspects.Aggregate.Assign_Indexed) and then
-                  Aspects.Aggregate.Assign_Indexed = Unit.Location
-                then
-                  Aspects.Aggregate.Assign_Indexed.Data := Data_Handle(Unit);
-                  Unit.Is_Used := True;
+                else
+                  Handle_Aggregate (Aspects.Aggregate);
                 end if;
                 Handle_Iterable (Aspects.Iterable);
               end if;
             end;
+          elsif First_Type.all in Derived_Type'class then
+            Handle_Aggregate (Derived_Type_Handle(First_Type).Aggregate);
           elsif First_Type.all in Record_Type'class then
-           declare
-              Handle  : constant Record_Handle := Record_Handle(First_Type);
-              Aspects : constant Iterable_Aspect_Handle := Handle.Aspects;
-            begin
-              if Aspects /= null then
-                Handle_Iterable (Aspects);
-              end if;
-            end;
+            Handle_Iterable (Record_Handle(First_Type).Aspects);
           end if;
         end if;
       end;
@@ -2004,22 +2043,13 @@ package body Ada_95.Token.Data is
         if Result_Type.all in Private_Type'class then
           declare
             Handle  : constant Private_Type_Handle := Private_Type_Handle(Result_Type);
-            Aspects : constant Private_Aspect_Handle := Handle.Aspects;
           begin
             if Handle.Aspects /= null then
-              if not Is_Null (Aspects.Aggregate.Empty) and then
-                Aspects.Aggregate.Empty = Unit.Location
-              then
-                Aspects.Aggregate.Empty.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              elsif not Is_Null (Aspects.Aggregate.New_Indexed) and then
-                Aspects.Aggregate.New_Indexed = Unit.Location
-              then
-                Aspects.Aggregate.New_Indexed.Data := Data_Handle(Unit);
-                Unit.Is_Used := True;
-              end if;
+              Handle_Aggregate_Result (Handle.Aspects.Aggregate);
             end if;
           end;
+        elsif Result_Type.all in Derived_Type'class then
+          Handle_Aggregate_Result (Derived_Type_Handle(Result_Type).Aggregate);
         end if;
       end;
     end if;
@@ -3132,8 +3162,87 @@ package body Ada_95.Token.Data is
   end New_Subprogram_Declaration;
 
 
-  procedure New_Used_Subprogram (Item  : Declaration_Handle;
-                                 Scope : Unit_Handle) is
+  function Actual_Profile_Of (Profile  : Subprogram_Profile;
+                              Instance : Instantiation_Handle) return Subprogram_Profile is
+
+    The_Position     : Natural;
+    The_Parameters   : List.Item;
+    The_Component    : Data_Handle;
+    The_Profile      : Subprogram_Profile;
+
+    use type List.Elements_Access;
+
+  begin
+    if Profile.Parameters = null then
+      The_Profile := New_Profile;
+    else
+      for Index in Profile.Parameters'range loop
+        if Profile.Parameters(Index).all in Data_Object'class then
+          declare
+            The_Parameter : constant Object_Handle := Object_Handle(Profile.Parameters(Index));
+          begin
+            if The_Parameter /= null and then not Is_Null (The_Parameter.Object_Type) and then
+              The_Parameter.Object_Type.all in Formal_Type'class
+            then
+              --TEST--------------------------------------------------------------------------
+              --Write_Log ("*** new Actual Component " & Image_Of (The_Parameter.Location.all)
+              --         & " for " & Image_Of (The_Parameter.Object_Type.Location.all));
+              --------------------------------------------------------------------------------
+              declare
+                Formal_Parameter : constant Formal_Handle := Formal_Handle(The_Parameter.Object_Type);
+              begin
+                The_Position := Formal_Parameter.Position;
+                The_Component := new Data_Object'(Location      => The_Parameter.Location,
+                                                  Is_Used       => False,
+                                                  Parent        => null,
+                                                  Object_Type   => Instance.Actual_Part(The_Position),
+                                                  Is_Class_Wide => The_Parameter.Is_Class_Wide,
+                                                  Has_Default   => The_Parameter.Has_Default);
+                --TEST------------------------------------------------------------------------------------
+                --Write_Log ("Type: " & Image_Of (Object_Handle(The_Component).Object_Type.Location.all));
+                ------------------------------------------------------------------------------------------
+              exception
+              when others =>
+                Write_Log ("*** new Actual Component " & Image_Of (The_Parameter.Location.all)
+                           & " for " & Image_Of (The_Parameter.Object_Type.Location.all));
+                Write_Log ("%%% Formal parameter type not found");
+                The_Component := Data_Handle(The_Parameter);
+              end;
+            else
+              The_Component := Data_Handle(The_Parameter);
+            end if;
+            The_Parameters.Append (The_Component);
+          end;
+        end if;
+      end loop;
+      The_Profile := New_Profile (The_Parameters);
+    end if;
+    The_Profile.Result_Type := Profile.Result_Type;
+    if not Is_Null (Profile.Result_Type) and then Profile.Result_Type.all in Formal_Type'class then
+      --TEST-----------------------------------------------------------------------------------
+      --Write_Log ("*** new Actual Result for " & Image_Of (Profile.Result_Type.Location.all));
+      -----------------------------------------------------------------------------------------
+      declare
+        Formal_Result : constant Formal_Handle := Formal_Handle(Profile.Result_Type);
+      begin
+        The_Position := Formal_Result.Position;
+        The_Profile.Result_Type := Data.Type_Of(Instance.Actual_Part(The_Position));
+        --TEST-------------------------------------------------------------------------
+        --Write_Log ("Result_Type " & Image_Of (The_Profile.Result_Type.Location.all));
+        -------------------------------------------------------------------------------
+      exception
+      when others =>
+        Write_Log ("*** new Actual Result for " & Image_Of (Profile.Result_Type.Location.all));
+        Write_Log ("%%% Formal result type not found");
+      end;
+    end if;
+    return The_Profile;
+  end Actual_Profile_Of;
+
+
+  procedure New_Used_Subprogram (Item     : Declaration_Handle;
+                                 Scope    : Unit_Handle;
+                                 Instance : Instantiation_Handle) is
 
     The_Scope      : Unit_Handle := Scope;
     The_Subprogram : Declaration_Handle;
@@ -3160,12 +3269,21 @@ package body Ada_95.Token.Data is
       --TEST------------------------------------------------------------------
       --Write_Log ("*** new Used_Subprogram " & Image_Of (Item.Location.all));
       ------------------------------------------------------------------------
-      The_Subprogram := new Used_Subprogram'(Location       => Item.Location,
-                                             Is_Used        => False,
-                                             Parent         => Item.Parent,
-                                             Used_Packages  => null,
-                                             Profile        => Profile_Of (Item),
-                                             Overload       => null);
+      if Instance = null then
+        The_Subprogram := new Used_Subprogram'(Location       => Item.Location,
+                                               Is_Used        => False,
+                                               Parent         => Item.Parent,
+                                               Used_Packages  => null,
+                                               Profile        => Profile_Of (Item),
+                                               Overload       => null);
+      else
+        The_Subprogram := new Used_Subprogram'(Location       => Item.Location,
+                                               Is_Used        => False,
+                                               Parent         => Item.Parent,
+                                               Used_Packages  => null,
+                                               Profile        => Actual_Profile_Of (Profile_Of (Item), Instance),
+                                               Overload       => null);
+      end if;
     end if;
     Declare_Item (To         => The_Scope.all,
                   Item       => Data_Handle(The_Subprogram),
@@ -3873,7 +3991,8 @@ package body Ada_95.Token.Data is
       The_Item := new Derived_Type'(Location    => Id,
                                     Is_Used     => False,
                                     Parent      => Parent,
-                                    Parent_Type => From_Type);
+                                    Parent_Type => From_Type,
+                                    Aggregate   => null);
     end if;
     return Declared_Type (Id   => Id,
                           To   => Parent,
@@ -3981,6 +4100,15 @@ package body Ada_95.Token.Data is
                                    Next        => Aspect_For (Lexical.Is_Next, Aspects));
     end New_Iterable_Aspects;
 
+    function New_Aggregate_Aspects return Aggregate_Aspect_Handle is
+    begin
+      return new Aggregate_Aspects'(Empty          => Aspect_For (Lexical.Is_Empty, Aspects),
+                                    Add_Named      => Aspect_For (Lexical.Is_Add_Named, Aspects),
+                                    Add_Unnamed    => Aspect_For (Lexical.Is_Add_Unnamed, Aspects),
+                                    New_Indexed    => Aspect_For (Lexical.Is_New_Indexed, Aspects),
+                                    Assign_Indexed => Aspect_For (Lexical.Is_Assign_Indexed, Aspects));
+    end New_Aggregate_Aspects;
+
   begin -- Add_Iterator_Aspects
     if To /= null then
       --TEST--------------------------------------------------------------------
@@ -3992,17 +4120,17 @@ package body Ada_95.Token.Data is
             Item_Handle : constant Private_Type_Handle := Private_Type_Handle(To);
           begin
             Item_Handle.Aspects := new Private_Aspects'
-              (Aggregate => (Empty          => Aspect_For (Lexical.Is_Empty, Aspects),
-                             Add_Named      => Aspect_For (Lexical.Is_Add_Named, Aspects),
-                             Add_Unnamed    => Aspect_For (Lexical.Is_Add_Unnamed, Aspects),
-                             New_Indexed    => Aspect_For (Lexical.Is_New_Indexed, Aspects),
-                             Assign_Indexed => Aspect_For (Lexical.Is_Assign_Indexed, Aspects)),
+              (Aggregate => New_Aggregate_Aspects,
                Iterator => (Element           => Aspect_For (Lexical.Is_Iterator_Element, Aspects),
                             Constant_Indexing => Aspect_For (Lexical.Is_Constant_Indexing, Aspects),
                             Variable_Indexing => Aspect_For (Lexical.Is_Variable_Indexing, Aspects),
                             Default_Iterator  => Aspect_For (Lexical.Is_Default_Iterator, Aspects)),
                Iterable => New_Iterable_Aspects);
           end;
+        end if;
+      elsif To.all in Derived_Type'class then
+        if Aspects /= No_Aspects then
+          Derived_Type_Handle(To).Aggregate := New_Aggregate_Aspects;
         end if;
       elsif To.all in Record_Type'class then
         if Aspects /= No_Aspects then
@@ -4525,7 +4653,8 @@ package body Ada_95.Token.Data is
                          Item => new Derived_Type'(Location    => Id,
                                                    Is_Used     => False,
                                                    Parent      => Unit_Handle(Parameters),
-                                                   Parent_Type => From_Type));
+                                                   Parent_Type => From_Type,
+                                                   Aggregate   => null));
   end New_Formal_Derived_Type;
 
   procedure New_Formal_Private_Extension_Type (Id         : Identifier_Handle;
@@ -4933,6 +5062,14 @@ package body Ada_95.Token.Data is
       then
         The_Left := Type_Handle(The_Left).Parent_Type;
         The_Right := Type_Handle(The_Right).Parent_Type;
+        if ((not Is_Null (The_Left)) and then (The_Left.all in Tagged_Record_Type'class)) and
+           ((not Is_Null (The_Right)) and then (The_Right.all in Private_Extension_Type'class))
+        then
+          The_Right := Tagged_Private_Handle(The_Right).Parent_Type;
+          if The_Left = The_Right then
+            return True;
+          end if;
+        end if;
       end if;
       if Instantiation /= null then
         if not Is_Null (The_Left) and then The_Left.all in Formal_Type'class then
@@ -5943,10 +6080,10 @@ package body Ada_95.Token.Data is
             if The_Parameter /= null and then not Is_Null (The_Parameter.Object_Type) and then
               The_Parameter.Object_Type.all in Formal_Type'class
             then
-              --TEST----------------------------------------------------------------------
-              --Write_Log ("*** new Actual Component " & Image_Of (Parameter.Location.all)
-              --         & " for " & Image_Of (Parameter.Object_Type.Location.all));
-              ----------------------------------------------------------------------------
+              --TEST--------------------------------------------------------------------------
+              --Write_Log ("*** new Actual Component " & Image_Of (The_Parameter.Location.all)
+              --         & " for " & Image_Of (The_Parameter.Object_Type.Location.all));
+              --------------------------------------------------------------------------------
               declare
                 Formal_Parameter : constant Formal_Handle := Formal_Handle(The_Parameter.Object_Type);
               begin

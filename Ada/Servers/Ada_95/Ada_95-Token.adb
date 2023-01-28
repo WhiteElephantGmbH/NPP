@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -359,7 +359,7 @@ package body Ada_95.Token is
     function "+" (Left  : String;
                   Right : Handle) return String is
 
-      Spaces : constant String(1 .. Natural(Area_Of(Right.all).First_Column) - Left'length - 1) := (others => ' ');
+      Spaces : constant String(1 .. Natural(Area_Of(Right.all).First_Column) - Left'length - 1) := [others => ' '];
 
       Image : constant String := Left & Spaces & Image_Of (Right.all);
 
@@ -1201,7 +1201,7 @@ package body Ada_95.Token is
 
 
   procedure Append_Literal (Item : Character) is
-    Literal_Id : String := ('`', Item); -- mark not uppercase
+    Literal_Id : String := ['`', Item]; -- mark not uppercase
   begin
     if Ada.Characters.Handling.Is_Upper (Item) then
       Literal_Id(Literal_Id'first) := '~'; -- mark uppercase

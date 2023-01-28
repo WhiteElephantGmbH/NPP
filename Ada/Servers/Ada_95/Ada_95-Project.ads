@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2008 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -8,7 +8,7 @@ with Ada_95.Error;
 with Ada_95.Library;
 with Ada_95.Token;
 with Server;
-with String_List;
+with Strings;
 
 package Ada_95.Project is
 
@@ -16,7 +16,7 @@ package Ada_95.Project is
 
   subtype Token_Kind is Standard.Server.Token_Kind;
 
-  procedure Initialize (Work_Path : String_List.Item);
+  procedure Initialize (Work_Path : Strings.List);
 
   procedure Finalize;
 

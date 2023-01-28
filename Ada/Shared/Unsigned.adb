@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -42,7 +42,7 @@ package body Unsigned is
 
 
   function String_Of (The_Byte : Byte) return Byte_String is
-    The_Byte_String : constant Byte_String (1..1) := (others => The_Byte);
+    The_Byte_String : constant Byte_String := [The_Byte];
   begin
     return The_Byte_String;
   end String_Of;
@@ -136,7 +136,7 @@ package body Unsigned is
       return "";
     else
       declare
-        The_Result : String (1.. The_String'length * 5 -1) := (others => Space);
+        The_Result : String (1.. The_String'length * 5 -1) := [others => Space];
       begin
         for The_Index in The_String'range loop
           Ada.Strings.Fixed.Overwrite (The_Result, (The_Index * 5 - 4), Hex_Image_Of (The_String(The_Index)));
@@ -173,7 +173,7 @@ package body Unsigned is
       return "";
     else
       declare
-        The_Result : String (1.. The_String'length * 9 -1) := (others => Space);
+        The_Result : String (1.. The_String'length * 9 -1) := [others => Space];
       begin
         for The_Index in The_String'range loop
           Ada.Strings.Fixed.Overwrite (The_Result, (The_Index * 9 - 8), Hex_Image_Of (The_String(The_Index)));
@@ -408,7 +408,7 @@ package body Unsigned is
 
   function String_Of (The_Word : Word) return Byte_String is
   begin
-    return (Byte(The_Word mod 2**8), Byte(The_Word / 2**8));
+    return [Byte(The_Word mod 2**8), Byte(The_Word / 2**8)];
   end String_Of;
 
 
@@ -430,7 +430,7 @@ package body Unsigned is
 
   function String_Of (The_Longword : Longword) return Word_String is
   begin
-    return (Word(The_Longword mod 2**16), Word(The_Longword / 2**16));
+    return [Word(The_Longword mod 2**16), Word(The_Longword / 2**16)];
   end String_Of;
 
 
@@ -504,7 +504,7 @@ package body Unsigned is
 
   function String_Of (The_Quadword : Quadword) return Longword_String is
   begin
-    return (Least_Significant_Longword_Of (The_Quadword), Most_Significant_Longword_Of (The_Quadword));
+    return [Least_Significant_Longword_Of (The_Quadword), Most_Significant_Longword_Of (The_Quadword)];
   end String_Of;
 
 

@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,13 +36,16 @@ with Ada.Iterator_Interfaces;
 with Ada.Containers.Helpers;
 private with Ada.Finalization;
 private with Ada.Streams;
+private with Ada.Strings.Text_Buffers;
 
 generic
    type Element_Type (<>) is private;
 
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
-package Ada.Containers.Indefinite_Multiway_Trees is
+package Ada.Containers.Indefinite_Multiway_Trees with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate;
    pragma Remote_Types;
@@ -346,7 +349,10 @@ private
       Root  : aliased Tree_Node_Type;
       TC    : aliased Tamper_Counts;
       Count : Count_Type := 0;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class; V : Tree);
 
    overriding procedure Adjust (Container : in out Tree);
 
@@ -433,10 +439,7 @@ private
 
    for Reference_Type'Write use Write;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Exp_Ch5 for
-   --  details.
+   --  See Ada.Containers.Vectors for documentation on the following
 
    function Pseudo_Reference
      (Container : aliased Tree'Class) return Reference_Control_Type;

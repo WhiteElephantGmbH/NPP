@@ -1,10 +1,9 @@
 -- *********************************************************************************************************************
--- *                   (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with String_List;
 with Strings;
 
 package Ada_95.Build is
@@ -12,8 +11,7 @@ package Ada_95.Build is
   Sub_Directory_32 : constant String := "32";
   Sub_Directory_64 : constant String := "64";
 
-  use type Strings.Item;
-  Sub_Directories : constant Strings.Item := Sub_Directory_32 + Sub_Directory_64;
+  Sub_Directories : constant Strings.Item := [Sub_Directory_32, Sub_Directory_64];
 
   type Kind is (Console_Application, Windows_Application, Dll);
 
@@ -50,9 +48,9 @@ package Ada_95.Build is
 
   function Is_Dll return Boolean;
 
-  procedure Define_Interface (Item : String_List.Item);
+  procedure Define_Interface (Item : Strings.List);
 
-  function Actual_Interface return String_List.Item;
+  function Actual_Interface return Strings.List;
 
   procedure Define (Item : Version);
 
@@ -97,9 +95,9 @@ package Ada_95.Build is
 
   function Check_Of (Library : String) return Library_Check_Completion;
 
-  procedure Define_Libraries (Item : String_List.Item);
+  procedure Define_Libraries (Item : Strings.List);
 
-  function Actual_Libraries return String_List.Item;
+  function Actual_Libraries return Strings.List;
 
   function Defined_Resource (Item : String) return Boolean;
 

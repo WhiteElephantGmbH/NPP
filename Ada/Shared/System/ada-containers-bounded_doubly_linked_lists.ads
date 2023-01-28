@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,6 +36,7 @@ with Ada.Iterator_Interfaces;
 with Ada.Containers.Helpers;
 private with Ada.Streams;
 private with Ada.Finalization;
+private with Ada.Strings.Text_Buffers;
 
 generic
    type Element_Type is private;
@@ -43,7 +44,9 @@ generic
    with function "=" (Left, Right : Element_Type)
       return Boolean is <>;
 
-package Ada.Containers.Bounded_Doubly_Linked_Lists is
+package Ada.Containers.Bounded_Doubly_Linked_Lists with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Pure;
    pragma Remote_Types;
@@ -52,16 +55,19 @@ package Ada.Containers.Bounded_Doubly_Linked_Lists is
       Constant_Indexing => Constant_Reference,
       Variable_Indexing => Reference,
       Default_Iterator  => Iterate,
-      Iterator_Element  => Element_Type;
+      Iterator_Element  => Element_Type,
+      Aggregate         => (Empty       => Empty,
+                            Add_Unnamed => Append),
+      Preelaborable_Initialization
+                        => Element_Type'Preelaborable_Initialization;
 
-   pragma Preelaborable_Initialization (List);
-
-   type Cursor is private;
-   pragma Preelaborable_Initialization (Cursor);
+   type Cursor is private with Preelaborable_Initialization;
 
    Empty_List : constant List;
 
    No_Element : constant Cursor;
+
+   function Empty (Capacity : Count_Type := 10) return List;
 
    function Has_Element (Position : Cursor) return Boolean;
 
@@ -145,7 +151,11 @@ package Ada.Containers.Bounded_Doubly_Linked_Lists is
    procedure Append
      (Container : in out List;
       New_Item  : Element_Type;
-      Count     : Count_Type := 1);
+      Count     : Count_Type);
+
+   procedure Append
+     (Container : in out List;
+      New_Item  : Element_Type);
 
    procedure Delete
      (Container : in out List;
@@ -258,7 +268,7 @@ private
    use Ada.Finalization;
 
    type Node_Type is record
-      Prev    : Count_Type'Base;
+      Prev    : Count_Type'base;
       Next    : Count_Type;
       Element : aliased Element_Type;
    end record;
@@ -266,28 +276,31 @@ private
    type Node_Array is array (Count_Type range <>) of Node_Type;
 
    type List (Capacity : Count_Type) is tagged record
-      Nodes  : Node_Array (1 .. Capacity) := (others => <>);
-      Free   : Count_Type'Base := -1;
+      Nodes  : Node_Array (1 .. Capacity);
+      Free   : Count_Type'base := -1;
       First  : Count_Type := 0;
       Last   : Count_Type := 0;
       Length : Count_Type := 0;
       TC     : aliased Tamper_Counts;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class; V : List);
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out List);
 
-   for List'Read use Read;
+   for List'read use Read;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : List);
 
-   for List'Write use Write;
+   for List'write use Write;
 
    type List_Access is access all List;
-   for List_Access'Storage_Size use 0;
+   for List_Access'storage_size use 0;
 
    type Cursor is record
       Container : List_Access;
@@ -295,16 +308,16 @@ private
    end record;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Cursor);
 
-   for Cursor'Read use Read;
+   for Cursor'read use Read;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Cursor);
 
-   for Cursor'Write use Write;
+   for Cursor'write use Write;
 
    subtype Reference_Control_Type is Implementation.Reference_Control_Type;
    --  It is necessary to rename this here, so that the compiler can find it
@@ -320,16 +333,16 @@ private
       end record;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Constant_Reference_Type);
 
-   for Constant_Reference_Type'Read use Read;
+   for Constant_Reference_Type'read use Read;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Constant_Reference_Type);
 
-   for Constant_Reference_Type'Write use Write;
+   for Constant_Reference_Type'write use Write;
 
    type Reference_Type (Element : not null access Element_Type) is record
       Control : Reference_Control_Type :=
@@ -340,24 +353,24 @@ private
    end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Reference_Type);
 
-   for Reference_Type'Write use Write;
+   for Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Reference_Type);
 
-   for Reference_Type'Read use Read;
+   for Reference_Type'read use Read;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Exp_Ch5 for
-   --  details.
+   --  See Ada.Containers.Vectors for documentation on the following
+
+   --!!! WE procedure _Next (Position : in out Cursor) renames Next;
+   --!!! WE procedure _Previous (Position : in out Cursor) renames Previous;
 
    function Pseudo_Reference
-     (Container : aliased List'Class) return Reference_Control_Type;
+     (Container : aliased List'class) return Reference_Control_Type;
    pragma Inline (Pseudo_Reference);
    --  Creates an object of type Reference_Control_Type pointing to the
    --  container, and increments the Lock. Finalization of this object will

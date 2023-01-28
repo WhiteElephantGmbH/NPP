@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---             Copyright (C) 2013-2020, Free Software Foundation, Inc.      --
+--             Copyright (C) 2013-2022, Free Software Foundation, Inc.      --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -46,6 +46,11 @@ package System.File_Attributes is
      (N : System.Address;
       A : access File_Attributes) return Integer;
 
+   function File_Length_Attr
+     (FD : Integer;
+      N  : System.Address;
+      A  : access File_Attributes) return Long_Long_Integer;
+
    function Is_Regular_File_Attr
      (N : System.Address;
       A : access File_Attributes) return Integer;
@@ -65,6 +70,7 @@ private
    pragma Import (C, Reset_Attributes,     "__gnat_reset_attributes");
    pragma Import (C, Error_Attributes,     "__gnat_error_attributes");
    pragma Import (C, File_Exists_Attr,     "__gnat_file_exists_attr");
+   pragma Import (C, File_Length_Attr,     "__gnat_file_length_attr");
    pragma Import (C, Is_Regular_File_Attr, "__gnat_is_regular_file_attr");
    pragma Import (C, Is_Directory_Attr,    "__gnat_is_directory_attr");
 

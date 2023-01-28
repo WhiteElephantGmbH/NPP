@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2012-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2012-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -40,6 +40,7 @@ package Ada.Numerics.Generic_Elementary_Functions with
   SPARK_Mode => On
 is
    pragma Pure;
+   pragma Annotate (GNATprove, Always_Return, Generic_Elementary_Functions);
 
    --  Preconditions in this unit are meant for analysis only, not for run-time
    --  checking, so that the expected exceptions are raised when calling
@@ -92,6 +93,7 @@ is
        and then (if Left  = 0.0 then "**"'Result = 0.0);
 
    function Sin (X : Float_Type'Base) return Float_Type'Base with
+     Inline,
      Post => Sin'Result in -1.0 .. 1.0
        and then (if X = 0.0 then Sin'Result = 0.0);
 
@@ -101,6 +103,7 @@ is
        and then (if X = 0.0 then Sin'Result = 0.0);
 
    function Cos (X : Float_Type'Base) return Float_Type'Base with
+     Inline,
      Post => Cos'Result in -1.0 .. 1.0
        and then (if X = 0.0 then Cos'Result = 1.0);
 
@@ -124,7 +127,7 @@ is
      Pre => Cycle > 0.0
        and then X /= 0.0
        and then Float_Type'Base'Remainder (X, Cycle) /= 0.0
-       and then abs Float_Type'Base'Remainder (X, Cycle) = 0.5 * Cycle;
+       and then abs Float_Type'Base'Remainder (X, Cycle) /= 0.5 * Cycle;
 
    function Arcsin (X : Float_Type'Base) return Float_Type'Base with
      Pre  => abs X <= 1.0,

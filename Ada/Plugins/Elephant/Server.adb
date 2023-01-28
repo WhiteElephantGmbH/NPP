@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -18,7 +18,6 @@ pragma Style_White_Elephant;
 with Ada.Unchecked_Conversion;
 with File;
 with Log;
-with Text;
 with System;
 with Os.Application;
 with Os.Pipe;
@@ -32,7 +31,9 @@ package body Server is
   The_Data   : aliased Source_Buffer;
   for The_Data'alignment use 4;
 
-  The_Message : Text.String;
+  The_Message : Strings.Element;
+
+  use type Strings.Element;
 
 
   procedure Read_Data is
@@ -82,7 +83,7 @@ package body Server is
 
   procedure Set_Message (Item : String) is
   begin
-    The_Message := Text.String_Of (Item);
+    The_Message := [Item];
   end Set_Message;
 
 
@@ -239,13 +240,13 @@ package body Server is
 
   The_Actual_Column   : Column_Range;
   The_Actual_Line     : Line_Number;
-  The_Actual_Filename : Text.String;
+  The_Actual_Filename : Strings.Element;
 
 
   procedure Read_Filename is
   begin
     Send (Get_Filename);
-    The_Actual_Filename := Text.String_Of (Data_String);
+    The_Actual_Filename := [Data_String];
   end Read_Filename;
 
 
@@ -388,13 +389,13 @@ package body Server is
 
   function Message return String is
   begin
-    return Text.String_Of (The_Message);
+    return +The_Message;
   end Message;
 
 
   function Filename return String is
   begin
-    return Text.String_Of (The_Actual_Filename);
+    return +The_Actual_Filename;
   end Filename;
 
 
@@ -410,7 +411,7 @@ package body Server is
   end Line;
 
 
-  function Names_Of (Item : String_List.Item) return String is
+  function Names_Of (Item : Strings.List) return String is
   begin
     raise Program_Error;
     return "";

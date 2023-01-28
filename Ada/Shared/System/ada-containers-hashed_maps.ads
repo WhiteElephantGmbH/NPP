@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,6 +36,7 @@ with Ada.Iterator_Interfaces;
 private with Ada.Containers.Hash_Tables;
 private with Ada.Finalization;
 private with Ada.Streams;
+private with Ada.Strings.Text_Buffers;
 
 --  The language-defined generic package Containers.Hashed_Maps provides
 --  private types Map and Cursor, and a set of operations for each type. A map
@@ -88,7 +89,9 @@ generic
    --  map values returns an unspecified value. The exact arguments and number
    --  of calls of this generic formal function by the function "=" on map
    --  values are unspecified.
-package Ada.Containers.Hashed_Maps is
+package Ada.Containers.Hashed_Maps with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate;
    pragma Remote_Types;
@@ -98,12 +101,22 @@ package Ada.Containers.Hashed_Maps is
       Constant_Indexing => Constant_Reference,
       Variable_Indexing => Reference,
       Default_Iterator  => Iterate,
-      Iterator_Element  => Element_Type;
+      Iterator_Element  => Element_Type,
+      Aggregate         => (Empty     => Empty,
+                            Add_Named => Insert);
 
    pragma Preelaborable_Initialization (Map);
 
    type Cursor is private;
    pragma Preelaborable_Initialization (Cursor);
+
+   function "=" (Left, Right : Cursor) return Boolean;
+   --  The representation of cursors includes a component used to optimize
+   --  iteration over maps. This component may become unreliable after
+   --  multiple map insertions, and must be excluded from cursor equality,
+   --  so we need to provide an explicit definition for it, instead of
+   --  using predefined equality (as implied by a questionable comment
+   --  in the RM).
 
    Empty_Map : constant Map;
    --  Map objects declared without an initialization expression are
@@ -112,6 +125,8 @@ package Ada.Containers.Hashed_Maps is
    No_Element : constant Cursor;
    --  Cursor objects declared without an initialization expression are
    --  initialized to the value No_Element.
+
+   function Empty (Capacity : Count_Type := 1000) return Map;
 
    function Has_Element (Position : Cursor) return Boolean;
    --  Returns True if Position designates an element, and returns False
@@ -390,7 +405,7 @@ package Ada.Containers.Hashed_Maps is
    --  raised by Process.all is propagated.
 
    function Iterate
-     (Container : Map) return Map_Iterator_Interfaces.Forward_Iterator'Class;
+     (Container : Map) return Map_Iterator_Interfaces.Forward_Iterator'class;
 
 private
    pragma Inline ("=");
@@ -421,7 +436,10 @@ private
 
    type Map is new Ada.Finalization.Controlled with record
       HT : HT_Types.Hash_Table_Type;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class; V : Map);
 
    overriding procedure Adjust (Container : in out Map);
 
@@ -432,19 +450,19 @@ private
    use Ada.Streams;
 
    procedure Write
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : Map);
 
-   for Map'Write use Write;
+   for Map'write use Write;
 
    procedure Read
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : out Map);
 
-   for Map'Read use Read;
+   for Map'read use Read;
 
    type Map_Access is access all Map;
-   for Map_Access'Storage_Size use 0;
+   for Map_Access'storage_size use 0;
 
    type Cursor is record
       Container : Map_Access;
@@ -453,22 +471,30 @@ private
       Node      : Node_Access;
       --  Access to the node pointed to by this cursor
 
-      Position  : Hash_Type := Hash_Type'Last;
+      Position  : Hash_Type := Hash_Type'last;
       --  Position of the node in the buckets of the container. If this is
-      --  equal to Hash_Type'Last, then it will not be used.
+      --  equal to Hash_Type'Last, then it will not be used. Position is
+      --  not requried by the implementation, but improves the efficiency
+      --  of various operations.
+      --
+      --  However, this value must be maintained so that the predefined
+      --  equality operation acts as required by RM A.18.4-18/2, which
+      --  states: "The predefined "=" operator for type Cursor returns True
+      --  if both cursors are No_Element, or designate the same element
+      --  in the same container."
    end record;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Cursor);
 
-   for Cursor'Read use Read;
+   for Cursor'read use Read;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Cursor);
 
-   for Cursor'Write use Write;
+   for Cursor'write use Write;
 
    subtype Reference_Control_Type is Implementation.Reference_Control_Type;
    --  It is necessary to rename this here, so that the compiler can find it
@@ -484,16 +510,16 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Constant_Reference_Type);
 
-   for Constant_Reference_Type'Write use Write;
+   for Constant_Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Constant_Reference_Type);
 
-   for Constant_Reference_Type'Read use Read;
+   for Constant_Reference_Type'read use Read;
 
    type Reference_Type
      (Element : not null access Element_Type) is
@@ -506,24 +532,23 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Reference_Type);
 
-   for Reference_Type'Write use Write;
+   for Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Reference_Type);
 
-   for Reference_Type'Read use Read;
+   for Reference_Type'read use Read;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Sem_Ch5 for
-   --  details.
+   --  See Ada.Containers.Vectors for documentation on the following
+
+   --!!! WE procedure _Next (Position : in out Cursor) renames Next;
 
    function Pseudo_Reference
-     (Container : aliased Map'Class) return Reference_Control_Type;
+     (Container : aliased Map'class) return Reference_Control_Type;
    pragma Inline (Pseudo_Reference);
    --  Creates an object of type Reference_Control_Type pointing to the
    --  container, and increments the Lock. Finalization of this object will
@@ -539,7 +564,7 @@ private
    Empty_Map : constant Map := (Controlled with others => <>);
 
    No_Element : constant Cursor := (Container => null, Node => null,
-                                    Position  => Hash_Type'Last);
+                                    Position  => Hash_Type'last);
 
    type Iterator is new Limited_Controlled and
      Map_Iterator_Interfaces.Forward_Iterator with

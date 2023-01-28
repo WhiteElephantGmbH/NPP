@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,7 +10,6 @@ with Ada.Unchecked_Conversion;
 with File;
 with Interfaces.C;
 with Os;
-with String_List;
 with System;
 with Win32.Winbase;
 with Win32.Winerror;
@@ -453,10 +452,10 @@ package body Files is
 
   function Project_Parts_Of (Name          :     String;
                              Area          :     String;
-                             The_Directory : out Text.String) return Strings.Item is
+                             The_Directory : out Strings.Element) return Strings.Item is
 
-    The_Index  : Natural := Name'first;
-    The_List   : String_List.Item;
+    The_Index : Natural := Name'first;
+    The_List  : Strings.Item;
 
   begin
     for Index in Name'range loop
@@ -466,16 +465,15 @@ package body Files is
             Part : constant String := Name(The_Index + 1 .. Index - 1);
           begin
             if Part = Area then
-              The_Directory := Text.String_Of (Normalized (Name(Name'first .. Index - 1)));
+              The_Directory := [Normalized (Name(Name'first .. Index - 1))];
               The_Index := Name'last;
               for Inner_Index in reverse Index .. Name'last loop
                 if Name(Inner_Index) = Separator or Name(Inner_Index) = Other_Separator then
                   declare
                     Inner_Part : constant String := Name(Inner_Index + 1 .. The_Index);
-                    use type String_List.Item;
                   begin
                     if Inner_Part /= "" then
-                      The_List := Inner_Part + The_List;
+                      The_List.Prepend (Inner_Part);
                     end if;
                   end;
                   The_Index := Inner_Index - 1;
@@ -488,7 +486,7 @@ package body Files is
         The_Index := Index;
       end if;
     end loop;
-    return Strings.Item_Of (The_List);
+    return The_List;
   end Project_Parts_Of;
 
 end Files;

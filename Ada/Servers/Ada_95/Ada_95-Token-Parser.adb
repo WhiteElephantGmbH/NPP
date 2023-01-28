@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,7 +12,7 @@ with Ada_95.Build;
 with Ada_95.Token.Checker;
 with Indefinite_Doubly_Linked_Lists;
 with Log;
-with String_List;
+with Strings;
 
 package body Ada_95.Token.Parser is
 
@@ -53,7 +53,7 @@ package body Ada_95.Token.Parser is
   type Simple_Expression_Data is array (Simple_Expression_State, Lexical.Element) of Simple_Expression_Handle;
 
   Next_Simple_Expression_Data : constant Simple_Expression_Data :=
-    (S_0    => (Lexical.Plus | Lexical.Minus                                       => (S_1,   Operator),
+    [S_0    => [Lexical.Plus | Lexical.Minus                                       => (S_1,   Operator),
                 Lexical.Left_Bracket                                               => (F_111, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
@@ -63,9 +63,9 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_New                                                     => (F_111, Allocator),
                 Lexical.Is_Null                                                    => (F_111, Is_Null),
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_112, Operator),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     S_1    => (Lexical.Left_Bracket                                               => (F_111, Aggregate),
+     S_1    => [Lexical.Left_Bracket                                               => (F_111, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_111, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_111, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_111, Is_Integer_Literal),
@@ -74,14 +74,14 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_New                                                     => (F_111, Allocator),
                 Lexical.Is_Null                                                    => (F_111, Is_Null),
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_112, Operator),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     F_111  => (Lexical.Exponentiation                                             => (F_112, Operator),
+     F_111  => [Lexical.Exponentiation                                             => (F_112, Operator),
                 Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_12,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)),
+                others                                                             => (S_0,   Unknown)],
 
-     F_112  => (Lexical.Left_Bracket                                               => (T_11,  Aggregate),
+     F_112  => [Lexical.Left_Bracket                                               => (T_11,  Aggregate),
                 Lexical.Left_Parenthesis                                           => (T_11,  Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (T_11,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_11,  Is_Integer_Literal),
@@ -89,13 +89,13 @@ package body Ada_95.Token.Parser is
                 Lexical.String_Literal                                             => (T_11,  Is_String_Literal),
                 Lexical.Is_New                                                     => (T_11,  Allocator),
                 Lexical.Is_Null                                                    => (T_11,  Is_Null),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     T_11   => (Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_12,  Operator),
+     T_11   => [Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_12,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)),
+                others                                                             => (S_0,   Unknown)],
 
-     T_12   => (Lexical.Left_Bracket                                               => (F_121, Aggregate),
+     T_12   => [Lexical.Left_Bracket                                               => (F_121, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_121, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_121, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_121, Is_Integer_Literal),
@@ -104,14 +104,14 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_New                                                     => (F_121, Allocator),
                 Lexical.Is_Null                                                    => (F_121, Is_Null),
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_112, Operator),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     F_121  => (Lexical.Exponentiation                                             => (F_112, Operator),
+     F_121  => [Lexical.Exponentiation                                             => (F_112, Operator),
                 Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_12,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)),
+                others                                                             => (S_0,   Unknown)],
 
-     S_2    => (Lexical.Left_Bracket                                               => (F_211, Aggregate),
+     S_2    => [Lexical.Left_Bracket                                               => (F_211, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_211, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_211, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_211, Is_Integer_Literal),
@@ -120,14 +120,14 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_New                                                     => (F_211, Allocator),
                 Lexical.Is_Null                                                    => (F_211, Is_Null),
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_212, Operator),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     F_211  => (Lexical.Exponentiation                                             => (F_212, Operator),
+     F_211  => [Lexical.Exponentiation                                             => (F_212, Operator),
                 Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_22,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)),
+                others                                                             => (S_0,   Unknown)],
 
-     F_212  => (Lexical.Left_Bracket                                               => (T_21,  Aggregate),
+     F_212  => [Lexical.Left_Bracket                                               => (T_21,  Aggregate),
                 Lexical.Left_Parenthesis                                           => (T_21,  Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (T_21,  Is_Identifier),
                 Lexical.Integer_Literal                                            => (T_21,  Is_Integer_Literal),
@@ -135,13 +135,13 @@ package body Ada_95.Token.Parser is
                 Lexical.String_Literal                                             => (T_21,  Is_String_Literal),
                 Lexical.Is_New                                                     => (T_21,  Allocator),
                 Lexical.Is_Null                                                    => (T_21,  Is_Null),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     T_21   => (Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_22,  Operator),
+     T_21   => [Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_22,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)),
+                others                                                             => (S_0,   Unknown)],
 
-     T_22   => (Lexical.Left_Bracket                                               => (F_221, Aggregate),
+     T_22   => [Lexical.Left_Bracket                                               => (F_221, Aggregate),
                 Lexical.Left_Parenthesis                                           => (F_221, Aggregate_Or_Expression),
                 Lexical.Identifier | Lexical.Target_Name                           => (F_221, Is_Identifier),
                 Lexical.Integer_Literal                                            => (F_221, Is_Integer_Literal),
@@ -150,12 +150,12 @@ package body Ada_95.Token.Parser is
                 Lexical.Is_New                                                     => (F_221, Allocator),
                 Lexical.Is_Null                                                    => (F_221, Is_Null),
                 Lexical.Is_Abs | Lexical.Is_Not                                    => (F_212, Operator),
-                others                                                             => (S_0,   Unexpected)),
+                others                                                             => (S_0,   Unexpected)],
 
-     F_221  => (Lexical.Exponentiation                                             => (F_212, Operator),
+     F_221  => [Lexical.Exponentiation                                             => (F_212, Operator),
                 Lexical.Asterisk | Lexical.Slash | Lexical.Is_Mod | Lexical.Is_Rem => (T_22,  Operator),
                 Lexical.Plus | Lexical.Minus | Lexical.Ampersand                   => (S_2,   Operator),
-                others                                                             => (S_0,   Unknown)));
+                others                                                             => (S_0,   Unknown)]];
 
 
   --====================================================================================================================
@@ -4140,7 +4140,7 @@ package body Ada_95.Token.Parser is
         package Library_List is new Indefinite_Doubly_Linked_Lists (Library_Info);
 
         The_Library_List   : Library_List.Item;
-        The_Libraries      : String_List.Item;
+        The_Libraries      : Strings.List;
 
         procedure Parse_Libraries is
         begin
@@ -4215,7 +4215,7 @@ package body Ada_95.Token.Parser is
             end;
           end Image_Of_Unit;
 
-          The_Interface : String_List.Item;
+          The_Interface : Strings.List;
 
         begin
           loop
@@ -4764,7 +4764,7 @@ package body Ada_95.Token.Parser is
 
         type Parameters is array (Parameters_First..Parameters_Last) of Boolean;
 
-        Found_Parameters : Parameters := (others => False);
+        Found_Parameters : Parameters := [others => False];
         Associated       : Boolean := True;
 
         function Parameter_Associated return Boolean with Inline is
@@ -5014,7 +5014,7 @@ package body Ada_95.Token.Parser is
 
       type Parameters is array (Parameters_First..Parameters_Last) of Boolean;
 
-      Found_Parameters : Parameters := (others => False);
+      Found_Parameters : Parameters := [others => False];
 
       function Parameter_Associated return Boolean with Inline is
 
@@ -8566,7 +8566,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Is_With =>
           if Found_Declaration then
             The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Self, Profile);
-            Aspect_Specification ((The_Unit, null), (1 => The_Identifier));
+            Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
             Get_Element (Lexical.Semicolon);
           else
             if Is_Basic then
@@ -8614,13 +8614,13 @@ package body Ada_95.Token.Parser is
                   The_Unit := Expression_Function (The_Identifier, Scope, Profile);
                 else
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
-                  Aspect_Specification ((The_Unit, null), (1 => The_Identifier));
+                  Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
                 end if;
                 Get_Element (Lexical.Semicolon);
               else
                 if Is_Basic then
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
-                  Aspect_Specification ((The_Unit, null), (1 => The_Identifier));
+                  Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
                   Get_Element (Lexical.Semicolon);
                 else
                   The_Unit := Data.New_Subprogram_Body (The_Identifier, Scope, Profile);
@@ -10190,7 +10190,7 @@ package body Ada_95.Token.Parser is
             end if;
             if Is_Constant then
               Get_Element (Lexical.Assignment);
-              Data.New_Constants (Names         => (1 => Object_Id),
+              Data.New_Constants (Names         => [1 => Object_Id],
                                   Subtype_Mark  => Data.Root_Type_Of (Expression ((Return_Block, The_Subtype))),
                                   Is_Class_Wide => Is_Class_Wide_Type,
                                   Has_Default   => True,
@@ -10991,8 +10991,8 @@ package body Ada_95.Token.Parser is
       Report_Error (Error.End_Of_File_Expected, The_Token); -- only one compilation unit per file
     end if;
   exception
-  when Reported_Error =>
-    null;
+  --when Reported_Error =>
+  --  null;
   when Occurrence: others =>
     Log.Write ("!!! PARSER EXCEPTION", Occurrence);
   end Process;

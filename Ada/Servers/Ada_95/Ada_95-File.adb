@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -8,13 +8,12 @@ with Ada.Characters.Handling;
 with Ada_95.Source.File;
 with Files;
 with Log;
-with Strings;
 
 package body Ada_95.File is
 
   Unit_Separator : constant Character := '-';
 
-  The_Work_Path : String_List.Item;
+  The_Work_Path : Strings.List;
 
 
   function Normalized (Item : String) return String is
@@ -42,7 +41,7 @@ package body Ada_95.File is
   end Normalized_Folder;
 
 
-  procedure Define_Work_Path (List : String_List.Item) is
+  procedure Define_Work_Path (List : Strings.List) is
   begin
     The_Work_Path := List;
   end Define_Work_Path;

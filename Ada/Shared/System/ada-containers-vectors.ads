@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,6 +36,7 @@ with Ada.Iterator_Interfaces;
 with Ada.Containers.Helpers;
 private with Ada.Finalization;
 private with Ada.Streams;
+private with Ada.Strings.Text_Buffers;
 
 --  The language-defined generic package Containers.Vectors provides private
 --  types Vector and Cursor, and a set of operations for each type. A vector
@@ -70,19 +71,21 @@ generic
    --  number of calls of this generic formal function by the functions defined
    --  to use it are unspecified.
 
-package Ada.Containers.Vectors is
+package Ada.Containers.Vectors with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate;
    pragma Remote_Types;
 
-   subtype Extended_Index is Index_Type'Base
-     range Index_Type'First - 1 ..
-           Index_Type'Min (Index_Type'Base'Last - 1, Index_Type'Last) + 1;
+   subtype Extended_Index is Index_Type'base
+     range Index_Type'first - 1 ..
+           Index_Type'min (Index_Type'base'last - 1, Index_Type'last) + 1;
    --  The subtype Extended_Index includes the indices covered by Index_Type
    --  plus the value No_Index and, if it exists, the successor to the
    --  Index_Type'Last.
 
-   No_Index : constant Extended_Index := Extended_Index'First;
+   No_Index : constant Extended_Index := Extended_Index'first;
    --  No_Index represents a position that does not correspond to any element.
 
    type Vector is tagged private
@@ -90,7 +93,12 @@ package Ada.Containers.Vectors is
       Constant_Indexing => Constant_Reference,
       Variable_Indexing => Reference,
       Default_Iterator  => Iterate,
-      Iterator_Element  => Element_Type;
+      Iterator_Element  => Element_Type,
+      Aggregate         => (Empty          => Empty,
+                            Add_Unnamed    => Append,
+                            New_Indexed    => New_Vector,
+                            Assign_Indexed => Replace_Element);
+
    pragma Preelaborable_Initialization (Vector);
    --  Vector type, to be instantiated by users of this package. If an object
    --  of type Vector is not otherwise initialized, it is initialized to
@@ -113,6 +121,8 @@ package Ada.Containers.Vectors is
 
    Empty_Vector : constant Vector;
    --  Empty_Vector represents the empty vector object. It has a length of 0.
+
+   function Empty (Capacity : Count_Type := 10) return Vector;
 
    overriding function "=" (Left, Right : Vector) return Boolean;
    --  If Left and Right denote the same vector object, then the function
@@ -320,36 +330,52 @@ package Ada.Containers.Vectors is
    --  Source is removed from Source and inserted into Target in the original
    --  order. The length of Source is 0 after a successful call to Move.
 
-   procedure Insert
+   function New_Vector (First, Last : Index_Type) return Vector
+     with Pre => First = Index_Type'first;
+   --  Ada 2022 aggregate operation.
+
+   procedure Insert_Vector
      (Container : in out Vector;
       Before    : Extended_Index;
       New_Item  : Vector);
    --  If Before is not in the range First_Index (Container) .. Last_Index
    --  (Container) + 1, then Constraint_Error is propagated. If
-   --  Length(New_Item) is 0, then Insert does nothing. Otherwise, it computes
-   --  the new length NL as the sum of the current length and Length
+   --  Length(New_Item) is 0, then Insert_Vector does nothing. Otherwise, it
+   --  computes the new length NL as the sum of the current length and Length
    --  (New_Item); if the value of Last appropriate for length NL would be
    --  greater than Index_Type'Last then Constraint_Error is propagated.
    --
    --  If the current vector capacity is less than NL, Reserve_Capacity
-   --  (Container, NL) is called to increase the vector capacity. Then Insert
-   --  slides the elements in the range Before .. Last_Index (Container) up by
-   --  Length(New_Item) positions, and then copies the elements of New_Item to
-   --  the positions starting at Before. Any exception raised during the
-   --  copying is propagated.
+   --  (Container, NL) is called to increase the vector capacity. Then
+   --  Insert_Vector slides the elements in the range Before .. Last_Index
+   --  (Container) up by Length(New_Item) positions, and then copies the
+   --  elements of New_Item to the positions starting at Before. Any exception
+   --  raised during the copying is propagated.
 
    procedure Insert
+     (Container : in out Vector;
+      Before    : Extended_Index;
+      New_Item  : Vector) renames Insert_Vector;
+   --  Retained for now for compatibility; AI12-0400 will remove this.
+
+   procedure Insert_Vector
      (Container : in out Vector;
       Before    : Cursor;
       New_Item  : Vector);
    --  If Before is not No_Element, and does not designate an element in
    --  Container, then Program_Error is propagated. Otherwise, if
-   --  Length(New_Item) is 0, then Insert does nothing. If Before is
-   --  No_Element, then the call is equivalent to Insert (Container, Last_Index
-   --  (Container) + 1, New_Item); otherwise the call is equivalent to Insert
-   --  (Container, To_Index (Before), New_Item);
+   --  Length(New_Item) is 0, then Insert_Vector does nothing. If Before is
+   --  No_Element, then the call is equivalent to Insert_Vector (Container,
+   --  Last_Index (Container) + 1, New_Item); otherwise the call is equivalent
+   --  to Insert_Vector (Container, To_Index (Before), New_Item);
 
    procedure Insert
+     (Container : in out Vector;
+      Before    : Cursor;
+      New_Item  : Vector) renames Insert_Vector;
+   --  Retained for now for compatibility; AI12-0400 will remove this.
+
+   procedure Insert_Vector
      (Container : in out Vector;
       Before    : Cursor;
       New_Item  : Vector;
@@ -357,22 +383,31 @@ package Ada.Containers.Vectors is
    --  If Before is not No_Element, and does not designate an element in
    --  Container, then Program_Error is propagated. If Before equals
    --  No_Element, then let T be Last_Index (Container) + 1; otherwise, let T
-   --  be To_Index (Before). Insert (Container, T, New_Item) is called, and
-   --  then Position is set to To_Cursor (Container, T).
+   --  be To_Index (Before). Insert_Vector (Container, T, New_Item) is called,
+   --  and then Position is set to To_Cursor (Container, T).
+
+   procedure Insert
+     (Container : in out Vector;
+      Before    : Cursor;
+      New_Item  : Vector;
+      Position  : out Cursor) renames Insert_Vector;
+   --  Retained for now for compatibility; AI12-0400 will remove this.
 
    procedure Insert
      (Container : in out Vector;
       Before    : Extended_Index;
       New_Item  : Element_Type;
       Count     : Count_Type := 1);
-   --  Equivalent to Insert (Container, Before, To_Vector (New_Item, Count));
+   --  Equivalent to:
+   --  Insert_Vector (Container, Before, To_Vector (New_Item, Count));
 
    procedure Insert
      (Container : in out Vector;
       Before    : Cursor;
       New_Item  : Element_Type;
       Count     : Count_Type := 1);
-   --  Equivalent to Insert (Container, Before, To_Vector (New_Item, Count));
+   --  Equivalent to:
+   --  Insert_Vector (Container, Before, To_Vector (New_Item, Count));
 
    procedure Insert
      (Container : in out Vector;
@@ -381,7 +416,7 @@ package Ada.Containers.Vectors is
       Position  : out Cursor;
       Count     : Count_Type := 1);
    --  Equivalent to
-   --  Insert (Container, Before, To_Vector (New_Item, Count), Position);
+   --  Insert_Vector (Container, Before, To_Vector (New_Item, Count), Position)
 
    procedure Insert
      (Container : in out Vector;
@@ -411,10 +446,15 @@ package Ada.Containers.Vectors is
    --  be To_Index (Before). Insert (Container, T, Count) is called, and then
    --  Position is set to To_Cursor (Container, T).
 
-   procedure Prepend
+   procedure Prepend_Vector
      (Container : in out Vector;
       New_Item  : Vector);
    --  Equivalent to Insert (Container, First_Index (Container), New_Item).
+
+   procedure Prepend
+     (Container : in out Vector;
+      New_Item  : Vector) renames Prepend_Vector;
+   --  Retained for now for compatibility; AI12-0400 will remove this.
 
    procedure Prepend
      (Container : in out Vector;
@@ -423,17 +463,25 @@ package Ada.Containers.Vectors is
    --  Equivalent to Insert (Container, First_Index (Container), New_Item,
    --  Count).
 
-   procedure Append
+   procedure Append_Vector
      (Container : in out Vector;
       New_Item  : Vector);
    --  Equivalent to Insert (Container, Last_Index (Container) + 1, New_Item).
 
    procedure Append
      (Container : in out Vector;
+      New_Item  : Vector) renames Append_Vector;
+   --  Retained for now for compatibility; AI12-0400 will remove this.
+
+   procedure Append
+     (Container : in out Vector;
       New_Item  : Element_Type;
-      Count     : Count_Type := 1);
+      Count     : Count_Type);
    --  Equivalent to Insert (Container, Last_Index (Container) + 1, New_Item,
    --  Count).
+
+   procedure Append (Container : in out Vector;
+                     New_Item  :        Element_Type);
 
    procedure Insert_Space
      (Container : in out Vector;
@@ -551,7 +599,7 @@ package Ada.Containers.Vectors is
    function Find_Index
      (Container : Vector;
       Item      : Element_Type;
-      Index     : Index_Type := Index_Type'First) return Extended_Index;
+      Index     : Index_Type := Index_Type'first) return Extended_Index;
    --  Searches the elements of Container for an element equal to Item (using
    --  the generic formal equality operator). The search starts at position
    --  Index and proceeds towards Last_Index (Container). If no equal
@@ -575,7 +623,7 @@ package Ada.Containers.Vectors is
    function Reverse_Find_Index
      (Container : Vector;
       Item      : Element_Type;
-      Index     : Index_Type := Index_Type'Last) return Extended_Index;
+      Index     : Index_Type := Index_Type'last) return Extended_Index;
    --  Searches the elements of Container for an element equal to Item (using
    --  the generic formal equality operator). The search starts at position
    --  Index or, if Index is greater than Last_Index (Container), at
@@ -619,10 +667,10 @@ package Ada.Containers.Vectors is
    --
 
    function Iterate (Container : Vector)
-      return Vector_Iterator_Interfaces.Reversible_Iterator'Class;
+      return Vector_Iterator_Interfaces.Reversible_Iterator'class;
 
    function Iterate (Container : Vector; Start : Cursor)
-      return Vector_Iterator_Interfaces.Reversible_Iterator'Class;
+      return Vector_Iterator_Interfaces.Reversible_Iterator'class;
 
    generic
       with function "<" (Left, Right : Element_Type) return Boolean is <>;
@@ -682,7 +730,7 @@ private
    function "=" (L, R : Elements_Array) return Boolean is abstract;
 
    type Elements_Type (Last : Extended_Index) is limited record
-      EA : Elements_Array (Index_Type'First .. Last);
+      EA : Elements_Array (Index_Type'first .. Last);
    end record;
 
    type Elements_Access is access all Elements_Type;
@@ -694,42 +742,45 @@ private
       Elements : Elements_Access := null;
       Last     : Extended_Index := No_Index;
       TC       : aliased Tamper_Counts;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class; V : Vector);
 
    overriding procedure Adjust (Container : in out Vector);
    overriding procedure Finalize (Container : in out Vector);
 
    procedure Write
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : Vector);
 
-   for Vector'Write use Write;
+   for Vector'write use Write;
 
    procedure Read
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : out Vector);
 
-   for Vector'Read use Read;
+   for Vector'read use Read;
 
    type Vector_Access is access all Vector;
-   for Vector_Access'Storage_Size use 0;
+   for Vector_Access'storage_size use 0;
 
    type Cursor is record
       Container : Vector_Access;
-      Index     : Index_Type := Index_Type'First;
+      Index     : Index_Type := Index_Type'first;
    end record;
 
    procedure Read
-     (Stream   : not null access Root_Stream_Type'Class;
+     (Stream   : not null access Root_Stream_Type'class;
       Position : out Cursor);
 
-   for Cursor'Read use Read;
+   for Cursor'read use Read;
 
    procedure Write
-     (Stream   : not null access Root_Stream_Type'Class;
+     (Stream   : not null access Root_Stream_Type'class;
       Position : Cursor);
 
-   for Cursor'Write use Write;
+   for Cursor'write use Write;
 
    subtype Reference_Control_Type is Implementation.Reference_Control_Type;
    --  It is necessary to rename this here, so that the compiler can find it
@@ -745,16 +796,16 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Constant_Reference_Type);
 
-   for Constant_Reference_Type'Write use Write;
+   for Constant_Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Constant_Reference_Type);
 
-   for Constant_Reference_Type'Read use Read;
+   for Constant_Reference_Type'read use Read;
 
    type Reference_Type
      (Element : not null access Element_Type) is
@@ -767,24 +818,27 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Reference_Type);
 
-   for Reference_Type'Write use Write;
+   for Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Reference_Type);
 
-   for Reference_Type'Read use Read;
+   for Reference_Type'read use Read;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Exp_Ch5 for
-   --  details.
+   --  Three operations are used to optimize the expansion of "for ... of"
+   --  loops: the Next(Cursor) (or Previous) procedure in the visible part,
+   --  and the following Pseudo_Reference and Get_Element_Access functions.
+   --  See Exp_Ch5 for details, including the leading underscores here.
+
+   --!!! WE procedure _Next (Position : in out Cursor) renames Next;
+   --!!! WE procedure _Previous (Position : in out Cursor) renames Previous;
 
    function Pseudo_Reference
-     (Container : aliased Vector'Class) return Reference_Control_Type;
+     (Container : aliased Vector'class) return Reference_Control_Type;
    pragma Inline (Pseudo_Reference);
    --  Creates an object of type Reference_Control_Type pointing to the
    --  container, and increments the Lock. Finalization of this object will
@@ -796,7 +850,7 @@ private
      (Position : Cursor) return not null Element_Access;
    --  Returns a pointer to the element designated by Position.
 
-   No_Element : constant Cursor := Cursor'(null, Index_Type'First);
+   No_Element : constant Cursor := Cursor'(null, Index_Type'first);
 
    Empty_Vector : constant Vector := (Controlled with others => <>);
 
@@ -804,7 +858,7 @@ private
      Vector_Iterator_Interfaces.Reversible_Iterator with
    record
       Container : Vector_Access;
-      Index     : Index_Type'Base;
+      Index     : Index_Type'base;
    end record
      with Disable_Controlled => not T_Check;
 

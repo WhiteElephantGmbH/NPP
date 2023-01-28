@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1993-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1993-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -53,17 +53,19 @@ package Ada.Text_IO.Modular_IO is
       Item  : out Num;
       Width : Field := 0)
    with
-     Pre    => Is_Open (File) and then Mode (File) = In_File,
-     Global => (In_Out => File_System);
+     Pre      => Is_Open (File) and then Mode (File) = In_File,
+     Global   => (In_Out => File_System),
+     Annotate => (GNATprove, Might_Not_Return);
 
    procedure Get
      (Item  : out Num;
       Width : Field := 0)
    with
-     Post   =>
+     Post     =>
        Line_Length'Old = Line_Length
        and Page_Length'Old = Page_Length,
-     Global => (In_Out => File_System);
+     Global   => (In_Out => File_System),
+     Annotate => (GNATprove, Might_Not_Return);
 
    procedure Put
      (File  : File_Type;
@@ -71,35 +73,39 @@ package Ada.Text_IO.Modular_IO is
       Width : Field := Default_Width;
       Base  : Number_Base := Default_Base)
    with
-     Pre    => Is_Open (File) and then Mode (File) /= In_File,
-     Post   =>
+     Pre      => Is_Open (File) and then Mode (File) /= In_File,
+     Post     =>
        Line_Length (File)'Old = Line_Length (File)
        and Page_Length (File)'Old = Page_Length (File),
-     Global => (In_Out => File_System);
+     Global   => (In_Out => File_System),
+     Annotate => (GNATprove, Might_Not_Return);
 
    procedure Put
      (Item  : Num;
       Width : Field := Default_Width;
       Base  : Number_Base := Default_Base)
    with
-     Post   =>
+     Post     =>
        Line_Length'Old = Line_Length
        and Page_Length'Old = Page_Length,
-     Global => (In_Out => File_System);
+     Global   => (In_Out => File_System),
+     Annotate => (GNATprove, Might_Not_Return);
 
    procedure Get
      (From : String;
       Item : out Num;
       Last : out Positive)
    with
-     Global => null;
+     Global   => null,
+     Annotate => (GNATprove, Might_Not_Return);
 
    procedure Put
      (To   : out String;
       Item : Num;
       Base : Number_Base := Default_Base)
    with
-     Global => null;
+     Global   => null,
+     Annotate => (GNATprove, Might_Not_Return);
 
 private
    pragma Inline (Get);

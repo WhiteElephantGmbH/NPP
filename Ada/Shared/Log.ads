@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -41,7 +41,7 @@ package Log is
 
 private
 
-  Max_Number_Of_Categories : constant := 31;
+  Max_Number_Of_Categories : constant := 63;
 
   type Category is mod 2 ** (Max_Number_Of_Categories + 1);
 

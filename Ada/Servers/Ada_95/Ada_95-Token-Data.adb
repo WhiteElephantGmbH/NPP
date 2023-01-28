@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -1070,7 +1070,7 @@ package body Ada_95.Token.Data is
          Parent      => null,
          Parent_Type => null,
          Definition  => new Array_Definition'(Dimension      => 1,
-                                              Index_Subtypes => (1 => Root_Integer_Type),
+                                              Index_Subtypes => [1 => Root_Integer_Type],
                                               Component_Type => Boolean_Type));
     end Do_Initialize;
 
@@ -4109,6 +4109,35 @@ package body Ada_95.Token.Data is
                                     Assign_Indexed => Aspect_For (Lexical.Is_Assign_Indexed, Aspects));
     end New_Aggregate_Aspects;
 
+    procedure Handle_Inherited_Aspect (Subprogram       : Identifier_Handle;
+                                       Parameters_Count : Natural) is
+      The_Type : Data_Handle :=  Private_Type_Handle(To).Parent_Type;
+    begin
+      if not Is_Null (Subprogram) and not Is_Null (The_Type) then
+        if The_Type.all in Instantiated_Type'class then
+          The_Type := Data.Item_Instantiation(The_Type).Item;
+          if not Is_Null (The_Type) then
+            if The_Type.all in Tagged_Private_Type'class then
+              declare
+                Unit : constant Tagged_Private_Handle := Tagged_Private_Handle(The_Type);
+              begin
+                for The_Method of Unit.Methods loop
+                  if The_Method.all in Data.Subprogram_Declaration'class then
+                    if The_Method.Location = Subprogram then
+                      if Subprogram_Declaration_Handle(The_Method).Profile.Parameters'length = Parameters_Count then
+                        Subprogram.Data := The_Method;
+                        Declaration_Handle(The_Method).Is_Used := True;
+                      end if;
+                    end if;
+                  end if;
+                end loop;
+              end;
+            end if;
+          end if;
+        end if;
+      end if;
+    end Handle_Inherited_Aspect;
+
   begin -- Add_Iterator_Aspects
     if To /= null then
       --TEST--------------------------------------------------------------------
@@ -4126,6 +4155,7 @@ package body Ada_95.Token.Data is
                             Variable_Indexing => Aspect_For (Lexical.Is_Variable_Indexing, Aspects),
                             Default_Iterator  => Aspect_For (Lexical.Is_Default_Iterator, Aspects)),
                Iterable => New_Iterable_Aspects);
+            Handle_Inherited_Aspect (Item_Handle.Aspects.Aggregate.Add_Unnamed, Parameters_Count => 2);
           end;
         end if;
       elsif To.all in Derived_Type'class then
@@ -5716,7 +5746,7 @@ package body Ada_95.Token.Data is
               The_Type := Aspects.Iterable.Element.Data;
               Aspect_Found := True;
             else
-              exit;
+              The_Type := Tagged_Private_Handle(The_Type).Parent_Type;
            end if;
           end;
         else -- not tagged private

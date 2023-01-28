@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -136,7 +136,7 @@ package Ada_95.Token is
 
   type Identifiers is array (Positive range <>) of Identifier_Handle;
 
-  No_Identifiers : constant Identifiers(1..0) := (others => null);
+  No_Identifiers : constant Identifiers(1..0) := [others => null];
 
   function Comparison (Left, Right : Identifiers) return Result;
 

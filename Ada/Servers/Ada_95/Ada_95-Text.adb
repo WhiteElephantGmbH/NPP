@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -22,8 +22,8 @@ package body Ada_95.Text is
 
   type Operator_Map is array (Character) of Boolean;
 
-  Is_Operator : constant Operator_Map := ('=' | '<' | '>' | '+' | '-' | '*' | '/' | '&' => True,
-                                          others                                        => False);
+  Is_Operator : constant Operator_Map := ['=' | '<' | '>' | '+' | '-' | '*' | '/' | '&' => True,
+                                          others                                        => False];
 
   function Operator_Of (Item : Handle) return String is
   begin

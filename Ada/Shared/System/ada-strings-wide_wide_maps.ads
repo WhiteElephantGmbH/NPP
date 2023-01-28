@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -183,8 +183,7 @@ private
    procedure Adjust     (Object : in out Wide_Wide_Character_Set);
    procedure Finalize   (Object : in out Wide_Wide_Character_Set);
 
-   Null_Range : aliased constant Wide_Wide_Character_Ranges :=
-                  (1 .. 0 => (Low => ' ', High => ' '));
+   Null_Range : aliased constant Wide_Wide_Character_Ranges := [];
 
    Null_Set : constant Wide_Wide_Character_Set :=
                 (AF.Controlled with

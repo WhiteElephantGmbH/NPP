@@ -5,9 +5,8 @@
 --                     A D A . N U M E R I C S . A U X                      --
 --                                                                          --
 --                                 S p e c                                  --
---                        (Machine Version for x86)                         --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -16,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -30,47 +29,60 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
---  This version is for the x86 using the 80-bit x86 long double format with
---  inline asm statements.
+--  This is a backward-compatibility unit, for users of this internal
+--  package before the introduction of Aux.Generic_Float.
+
+with Ada.Numerics.Aux_Compat;
 
 package Ada.Numerics.Aux is
    pragma Pure;
 
-   type Double is new Long_Long_Float;
+   package Aux renames Aux_Compat;
 
-   function Sin (X : Double) return Double;
+   type Double is new Aux.T;
 
-   function Cos (X : Double) return Double;
+   subtype T is Double;
+   subtype W is Aux.T;
 
-   function Tan (X : Double) return Double;
+   --  Use the Aux implementation.
 
-   function Exp (X : Double) return Double;
+   function Sin (X : T) return T
+   is (T (Aux.Sin (W (X))));
 
-   function Sqrt (X : Double) return Double;
+   function Cos (X : T) return T
+   is (T (Aux.Cos (W (X))));
 
-   function Log (X : Double) return Double;
+   function Tan (X : T) return T
+   is (T (Aux.Tan (W (X))));
 
-   function Atan (X : Double) return Double;
+   function Exp (X : T) return T
+   is (T (Aux.Exp (W (X))));
 
-   function Acos (X : Double) return Double;
+   function Sqrt (X : T) return T
+   is (T (Aux.Sqrt (W (X))));
 
-   function Asin (X : Double) return Double;
+   function Log (X : T) return T
+   is (T (Aux.Log (W (X))));
 
-   function Sinh (X : Double) return Double;
+   function Acos (X : T) return T
+   is (T (Aux.Acos (W (X))));
 
-   function Cosh (X : Double) return Double;
+   function Asin (X : T) return T
+   is (T (Aux.Asin (W (X))));
 
-   function Tanh (X : Double) return Double;
+   function Atan (X : T) return T
+   is (T (Aux.Atan (W (X))));
 
-   function Pow (X, Y : Double) return Double;
+   function Sinh (X : T) return T
+   is (T (Aux.Sinh (W (X))));
 
-private
-   pragma Inline (Atan);
-   pragma Inline (Cos);
-   pragma Inline (Tan);
-   pragma Inline (Exp);
-   pragma Inline (Log);
-   pragma Inline (Sin);
-   pragma Inline (Sqrt);
+   function Cosh (X : T) return T
+   is (T (Aux.Cosh (W (X))));
+
+   function Tanh (X : T) return T
+   is (T (Aux.Tanh (W (X))));
+
+   function Pow (X, Y : T) return T
+   is (T (Aux.Pow (W (X), W (Y))));
 
 end Ada.Numerics.Aux;

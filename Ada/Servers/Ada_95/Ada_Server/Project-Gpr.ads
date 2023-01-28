@@ -1,10 +1,8 @@
 -- *********************************************************************************************************************
--- *                           (c) 2021 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                       (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
-
-with Text;
 
 package Project.Gpr is
 
@@ -15,8 +13,8 @@ package Project.Gpr is
   function Filename return String;
 
   type Information is record
-    Project_Name : Text.String;
-    Source_Path  : Text.String;
+    Project_Name : Strings.Element;
+    Source_Path  : Strings.Element;
   end record;
 
   function Information_Of (The_Filename : String) return Information;

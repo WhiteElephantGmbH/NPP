@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -45,6 +45,8 @@ pragma Assertion_Policy (Pre => Ignore);
 
 --  This version is supported on:
 --    - all Alpha platforms
+--    - all AARCH64 platforms
+--    - all ARM platforms
 --    - all ia64 platforms
 --    - all PowerPC platforms
 --    - all SPARC V9 platforms
@@ -78,13 +80,16 @@ pragma Assertion_Policy (Pre => Ignore);
 with Ada.Strings.Maps;
 private with Ada.Finalization;
 private with System.Atomic_Counters;
+private with Ada.Strings.Text_Buffers;
 
 package Ada.Strings.Unbounded with
   Initial_Condition => Length (Null_Unbounded_String) = 0
 is
    pragma Preelaborate;
+   pragma Annotate (GNATprove, Always_Return, Unbounded);
 
-   type Unbounded_String is private;
+   type Unbounded_String is private with
+     Default_Initial_Condition => Length (Unbounded_String) = 0;
    pragma Preelaborable_Initialization (Unbounded_String);
 
    Null_Unbounded_String : constant Unbounded_String;
@@ -362,9 +367,8 @@ is
       Going   : Direction := Forward;
       Mapping : Maps.Character_Mapping := Maps.Identity) return Natural
    with
-     Pre    => (if Length (Source) /= 0
-                then From <= Length (Source))
-                       and then Pattern'Length /= 0,
+     Pre    => (if Length (Source) /= 0 then From <= Length (Source))
+               and then Pattern'Length /= 0,
      Global => null;
    pragma Ada_05 (Index);
 
@@ -375,11 +379,9 @@ is
       Going   : Direction := Forward;
       Mapping : Maps.Character_Mapping_Function) return Natural
    with
-     Pre    => (if Length (Source) /= 0
-                then From <= Length (Source))
-                       and then Pattern'Length /= 0,
+     Pre    => (if Length (Source) /= 0 then From <= Length (Source))
+               and then Pattern'Length /= 0,
      Global => null;
-
    pragma Ada_05 (Index);
 
    function Index
@@ -724,10 +726,12 @@ private
    --  store string with specified length effectively.
 
    function Allocate
-     (Max_Length : Natural) return not null Shared_String_Access;
-   --  Allocates new Shared_String with at least specified maximum length.
-   --  Actual maximum length of the allocated Shared_String can be slightly
-   --  greater. Returns reference to Empty_Shared_String when requested length
+     (Required_Length : Natural;
+      Reserved_Length : Natural := 0) return not null Shared_String_Access;
+   --  Allocates new Shared_String. Actual maximum length of allocated object
+   --  is at least the specified required length. Additional storage is
+   --  allocated to allow to store up to the specified reserved length when
+   --  possible. Returns reference to Empty_Shared_String when requested length
    --  is zero.
 
    Empty_Shared_String : aliased Shared_String (0);
@@ -738,7 +742,11 @@ private
 
    type Unbounded_String is new AF.Controlled with record
       Reference : not null Shared_String_Access := Empty_Shared_String'Access;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'Class;
+      V : Unbounded_String);
 
    pragma Stream_Convert (Unbounded_String, To_Unbounded, To_String);
    --  Provide stream routines without dragging in Ada.Streams

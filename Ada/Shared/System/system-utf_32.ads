@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2005-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2005-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -41,7 +41,8 @@
 --  the same services. The reason this package is in System is so that it can
 --  with'ed by other packages in the Ada and System hierarchies.
 
-pragma Compiler_Unit_Warning;
+--  Note: this unit is used during bootstrap, see ADA_GENERATED_FILES in
+--  gcc-interface/Make-lang.in for details on the constraints.
 
 package System.UTF_32 is
    pragma Pure;
@@ -188,6 +189,12 @@ package System.UTF_32 is
    --  identifiers are equivalent if they are identical after folding all
    --  letters to upper case using this routine. A corresponding routine to
    --  fold to lower case is also provided.
+
+   function Is_UTF_32_NFKC (U : UTF_32) return Boolean;
+   pragma Inline (Is_UTF_32_NFKC);
+   --  Return True if U could be present in a string normalized to
+   --  Normalization Form KC (as defined by Clause 21 of ISO/IEC 10646:2017),
+   --  otherwise returns False.
 
    function Is_UTF_32_Basic (U : UTF_32) return Boolean;
    pragma Inline (Is_UTF_32_Basic);

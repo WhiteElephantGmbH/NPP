@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -28,7 +28,6 @@ with Npp.Tree_View;
 with Scintilla;
 with Strings;
 with System;
-with Text;
 with Win;
 
 package body Client is
@@ -375,7 +374,7 @@ package body Client is
 
     Filename_Item : Npp.Tree_View.Item := Npp.Tree_View.Root;
     Unused        : Npp.Tree_View.Item;
-    The_Line      : Text.String;
+    The_Line      : Strings.Element;
 
     procedure Dispose is new Ada.Unchecked_Deallocation (Strings.Item, Filenames);
     procedure Dispose is new Ada.Unchecked_Deallocation (Server.File_References, Locations);
@@ -408,7 +407,7 @@ package body Client is
             Line          : constant String := The_Line_Images (The_Location.Image_Index);
             At_Position   : constant Natural := Line'first + Positive(The_Location.Cursor.Column) - 1;
             Last_Position : Natural := Line'last;
-            use type Text.String;
+            use type Strings.Element;
             use type Server.Line_Counter;
           begin
             if Index /= The_Locations'last then
@@ -422,15 +421,15 @@ package body Client is
                 end if;
               end;
             end if;
-            if Text.Is_Null (The_Line) then
-              The_Line := Text.Trimmed (Line(Line'first .. At_Position - 1));
+            if Strings.Is_Null (The_Line) then
+              The_Line := [Strings.Trimmed (Line(Line'first .. At_Position - 1))];
             end if;
             The_Line := The_Line & Cursor_Mark & Line(At_Position .. Last_Position);
             if Last_Position = Line'last then
               Unused := Npp.Tree_View.Add (Parent => Filename_Item,
                                            Data   => The_Location'address,
-                                           Title  => Text.String_Of (The_Line));
-              Text.Clear (The_Line);
+                                           Title  => +The_Line);
+              Strings.Clear (The_Line);
             end if;
           end;
         end;
@@ -475,7 +474,7 @@ package body Client is
   -- Notifications
   ------------------
 
-  The_Known_Extensions : Text.String;
+  The_Known_Extensions : Strings.Element;
 
   procedure Open_Project is
   begin
@@ -485,7 +484,7 @@ package body Client is
     Project_Is_Open := Server.Project_Opened (Buffer_Name);
     if Project_Is_Open then
       Show (Server.Message);
-      The_Known_Extensions := Text.String_Of (Server.Known_Extensions);
+      The_Known_Extensions := [Server.Known_Extensions];
       declare
         Editor : Scintilla.Object;
       begin
@@ -505,7 +504,7 @@ package body Client is
         return;
       end if;
       Project_Is_Open := False;
-      Text.Clear (The_Known_Extensions);
+      Strings.Clear (The_Known_Extensions);
       Server.Close_Project;
       Show ("Project closed");
     end if;
@@ -524,7 +523,7 @@ package body Client is
           Filename  : constant String := Buffer_Name;
           Extension : constant String := "|" & Strings.File_Extension_Of (Filename) & "|";
         begin
-          if Text.Location_Of (Extension, The_Known_Extensions) /= Text.Not_Found then
+          if Strings.Location_Of (Extension, The_Known_Extensions) /= Strings.Not_Found then
             Scintilla.Create (Editor, Npp.Plugin.Edit_View);
             Scintilla.Define_Styles (Editor);
             Update_Style (Filename, Editor);

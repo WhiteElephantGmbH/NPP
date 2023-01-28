@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -181,7 +181,7 @@ package body File is
       declare
         Name : constant String := FS.Simple_Name(Directory_Entry);
       begin
-        if not (Name(Name'first) = '.') and then not Strings.Found_In (Exceptions, Name) then
+        if not (Name(Name'first) = '.') and then not Strings.Contains (Exceptions, Name) then
           The_Count := The_Count + 1;
         end if;
       end;
@@ -193,7 +193,7 @@ package body File is
   begin -- Is_Leaf_Directory
     FS.Search (Directory => Directory,
                Pattern   => "",
-               Filter    => (FS.Directory => True, others => False),
+               Filter    => [FS.Directory => True, others => False],
                Process   => Iterate_For'access);
     return The_Count = 0;
   exception
@@ -213,7 +213,7 @@ package body File is
         Name      : constant String := FS.Simple_Name(Directory_Entry);
         Directory : constant String := FS.Full_Name(Directory_Entry);
       begin
-        if not (Name(Name'first) in '.') and then not Strings.Found_In (Exceptions, Name) then
+        if not (Name(Name'first) in '.') and then not Strings.Contains (Exceptions, Name) then
           The_Count := The_Count + 1;
           Iterate_Over_Leaf_Directories (Directory, Iterator, Exceptions);
         end if;
@@ -226,7 +226,7 @@ package body File is
   begin -- Iterate_Over_Leaf_Directories
     FS.Search (Directory => From_Directory,
                Pattern   => "",
-               Filter    => (FS.Directory => True, others => False),
+               Filter    => [FS.Directory => True, others => False],
                Process   => Iterate_For'access);
     if The_Count = 0 then
       Iterator (From_Directory);
@@ -244,7 +244,7 @@ package body File is
     FS.Start_Search (Search    => The_Handle,
                      Directory => In_Directory,
                      Pattern   => "",
-                     Filter    => (FS.Directory => True, others => False));
+                     Filter    => [FS.Directory => True, others => False]);
     while FS.More_Entries (The_Handle) loop
       FS.Get_Next_Entry (The_Handle, The_Entry);
       declare
@@ -326,7 +326,7 @@ package body File is
     FS.Start_Search (Search    => Object.Container.Data.Position,
                      Directory => Object.Container.Name,
                      Pattern   => "",
-                     Filter    => (FS.Ordinary_File => True, others => False));
+                     Filter    => [FS.Ordinary_File => True, others => False]);
     return Next (Object, null);
   end First;
 

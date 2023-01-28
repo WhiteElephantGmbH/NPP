@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,7 +10,6 @@ with Build;
 with File;
 with Files;
 with Log;
-with Strings;
 
 package body Project.Resource is
 
@@ -148,8 +147,7 @@ package body Project.Resource is
         while not Ada.Text_IO.End_Of_File (The_File) loop
           declare
             Line  : constant String := Ada.Text_IO.Get_Line (The_File);
-            Items : constant Strings.Item
-              := Strings.Purge_Of (Strings.Item_Of (Line, Separator => ' ', Symbols => ",;""\"));
+            Items : constant Strings.Item := Strings.Item_Of (Line, Separator => ' ', Symbols => ",;""\");
           begin
             if Items.Count >= 7 then
               if Items(Strings.First_Index) = "VALUE" then

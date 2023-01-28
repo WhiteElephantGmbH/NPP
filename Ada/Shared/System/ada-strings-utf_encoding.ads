@@ -17,9 +17,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,8 +36,8 @@
 --  UTF encoded strings. Note: this package is consistent with Ada 95, and may
 --  be used in Ada 95 or Ada 2005 mode.
 
+with Ada.Unchecked_Conversion;
 with Interfaces;
-with Unchecked_Conversion;
 
 package Ada.Strings.UTF_Encoding is
    pragma Pure (UTF_Encoding);
@@ -94,7 +94,7 @@ package Ada.Strings.UTF_Encoding is
                 Character'Val (16#FE#);
 
    BOM_16   : constant UTF_16_Wide_String :=
-                (1 => Wide_Character'Val (16#FEFF#));
+                [Wide_Character'Val (16#FEFF#)];
 
    function Encoding
      (Item    : UTF_String;
@@ -106,13 +106,13 @@ package Ada.Strings.UTF_Encoding is
 
 private
    function To_Unsigned_8 is new
-     Unchecked_Conversion (Character, Interfaces.Unsigned_8);
+     Ada.Unchecked_Conversion (Character, Interfaces.Unsigned_8);
 
    function To_Unsigned_16 is new
-     Unchecked_Conversion (Wide_Character, Interfaces.Unsigned_16);
+     Ada.Unchecked_Conversion (Wide_Character, Interfaces.Unsigned_16);
 
    function To_Unsigned_32 is new
-     Unchecked_Conversion (Wide_Wide_Character, Interfaces.Unsigned_32);
+     Ada.Unchecked_Conversion (Wide_Wide_Character, Interfaces.Unsigned_32);
 
    subtype UTF_XE_Encoding is Encoding_Scheme range UTF_16BE .. UTF_16LE;
    --  Subtype containing only UTF_16BE and UTF_16LE entries

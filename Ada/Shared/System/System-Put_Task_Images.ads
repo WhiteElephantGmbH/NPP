@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---            Copyright (C) 2020, Free Software Foundation, Inc.            --
+--            Copyright (C) 2020-2022, Free Software Foundation, Inc.       --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -29,9 +29,9 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2020;
-with Ada.Strings.Text_Output;
+with Ada.Strings.Text_Buffers;
 with Ada.Task_Identification;
+
 package System.Put_Task_Images is
 
    --  This package contains subprograms that are called by the generated code
@@ -39,7 +39,7 @@ package System.Put_Task_Images is
    --  separate from System.Put_Images to avoid dragging the tasking runtimes
    --  into nontasking programs.
 
-   subtype Sink is Ada.Strings.Text_Output.Sink;
+   subtype Sink is Ada.Strings.Text_Buffers.Root_Buffer_Type;
 
    procedure Put_Image_Protected (S : in out Sink'Class);
    procedure Put_Image_Task

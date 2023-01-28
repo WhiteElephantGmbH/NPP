@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2007-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2007-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -69,6 +69,8 @@ is
    function Random (Gen : Generator) return Interfaces.Unsigned_32;
    function Random (Gen : Generator) return Interfaces.Integer_64;
    function Random (Gen : Generator) return Interfaces.Unsigned_64;
+   function Random (Gen : Generator) return Interfaces.Integer_128;
+   function Random (Gen : Generator) return Interfaces.Unsigned_128;
    function Random (Gen : Generator) return Integer;
    function Random (Gen : Generator) return Long_Integer;
    --  Return pseudo-random numbers uniformly distributed on T'First .. T'Last

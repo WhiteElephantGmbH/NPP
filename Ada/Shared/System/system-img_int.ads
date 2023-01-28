@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -30,28 +30,48 @@
 ------------------------------------------------------------------------------
 
 --  This package contains the routines for supporting the Image attribute for
---  signed integer types up to Size Integer'Size, and also for conversion
---  operations required in Text_IO.Integer_IO for such types.
+--  signed integer types up to Integer, and also for conversion operations
+--  required in Text_IO.Integer_IO for such types.
 
-package System.Img_Int is
-   pragma Pure;
+--  Preconditions in this unit are meant for analysis only, not for run-time
+--  checking, so that the expected exceptions are raised. This is enforced by
+--  setting the corresponding assertion policy to Ignore. Postconditions and
+--  contract cases should not be executed at runtime as well, in order not to
+--  slow down the execution of these functions.
+
+pragma Assertion_Policy (Pre                => Ignore,
+                         Post               => Ignore,
+                         Contract_Cases     => Ignore,
+                         Ghost              => Ignore,
+                         Subprogram_Variant => Ignore);
+
+with System.Image_I;
+with System.Unsigned_Types;
+with System.Val_Int;
+with System.Wid_Uns;
+
+package System.Img_Int
+  with SPARK_Mode
+is
+   subtype Unsigned is Unsigned_Types.Unsigned;
+
+   package Impl is new Image_I
+     (Int                  => Integer,
+      Uns                  => Unsigned,
+      Unsigned_Width_Ghost =>
+         Wid_Uns.Width_Unsigned (0, Unsigned'Last),
+      Int_Params           => System.Val_Int.Impl.Spec.Int_Params);
 
    procedure Image_Integer
      (V : Integer;
       S : in out String;
-      P : out Natural);
-   --  Computes Integer'Image (V) and stores the result in S (1 .. P)
-   --  setting the resulting value of P. The caller guarantees that S
-   --  is long enough to hold the result, and that S'First is 1.
+      P : out Natural)
+     renames Impl.Image_Integer;
 
    procedure Set_Image_Integer
      (V : Integer;
       S : in out String;
-      P : in out Natural);
-   --  Stores the image of V in S starting at S (P + 1), P is updated to point
-   --  to the last character stored. The value stored is identical to the value
-   --  of Integer'Image (V) except that no leading space is stored when V is
-   --  non-negative. The caller guarantees that S is long enough to hold the
-   --  result. S need not have a lower bound of 1.
+      P : in out Natural)
+     renames Impl.Set_Image_Integer;
 
 end System.Img_Int;

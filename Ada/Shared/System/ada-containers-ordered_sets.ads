@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -37,6 +37,7 @@ with Ada.Containers.Helpers;
 private with Ada.Containers.Red_Black_Trees;
 private with Ada.Finalization;
 private with Ada.Streams;
+private with Ada.Strings.Text_Buffers;
 
 generic
    type Element_Type is private;
@@ -44,7 +45,9 @@ generic
    with function "<" (Left, Right : Element_Type) return Boolean is <>;
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
-package Ada.Containers.Ordered_Sets is
+package Ada.Containers.Ordered_Sets with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Preelaborate;
    pragma Remote_Types;
@@ -54,7 +57,9 @@ package Ada.Containers.Ordered_Sets is
    type Set is tagged private
    with Constant_Indexing => Constant_Reference,
         Default_Iterator  => Iterate,
-        Iterator_Element  => Element_Type;
+        Iterator_Element  => Element_Type,
+        Aggregate         => (Empty       => Empty,
+                              Add_Unnamed => Include);
 
    pragma Preelaborable_Initialization (Set);
 
@@ -64,6 +69,7 @@ package Ada.Containers.Ordered_Sets is
    function Has_Element (Position : Cursor) return Boolean;
 
    Empty_Set : constant Set;
+   function Empty  return Set;
 
    No_Element : constant Cursor;
 
@@ -225,6 +231,25 @@ package Ada.Containers.Ordered_Sets is
       Start     : Cursor)
       return Set_Iterator_Interfaces.Reversible_Iterator'class;
 
+   --  Ada 2022 features:
+
+   function Has_Element (Container : Set; Position : Cursor) return Boolean;
+
+   function Tampering_With_Cursors_Prohibited (Container : Set) return Boolean;
+
+   function Element (Container : Set; Position : Cursor) return Element_Type;
+
+   procedure Query_Element
+     (Container : Set;
+      Position  : Cursor;
+      Process   : not null access procedure (Element : Element_Type));
+
+   function Next (Container : Set; Position : Cursor) return Cursor;
+
+   procedure Next (Container : Set; Position : in out Cursor);
+
+   ----------------
+
    generic
       type Key_Type (<>) is private;
 
@@ -237,6 +262,9 @@ package Ada.Containers.Ordered_Sets is
       function Equivalent_Keys (Left, Right : Key_Type) return Boolean;
 
       function Key (Position : Cursor) return Key_Type;
+
+      function Key (Container : Set; Position : Cursor) return Key_Type is
+        (Key (Element (Container, Position)));
 
       function Element (Container : Set; Key : Key_Type) return Element_Type;
 
@@ -281,7 +309,7 @@ package Ada.Containers.Ordered_Sets is
 
    private
       type Set_Access is access all Set;
-      for Set_Access'Storage_Size use 0;
+      for Set_Access'storage_size use 0;
 
       type Key_Access is access all Key_Type;
 
@@ -305,16 +333,16 @@ package Ada.Containers.Ordered_Sets is
       use Ada.Streams;
 
       procedure Write
-        (Stream : not null access Root_Stream_Type'Class;
+        (Stream : not null access Root_Stream_Type'class;
          Item   : Reference_Type);
 
-      for Reference_Type'Write use Write;
+      for Reference_Type'write use Write;
 
       procedure Read
-        (Stream : not null access Root_Stream_Type'Class;
+        (Stream : not null access Root_Stream_Type'class;
          Item   : out Reference_Type);
 
-      for Reference_Type'Read use Read;
+      for Reference_Type'read use Read;
    end Generic_Keys;
 
 private
@@ -338,7 +366,10 @@ private
 
    type Set is new Ada.Finalization.Controlled with record
       Tree : Tree_Types.Tree_Type;
-   end record;
+   end record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class; V : Set);
 
    overriding procedure Adjust (Container : in out Set);
 
@@ -350,19 +381,19 @@ private
    use Ada.Streams;
 
    procedure Write
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : Set);
 
-   for Set'Write use Write;
+   for Set'write use Write;
 
    procedure Read
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : out Set);
 
-   for Set'Read use Read;
+   for Set'read use Read;
 
    type Set_Access is access all Set;
-   for Set_Access'Storage_Size use 0;
+   for Set_Access'storage_size use 0;
 
    type Cursor is record
       Container : Set_Access;
@@ -370,16 +401,16 @@ private
    end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Cursor);
 
-   for Cursor'Write use Write;
+   for Cursor'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Cursor);
 
-   for Cursor'Read use Read;
+   for Cursor'read use Read;
 
    subtype Reference_Control_Type is Implementation.Reference_Control_Type;
    --  It is necessary to rename this here, so that the compiler can find it
@@ -395,24 +426,24 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Constant_Reference_Type);
 
-   for Constant_Reference_Type'Write use Write;
+   for Constant_Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Constant_Reference_Type);
 
-   for Constant_Reference_Type'Read use Read;
+   for Constant_Reference_Type'read use Read;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Sem_Ch5 for
-   --  details.
+   --  See Ada.Containers.Vectors for documentation on the following
+
+   --!!! WE procedure _Next (Position : in out Cursor) renames Next;
+   --!!! WE procedure _Previous (Position : in out Cursor) renames Previous;
 
    function Pseudo_Reference
-     (Container : aliased Set'Class) return Reference_Control_Type;
+     (Container : aliased Set'class) return Reference_Control_Type;
    pragma Inline (Pseudo_Reference);
    --  Creates an object of type Reference_Control_Type pointing to the
    --  container, and increments the Lock. Finalization of this object will
@@ -426,6 +457,7 @@ private
    --  Returns a pointer to the element designated by Position.
 
    Empty_Set : constant Set := (Controlled with others => <>);
+   function Empty  return Set is (Empty_Set);
 
    No_Element : constant Cursor := Cursor'(null, null);
 

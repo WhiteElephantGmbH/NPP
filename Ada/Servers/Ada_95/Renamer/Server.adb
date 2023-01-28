@@ -1,10 +1,8 @@
 -- *********************************************************************************************************************
--- *                           (c) 2008 .. 2019 by Soudronic AG, Bergdietikon, Switzerland                             *
+-- *                           (c) 2008 .. 2023 by Soudronic AG, Bergdietikon, Switzerland                             *
 -- *                      Developed by White Elephant GmbH, Switzerland (www.white-elephant.ch)                        *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
-
-with Strings;
 
 package body Server is
 
@@ -149,9 +147,9 @@ package body Server is
   end Column;
 
 
-  function Names_Of (Item : String_List.Item) return String is
+  function Names_Of (Item : Strings.List) return String is
   begin
-    return Strings.Data_Of (Item, (1 => Ascii.Nul));
+    return Item.To_Data (Names_Separator);
   end Names_Of;
 
 end Server;

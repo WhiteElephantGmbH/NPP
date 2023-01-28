@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -16,8 +16,6 @@
 pragma Style_White_Elephant;
 
 with Ada.Text_IO;
-with Strings;
-with Text;
 
 package body Configuration is
 
@@ -25,7 +23,7 @@ package body Configuration is
                           In_File : File_Handle) return Section is
   begin
     for The_Section of In_File.all loop
-      if Text.Is_Equal (The_Section.Name, Name) then
+      if Strings.Is_Equal (The_Section.Name, Name) then
         return The_Section;
       end if;
     end loop;
@@ -40,7 +38,7 @@ package body Configuration is
                        In_Section : Section_Handle) return Item is
   begin
     for The_Item of In_Section.all loop
-      if Text.Is_Equal (The_Item.Key, Key) then
+      if Strings.Is_Equal (The_Item.Key, Key) then
         return The_Item;
       end if;
     end loop;
@@ -57,7 +55,7 @@ package body Configuration is
 
     The_File : IO.File_Type;
 
-    The_Handle  : constant File_Handle := new Section_List.Item;
+    The_Handle  : constant File_Handle := new Sections.List;
     The_Section : Section;
 
   begin
@@ -71,9 +69,6 @@ package body Configuration is
         declare
           Trimmed_Line : constant String := Strings.Trimmed (Ada.Text_IO.Get_Line (The_File));
           Line         : constant String := (if Has_Bom then Trimmed_Line else Strings.Utf8_Of (Trimmed_Line));
-
-          use type Section_List.Item;
-
         begin
           if Line'length > 1 then
             case Line(Line'first) is
@@ -86,8 +81,8 @@ package body Configuration is
                   if The_Section = null then
                     The_Section := new Section_Data'(Name_Length => Section_Name'length,
                                                      Name        => Section_Name,
-                                                     Items       => new Item_List.Item);
-                    The_Handle.all := The_Handle.all + The_Section;
+                                                     Items       => new Items.List);
+                    The_Handle.Append (The_Section);
                   end if;
                 end;
               else
@@ -96,28 +91,31 @@ package body Configuration is
             when ';' | '#' =>
               null;
             when others =>
-              if The_Section /= null then
-                declare
-                  Separator_Index : constant Natural := Text.Location_Of ('=', Line);
-                begin
-                  if Separator_Index = Text.Not_Found then
-                    exit;
-                  else
-                    declare
-                      Key   : constant String := Strings.Trimmed (Line(Line'first .. Separator_Index - 1));
-                      Value : constant String := Strings.Trimmed (Line(Separator_Index + 1 .. Line'last));
-                      use type Item_List.Item;
-                    begin
-                      if Found_Item (Key, The_Section.Items) = null then
-                        The_Section.Items.all := The_Section.Items.all + new Item_Data'(Key_Length   => Key'length,
-                                                                                        Key          => Key,
-                                                                                        Value_Length => Value'length,
-                                                                                        Value        => Value);
-                      end if;
-                    end;
-                  end if;
-                end;
+              if The_Section = null then
+                The_Section := new Section_Data'(Name_Length => No_Section'length,
+                                                 Name        => No_Section,
+                                                 Items       => new Items.List);
+                The_Handle.Append (The_Section);
               end if;
+              declare
+                Separator_Index : constant Natural := Strings.Location_Of ('=', Line);
+              begin
+                if Separator_Index = Strings.Not_Found then
+                  exit;
+                else
+                  declare
+                    Key   : constant String := Strings.Trimmed (Line(Line'first .. Separator_Index - 1));
+                    Value : constant String := Strings.Trimmed (Line(Separator_Index + 1 .. Line'last));
+                  begin
+                    if Found_Item (Key, The_Section.Items) = null then
+                      The_Section.Items.Append (new Item_Data'(Key_Length   => Key'length,
+                                                               Key          => Key,
+                                                               Value_Length => Value'length,
+                                                               Value        => Value));
+                    end if;
+                  end;
+                end if;
+              end;
             end case;
           end if;
         end;
@@ -134,14 +132,8 @@ package body Configuration is
   end Handle_For;
 
 
-  function Is_Valid (The_Section : Section_Handle) return Boolean is
-  begin
-    return The_Section /= null;
-  end Is_Valid;
-
-
   function Handle_For (For_Handle   : File_Handle;
-                       Section_Name : String) return Section_Handle is
+                       Section_Name : String := No_Section) return Section_Handle is
     The_Section : Section;
   begin
     The_Section := Found_Section (Section_Name, For_Handle);
@@ -172,10 +164,9 @@ package body Configuration is
 
   function Value_Of (The_Section : Section_Handle;
                      Key         : String;
-                     Default     : String_List.Item := String_List.Empty) return String_List.Item is
+                     Default     : List := []) return List is
   begin
-    return Strings.Trimmed_List_Of (Strings.Purge_Of (Strings.Item_Of (Data      => Found_Item (Key, The_Section).Value,
-                                                                       Separator => ',')));
+    return Strings.Item_Of (Found_Item (Key, The_Section).Value, Separator => ',').To_Trimmed_List;
   exception
   when others =>
     return Default;

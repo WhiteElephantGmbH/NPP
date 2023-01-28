@@ -9,7 +9,6 @@ with Build;
 with File;
 with Log;
 with Project.Resource;
-with Strings;
 
 package body Project.Gpr is
 
@@ -27,7 +26,7 @@ package body Project.Gpr is
     function Interface_Name return String is
     begin
       if Build.Is_Defined then
-        return '"' & Strings.Data_Of (Build.Actual_Interface, Separator => """, """) & '"';
+        return '"' & Build.Actual_Interface.To_Data (Separator => """, """) & '"';
       else
         return '"' & Legacy_Interface_Name & '"';
       end if;
@@ -156,7 +155,7 @@ package body Project.Gpr is
     Gpr_Directory : constant String := File.Containing_Directory_Of (The_Filename);
 
     procedure Parse_Gpr is
-      The_Tokens : String_List.Item;
+      The_Tokens : Strings.List;
 
       function Next_Token return String is
       begin
@@ -166,11 +165,9 @@ package body Project.Gpr is
           end if;
           declare
             Line   : constant String := Ada.Text_IO.Get_Line (The_File);
-            Tokens : constant Strings.Item := Strings.Purge_Of (Strings.Item_Of (Line,
-                                                                                 Separator => ' ',
-                                                                                 Symbols=>")(;"));
+            Tokens : constant Strings.Item := Strings.Item_Of (Line, Separator => ' ', Symbols=>")(;");
           begin
-            The_Tokens := Strings.List_Of (Tokens);
+            The_Tokens := Tokens.To_List;
           end;
         end loop;
         return Unused : constant String := The_Tokens.First_Element do
@@ -189,18 +186,18 @@ package body Project.Gpr is
         begin
           exit when Token = "";
           if (Token = "library" and then Next_Token = "project") or Token = "project" then
-            The_Gpr.Project_Name := Text.String_Of (Next_Token);
+            The_Gpr.Project_Name := [Next_Token];
           elsif Token = "for" and then Next_Token = "Source_Dirs" and then
             Next_Token = "use" and then Next_Token = "("
           then
             declare
-              Source_Path : constant String := Text.Trimmed (Next_Token, '"');
+              Source_Path : constant String := Strings.Trimmed (Next_Token, '"');
             begin
-              The_Gpr.Source_Path := Text.String_Of (File.Full_Name_Of (Name_Or_Directory => Source_Path,
-                                                                        Current_Directory => Gpr_Directory));
+              The_Gpr.Source_Path := [File.Full_Name_Of (Name_Or_Directory => Source_Path,
+                                                         Current_Directory => Gpr_Directory)];
             exception
             when others =>
-              The_Gpr.Source_Path := Text.String_Of (Source_Path); -- use original to show in error message
+              The_Gpr.Source_Path := [Source_Path]; -- use original to show in error message
             end;
             exit;
           end if;

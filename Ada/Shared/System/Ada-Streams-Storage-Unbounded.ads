@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---             Copyright (C) 2020, Free Software Foundation, Inc.           --
+--             Copyright (C) 2020-2022, Free Software Foundation, Inc.      --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -30,8 +30,8 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-pragma Ada_2020;
 private with Ada.Finalization;
+
 package Ada.Streams.Storage.Unbounded with Preelaborate is
 
    type Stream_Type is new Storage_Stream_Type with private with
@@ -71,7 +71,7 @@ private
       EA : Stream_Element_Array (1 .. Last);
    end record;
 
-   Empty_Elements : aliased Elements_Type := (Last => 0, EA => (others => <>));
+   Empty_Elements : aliased Elements_Type (0);
 
    type Elements_Access is access all Elements_Type;
 

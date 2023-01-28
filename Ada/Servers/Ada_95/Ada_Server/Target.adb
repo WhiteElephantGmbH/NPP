@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -16,7 +16,6 @@ with Project.Resource;
 with Promotion;
 with Server;
 with Strings;
-with Text;
 
 package body Target is
 
@@ -58,18 +57,20 @@ package body Target is
 
     Windres : constant String := Project.Tools_Folder & "windres.exe";
 
-    The_Resource_Name : Text.String := Text.String_Of (Project.Name);
+    The_Resource_Name : Strings.Element := [Project.Name];
 
-    The_Source_Directory : Text.String := Text.String_Of (Project.Directory);
+    The_Source_Directory : Strings.Element := [Project.Directory];
+
+    use type Strings.Element;
 
     function Resource_Name return String is
     begin
-      return Text.String_Of (The_Resource_Name);
+      return +The_Resource_Name;
     end Resource_Name;
 
     function Source_Directory return String is
     begin
-      return Text.String_Of (The_Source_Directory);
+      return +The_Source_Directory;
     end Source_Directory;
 
     function Resource_Filename return String is
@@ -89,7 +90,7 @@ package body Target is
     function Changed_To_Parent_Resource return Boolean is
       Parent_Directory : constant String := Files.Directory_Of (Source_Directory);
     begin
-      if Text.Is_Equal (Parent_Directory, Project.Language_Directory) or else
+      if Strings.Is_Equal (Parent_Directory, Project.Language_Directory) or else
         not File.Directory_Exists (Parent_Directory)
       then
         if Project.Gpr.File_Is_Generated then
@@ -99,8 +100,8 @@ package body Target is
           return False;
         end if;
       end if;
-      The_Source_Directory := Text.String_Of (Parent_Directory);
-      The_Resource_Name := Text.String_Of (Files.Name_Of (Source_Directory));
+      The_Source_Directory := [Parent_Directory];
+      The_Resource_Name := [Files.Name_Of (Source_Directory)];
       return False;
     end Changed_To_Parent_Resource;
 
@@ -166,7 +167,7 @@ package body Target is
         return;
       end if;
       Log.Write ("   OUTPUT: <" & Result_Text & ">");
-      if Text.Location_Of ("Memory region", Result_Text, Result_Text'first) = Result_Text'first then
+      if Strings.Location_Of ("Memory region", Result_Text, Result_Text'first) = Result_Text'first then
         return;
       end if;
       declare
@@ -178,7 +179,7 @@ package body Target is
           if Separator = End_Of_Text then
             The_Index := Result_Text'last + 1;
           else
-            The_Index := Text.Location_Of (Separator, Result_Text, First_Index);
+            The_Index := Strings.Location_Of (Separator, Result_Text, First_Index);
           end if;
           declare
             The_Text : constant String := Result_Text(First_Index .. The_Index - 1);

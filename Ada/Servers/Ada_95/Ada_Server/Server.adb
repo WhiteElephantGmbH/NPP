@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -14,7 +14,6 @@ with Ada_95.Token.Data;
 with Log;
 with Project;
 with Promotion;
-with Strings;
 
 package body Server is
 
@@ -351,12 +350,11 @@ package body Server is
 
     Used_Token_Image : constant String := Ada_95.Project.Full_Name_Of (Used_Token);
 
-    The_Filenames   : String_List.Item;
-    The_Line_Images : String_List.Item;
+    The_Filenames   : Strings.List;
+    The_Line_Images : Strings.List;
     The_References  : Reference_List.Item;
 
     use type Reference_List.Item;
-    use type String_List.Item;
 
 
     procedure Get_Usages_For (Unit : Ada_95.Library.Handle) is
@@ -372,14 +370,14 @@ package body Server is
         if The_Token /= Used_Token and then The_Token.all in Ada_95.Token.Identifier'class then
           if Ada_95.Token.Declaration_Of (The_Token) = Used_Token then
             if not Filename_Added then
-              The_Filenames := The_Filenames + Ada_95.Token.Data.Resource(Unit.all).Attributes.Handle.Id;
+              The_Filenames.Append (Ada_95.Token.Data.Resource(Unit.all).Attributes.Handle.Id);
               Filename_Added := True;
             end if;
             declare
               Line_Image : constant String := Ada_95.Token.Line_Image_Of (The_Token);
             begin
-              if The_Line_Images.Count = 0 or else The_Line_Images.Last_Element /= Line_Image then
-                The_Line_Images := The_Line_Images + Line_Image;
+              if The_Line_Images.Is_Empty or else The_Line_Images.Last_Element /= Line_Image then
+                The_Line_Images.Append (Line_Image);
               end if;
             end;
             The_References := The_References +
@@ -521,12 +519,11 @@ package body Server is
 
   function Unused return Reference_Data is
 
-    The_Filenames   : String_List.Item;
-    The_Line_Images : String_List.Item;
+    The_Filenames   : Strings.List;
+    The_Line_Images : Strings.List;
     The_References  : Reference_List.Item;
 
     use type Reference_List.Item;
-    use type String_List.Item;
 
     procedure Get_Unused_For (Unit : Ada_95.Library.Handle) is
 
@@ -537,6 +534,7 @@ package body Server is
       Filename_Added : Boolean:= False;
 
       Max_Unused_Tokens : constant := 500;
+      Max_Line_Count    : constant := 1000;
 
       The_Token_Count : Natural := 0;
 
@@ -550,10 +548,10 @@ package body Server is
                               | Ada_95.Token.Data.Generic_Library_Subprogram_Declaration'class)
             then
               if not Filename_Added then
-                The_Filenames := The_Filenames + Ada_95.Token.Data.Resource(Unit.all).Attributes.Handle.Id;
+                The_Filenames.Append (Ada_95.Token.Data.Resource(Unit.all).Attributes.Handle.Id);
                 Filename_Added := True;
               end if;
-              The_Line_Images := The_Line_Images + Ada_95.Token.Line_Image_Of (The_Token);
+              The_Line_Images.Append (Ada_95.Token.Line_Image_Of (The_Token));
               The_Token_Count := The_Token_Count + 1;
               The_References := The_References +
                 File_Reference'(Cursor      => (Line   => Ada_95.Token.Line_Number_Of (The_Token),
@@ -571,7 +569,7 @@ package body Server is
           Log.Write ("%%% too many unused tokens");
           exit;
         end if;
-        if The_Line_Images.Count >= Strings.Max_Count then
+        if The_Line_Images.Count >= Max_Line_Count then
           Log.Write ("%%% too many unused token lines");
           exit;
         end if;
@@ -668,9 +666,9 @@ package body Server is
   procedure Promote (Name : String;
                      Kind : Promotion_Kind := Normal) is
   begin
-    --TEST----------------------------------
-    --Log.Write ("<== Promote " & Filename);
-    ----------------------------------------
+    --TEST------------------------------
+    --Log.Write ("<== Promote " & Name);
+    ------------------------------------
     Last_Action := Promote;
     Promotion.Start (Name, Kind);
   end Promote;
@@ -738,9 +736,9 @@ package body Server is
   end Column;
 
 
-  function Names_Of (Item : String_List.Item) return String is
+  function Names_Of (Item : Strings.List) return String is
   begin
-    return Strings.Data_Of (Item, (1 => Ascii.Nul));
+    return Item.To_Data (Names_Separator);
   end Names_Of;
 
 end Server;

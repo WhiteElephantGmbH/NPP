@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -37,7 +37,7 @@ package Unsigned with Preelaborate => True is
 
   for Byte_String'component_size use 8;
 
-  Byte_Null_String : constant Byte_String(1..0) := (others => Byte(0));
+  Byte_Null_String : constant Byte_String := [];
 
   function String_Of (The_Byte : Byte) return Byte_String;
 
@@ -88,7 +88,7 @@ package Unsigned with Preelaborate => True is
 
   for Word_String'component_size use 16;
 
-  Word_Null_String : constant Word_String(1..0) := (others => Word(0));
+  Word_Null_String : constant Word_String := [];
 
   function Hex_Image_Of (The_String : Word_String) return String;
 
@@ -128,7 +128,7 @@ package Unsigned with Preelaborate => True is
 
   for Longword_String'component_size use 32;
 
-  Longword_Null_String : constant Longword_String(1..0) := (others => Longword(0));
+  Longword_Null_String : constant Longword_String := [];
 
   function String_Of (The_String : Longword_String) return Byte_String;
 

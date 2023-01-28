@@ -6,7 +6,7 @@
 --                                                                          --
 --                                  S p e c                                 --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNARL is free software; you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -189,14 +189,19 @@ package System.Tasking.Protected_Objects.Entries is
    --  Lock a protected object for write access. Upon return, the caller owns
    --  the lock to this object, and no other call to Lock or Lock_Read_Only
    --  with the same argument will return until the corresponding call to
-   --  Unlock has been made by the caller. Program_Error is raised in case of
-   --  ceiling violation.
+   --  Unlock has been made by the caller. Program_Error is raised in case
+   --  of ceiling violation, or if the protected object has already been
+   --  finalized, or if Detect_Blocking is true and the protected object
+   --  is already locked by the current task. In the Program_Error cases,
+   --  the object is not locked.
 
    procedure Lock_Entries_With_Status
      (Object            : Protection_Entries_Access;
       Ceiling_Violation : out Boolean);
    --  Same as above, but return the ceiling violation status instead of
-   --  raising Program_Error.
+   --  raising Program_Error. This raises Program_Error in the other
+   --  cases mentioned for Lock_Entries. In the Program_Error cases,
+   --  the object is not locked.
 
    procedure Lock_Read_Only_Entries (Object : Protection_Entries_Access);
    --  Lock a protected object for read access. Upon return, the caller owns

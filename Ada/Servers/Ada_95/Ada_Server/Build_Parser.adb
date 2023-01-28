@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -9,8 +9,7 @@ with Build;
 with File;
 with Log;
 with Project;
-with String_List;
-with Text;
+with Strings;
 
 package body Build_Parser is
 
@@ -125,17 +124,18 @@ package body Build_Parser is
       while Found ("pragma") loop
         declare
           Pragma_Name : constant String := Next_Token;
-          The_Name    : Text.String;
+          The_Name    : Strings.Element;
 
           function Actual_Name return String is
+            use type Strings.Element;
           begin
-            if Text.Is_Null (The_Name) then
+            if Strings.Is_Null (The_Name) then
               return Next_Token;
             else
               declare
-                Name : constant String := Text.String_Of (The_Name);
+                Name : constant String := +The_Name;
               begin
-                Text.Clear (The_Name);
+                Strings.Clear (The_Name);
                 return Name;
               end;
             end if;
@@ -181,7 +181,7 @@ package body Build_Parser is
                 end Define_Kind;
 
                 procedure Define_Libraries is
-                  The_Libraries : String_List.Item;
+                  The_Libraries : Strings.List;
                 begin
                   The_Libraries.Append (Attribute);
                   loop
@@ -196,7 +196,7 @@ package body Build_Parser is
                 end Define_Libraries;
 
                 procedure Define_Interface is
-                  The_Interface : String_List.Item;
+                  The_Interface : Strings.List;
                 begin
                   The_Interface.Append (Attribute);
                   loop
@@ -206,7 +206,7 @@ package body Build_Parser is
                       if Token = "+" then
                         The_Interface.Append (Next_Token);
                       else
-                        The_Name := Text.String_Of (Token);
+                        The_Name := [Token];
                         exit;
                       end if;
                     end;

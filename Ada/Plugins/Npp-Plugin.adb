@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -48,7 +48,7 @@ package body Npp.Plugin is
   function Convert is new Ada.Unchecked_Conversion (System.Address, Win.LPARAM);
 
 
-  The_Name : aliased Wide_String (1..256) := (others => Wide_Nul);
+  The_Name : aliased Wide_String (1..256) := [others => Wide_Nul];
 
   procedure Define (Wide_Name : Wide_String) is
   begin
@@ -113,7 +113,7 @@ package body Npp.Plugin is
   type P_Funct_Plugin_Cmd is access procedure with Convention => C;
 
   type Func_Item is record
-    Name       : Item_Name          := (others => Win.Wide_Nul);
+    Name       : Item_Name          := [others => Win.Wide_Nul];
     P_Func     : P_Funct_Plugin_Cmd := null;
     Cmd_Id     : Win.INT            := 0;
     Init2check : Win.BOOL           := Win.FALSE           with Unreferenced;

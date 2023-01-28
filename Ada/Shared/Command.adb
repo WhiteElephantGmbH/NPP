@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -19,7 +19,7 @@ with Ada.Command_Line;
 with Log;
 with Project;
 with Server;
-with Text;
+with Strings;
 with Unsigned;
 with Os.Pipe;
 
@@ -38,8 +38,8 @@ package body Command is
 
     The_Pipe     : Os.Pipe.Handle;
     The_Length   : Natural;
-    The_Filename : Text.String;
-    The_Message  : Text.String;
+    The_Filename : Strings.Element;
+    The_Message  : Strings.Element;
 
     procedure Write_Confirmation is
     begin
@@ -102,6 +102,12 @@ package body Command is
       Os.Pipe.Write (The_Pipe, Item'address, Item'length);
     end Write;
 
+    procedure Write (Item : Strings.Element) is
+      use type Strings.Element;
+    begin
+      Write (String'(+Item));
+    end Write;
+
     procedure Write (Item : Server.Column_Position) is
     begin
       Os.Pipe.Write (The_Pipe, Item'address, Item'size / Unsigned.Byte'size);
@@ -111,7 +117,7 @@ package body Command is
       Reference : aliased constant Server.Location := (Column => Server.Column,
                                                        Line   => Server.Line);
     begin
-      The_Filename := Text.String_Of (Server.Filename);
+      The_Filename := [Server.Filename];
       Os.Pipe.Write (The_Pipe, Reference'address, Server.Location'size / Unsigned.Byte'size);
     end Write_Reference;
 
@@ -207,23 +213,23 @@ package body Command is
                           Kind => Server.Run);
         when Server.Has_Promotion_Message =>
           if Server.Has_Promotion_Message then
-            The_Message := Text.String_Of (Server.Message);
+            The_Message := [Server.Message];
           else
-            Text.Clear (The_Message);
+            The_Message := [];
           end if;
-          Write (Text.String_Of (The_Message));
+          Write (The_Message);
         when Server.Has_Promotion_Error =>
           if Server.Has_Promotion_Error then
-            The_Message := Text.String_Of (Server.Message);
+            The_Message := [Server.Message];
             Write_Reference;
           else
-            Text.Clear (The_Message);
+            The_Message := [];
             Write_No_Reference;
           end if;
         when Server.Get_Filename =>
-          Write (Text.String_Of (The_Filename));
+          Write (The_Filename);
         when Server.Get_Message =>
-          Write (Text.String_Of (The_Message));
+          Write (The_Message);
         when Server.Close_Project =>
           Server.Close_Project;
           exit;

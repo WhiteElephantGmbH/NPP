@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada_95.Name;
 with Ada_95.Source;
-with String_List;
+with Strings;
 
 package Ada_95.File is
 
@@ -33,7 +33,7 @@ package Ada_95.File is
   end record;
 
   No_Information : constant Information := (Length    => 0,
-                                            Id        => (others => null),
+                                            Id        => [others => null],
                                             Extension => Unknown);
 
   type Attributes is record
@@ -50,7 +50,7 @@ package Ada_95.File is
                                           Location    => Unknown,
                                           Update_Time => Source.Undefined_Time);
 
-  procedure Define_Work_Path (List : String_List.Item);
+  procedure Define_Work_Path (List : Strings.List);
 
   function Name_And_Extension_Of (Filename : String) return String;
 

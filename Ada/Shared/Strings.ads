@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -16,13 +16,67 @@
 pragma Style_White_Elephant;
 
 with Ada.Characters.Handling;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 with Ada.Iterator_Interfaces;
 with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Strings.Text_Buffers;
+with Ada.Strings.Unbounded;
 with Ada.Strings.UTF_Encoding;
 with Ada.Text_IO;
-with String_List;
 
 package Strings is
+
+  type Direction is new Ada.Strings.Direction;
+
+  type Element is new Ada.Strings.Unbounded.Unbounded_String
+  with
+    Aggregate => (Empty       => Empty_Element,
+                  Add_Unnamed => Set);
+
+  Empty_Element : constant Element;
+
+  procedure Set (The_Element : in out Element;
+                 New_Item    :        String) with Inline;
+
+  function Is_Null (The_Element : Element) return Boolean with Inline;
+
+  procedure Clear (The_Element : in out Element) with Inline;
+
+  function "+" (The_Element : Element) return String with Inline;
+
+  function "&" (Left  : String;
+                Right : Element) return String with Inline;
+
+  function "&" (Left  : Element;
+                Right : String) return String with Inline;
+
+  function Location_Of (The_String    : String;
+                        In_String     : Element;
+                        The_Direction : Direction := Forward) return Natural;
+  function Location_Of (The_String    : String;
+                        In_String     : Element;
+                        From          : Positive;
+                        The_Direction : Direction := Forward) return Natural;
+  -- The procedure returns the position of the match or in case of no match Not_Found.
+
+  package Linked_Strings is new Ada.Containers.Indefinite_Doubly_Linked_Lists (String);
+
+  type List is new Linked_Strings.List with private
+  with
+    Aggregate => (Empty       => Empty,
+                  Add_Unnamed => Append);
+
+  Empty : constant List;
+
+  function "+" (Left  : String;
+                Right : List) return List;
+
+  function "-" (Left  : List;
+                Right : String) return List;
+  -- remove string (Constraint_Error if not in List)
+
+  function Count (The_List : List) return Natural is (Natural(Length (The_List))) with Inline;
+
 
   function Is_Equal (Left, Right : String) return Boolean renames Ada.Strings.Equal_Case_Insensitive;
 
@@ -57,15 +111,21 @@ package Strings is
 
   Not_Found : constant Natural := 0;
 
-  type Direction is new Ada.Strings.Direction;
-
   function Location_Of (The_Character : Character;
                         In_String     : String;
+                        The_Direction : Direction := Forward) return Natural;
+  function Location_Of (The_Character : Character;
+                        In_String     : String;
+                        From          : Positive;
                         The_Direction : Direction := Forward) return Natural;
   function Location_Of (The_String    : String;
                         In_String     : String;
                         The_Direction : Direction := Forward) return Natural;
-  -- The procedure returns the position of the match or in case of no match zero.
+  function Location_Of (The_String    : String;
+                        In_String     : String;
+                        From          : Positive;
+                        The_Direction : Direction := Forward) return Natural;
+  -- The procedure returns the position of the match or in case of no match Not_Found.
 
 
   function Trimmed (Data : String) return String;
@@ -76,6 +136,10 @@ package Strings is
 
   function Trimmed_Trailing (Data : String) return String;
   -- Trims right whitespace.
+
+  function Trimmed (Data : String;
+                    What : Character) return String;
+  -- Removes left and right one character.
 
   function Purge_Of (Data : String) return String;
   -- Removes all whitespace.
@@ -101,7 +165,7 @@ package Strings is
   function Utf8_Of (Data : String) return String;
   -- if is not UTF8 encoded then it is converted to UTF8 without BOM
 
-  function Concatenation_Of (List      : String_List.Item;
+  function Concatenation_Of (The_List  : List;
                              Separator : String := " ") return String;
 
 
@@ -125,46 +189,47 @@ package Strings is
 
 
   generic
-    type Element is (<>);
-  function Image_Of (The_Value : Element) return String;
+    type Kind is (<>);
+  function Image_Of (The_Value : Kind) return String;
 
   generic
-    type Element is (<>);
-  function Legible_Image_Of (The_Value : Element) return String;
+    type Kind is (<>);
+  function Legible_Image_Of (The_Value : Kind) return String;
 
   Usage_Error : exception;
   generic
-    type Element is (<>);
-  function Padded_Image_Of (The_Value : Element;
+    type Kind is (<>);
+  function Padded_Image_Of (The_Value : Kind;
                             Padding   : Character := '0') return String;
 
 ------------------------------------------------------------------------------------------------------------------------
 
-  Max_Count       : constant := 2**16-1;
-  Max_Data_Length : constant := 2**24-1;
+  Max_Count       : constant := 2**8-1;
+  Max_Data_Length : constant := 2**12-1;
 
   First_Index : constant := 1;
 
   subtype Element_Count is Natural range 0 .. Max_Count;
   subtype Element_Index is Element_Count range First_Index .. Element_Count'last;
 
-  type Slice is record
-    First : Element_Index;
-    Last  : Element_Count;
-  end record;
-
   subtype Data_Length is Natural range 0 .. Max_Data_Length;
 
-  type Item (Count  : Element_Count;
-             Length : Data_Length) is tagged private --String of 'Standard.STRING'
+  type Item is tagged private --String of 'Standard.STRING'
   with
+    Aggregate => (Empty       => None,
+                  Add_Unnamed => Append),
     Constant_Indexing => Constant_Reference,
     Default_Iterator  => Iterate,
-    Iterator_Element  => String;
+    Iterator_Element  => String,
+    Relaxed_Initialization;
 
-  type Item_Access is access Item;
+  None : constant Item;
 
-  None : constant Item; -- no strings
+  procedure Append (The_Item : in out Item;
+                    Data     :        String)
+  with
+    Inline,
+    Pre => Data'length <= The_Item.Free_Space and The_Item.Count < Max_Count;
 
   No_Element : constant Element_Count := 0;
 
@@ -172,109 +237,99 @@ package Strings is
 
   package List_Iterator_Interfaces is new Ada.Iterator_Interfaces (Element_Count, Has_Element);
 
-  function Constant_Reference (The_List : aliased Item;
+  function Constant_Reference (The_Item : aliased Item;
                                Index    : Element_Count) return String with Inline;
 
   function Iterate (The_List : Item) return List_Iterator_Interfaces.Reversible_Iterator'class;
 
 
-  function "+" (Left  : String;
-                Right : String) return Item;
+  function Count (The_Item : Item) return Natural;
 
-  function "+" (Left  : Item;
-                Right : String) return Item;
+  function Free_Space (The_Item : Item) return Natural;
 
-  function "+" (Left  : String;
-                Right : Item) return Item;
-
-  function "+" (Left  : Item;
-                Right : Item) return Item;
-  -- Concatenate
+  function Length_At (The_Item : Item;
+                      Index    : Element_Index) return Natural with Inline;
 
 
-  function "+" (Data : String) return Item;
-  -- Convert
+  function First (The_Item : Item) return String with Inline;
 
 
-  function Length_At (List  : Item;
-                      Index : Element_Index) return Natural with Inline;
+  function Last (The_Item : Item) return String with Inline;
 
 
-  function First (List : Item) return String with Inline;
-
-
-  function Last (List : Item) return String with Inline;
-
-
-  function Data_Of (List      : Item;
+  function To_Data (The_Item  : Item;
                     Separator : String := "") return String with Inline;
 
+  function To_Data (The_List  : List;
+                    Separator : String := "") return String;
 
   function Item_Of (Data      : String;
                     Separator : Character;
+                    Purge     : Boolean := True;
                     Symbols   : String := "") return Item;
   -- Returns the splitted strings from Data.
-  --   Example: Data = "," and Separator = ',' results in two empty strings.
+  --   Example: Data = "," and Separator = ',' and Purge = False results in two empty strings.
+  -- Per default (Purge = True) empty strings are removed.
+  -- Symbols are added to the result.
 
 
-  function Purge_Of (List : Item) return Item;
-  -- Removes all empty strings.
+  function Part (The_Item : Item;
+                 From     : Element_Index;
+                 To       : Element_Count) return Item
+    with Pre => To <= The_Item.Count and then To - From + 1 >= 0;
 
 
-  function Item_Of (List      : Item;
-                    Selection : Slice) return Item;
-  -- Exception: CONSTRAINT_ERROR: Index out of range.
+  function "+" (Left  : Item;
+                Right : Item) return Item
+  with
+    Pre => (Left.Count + Right.Count) <= Max_Count and then (Left.Free_Space + Right.Free_Space) >= Max_Data_Length;
+  -- Concatenate
 
+  procedure Prepend (The_Item : in out Item;
+                     Data     :        String)
+  with
+    Pre => Data'length <= The_Item.Free_Space and The_Item.Count < Max_Count;
 
-  function Found_In (List : Item;
-                     Name : String) return Boolean;
+  function Contains (The_Item : Item;
+                     Name     : String) return Boolean;
 
+  function To_List (The_Item : Item'class) return List;
 
-  function Data_Of (List      : String_List.Item;
-                    Separator : String := "") return String;
-
-  function Item_Of (List : String_List.Item) return Item;
-
-  function List_Of (List : Item) return String_List.Item;
-
-  function Trimmed_List_Of (List : Item) return String_List.Item;
-
-
-  generic
-    Count : Element_Count;
-    with function Next_Length return Data_Length;
-    with function Next_String return String;
-  function Creator return Item;
-
-
-  generic
-    From : Element_Index;
-    To   : Element_Count;
-    with function Next_Length (Index : Element_Index) return Data_Length;
-    with function Next_String (Index : Element_Index) return String;
-  function Indexed_Creator return Item;
-
-
-  generic
-     with function Mapped_String_Of (Data : String) return String;
-  function Creator_From (List : Item) return Item;
-  -- Create a new string for each string in items.
-
+  function To_Trimmed_List (The_Item : Item'class) return List;
 
 private
+
+  Empty_Element : constant Element := Element(Ada.Strings.Unbounded.Null_Unbounded_String);
+
+  type List is new Linked_Strings.List with null record
+  with Put_Image => Put_List_Image;
+
+  procedure Put_List_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
+                            V : List);
+
+  Empty : constant List := (Linked_Strings.Empty_List with null record);
+
   type Position is new Data_Length range First_Index .. Data_Length'last;
 
-  type Element_Positions is array (Element_Count range <>) of Position with Pack;
+  type Element_Positions is array (Element_Index) of Position with Pack, Suppress_Initialization;
 
-  type Item (Count  : Element_Count;
-             Length : Data_Length) is tagged
-  record
-    Positions : Element_Positions(First_Index..Count);
-    Data      : aliased String(First_Index..Length);
-  end record;
+  subtype String_Data is String (First_Index .. Max_Data_Length) with Suppress_Initialization;
 
-  None : constant Item := (Count     => 0,
-                           Length    => 0,
-                           Positions => (others => First_Index),
-                           Data      => (others => Ascii.Nul));
+  type Item is tagged record
+    Count     : Element_Count := 0;
+    Length    : Data_Length := 0;
+    Positions : Element_Positions;
+    Data      : String_Data;
+  end record
+  with Put_Image => Put_Item_Image;
+
+  procedure Put_Item_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
+                            V : Item);
+
+  None : constant Item := (Count => 0, Length => 0, others => <>);
+
+  function Count (The_Item : Item) return Natural is (The_Item.Count);
+
+  function Free_Space (The_Item : Item) return Natural is (Max_Data_Length - The_Item.Length);
+
 end Strings;

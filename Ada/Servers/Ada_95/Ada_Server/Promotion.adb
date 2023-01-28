@@ -1,16 +1,19 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Unchecked_Deallocation;
 with Log;
 with Target;
 with Project;
-with String_List;
-with Text;
+with Strings;
 
 package body Promotion is
+
+  use type Strings.Element;
+
 
   task type Handler is
     entry Start (Name : String;
@@ -44,12 +47,12 @@ package body Promotion is
     function Actual_Column return Server.Column_Range;
 
   private
-    The_Message  : Text.String;
+    The_Message  : Strings.Element;
     New_Message  : Boolean := False;
     New_Error    : Boolean := False;
     Is_Complete  : Boolean := False;
-    Last_Message : Text.String;
-    The_Filename : Text.String;
+    Last_Message : Strings.Element;
+    The_Filename : Strings.Element;
     The_Line     : Server.Line_Number;
     The_Column   : Server.Column_Range;
   end Control;
@@ -89,7 +92,7 @@ package body Promotion is
 
     begin -- Promote_All_Projects
       declare
-        Projects : constant String_List.Item := Project.Promotion_List;
+        Projects : constant Strings.List := Project.Promotion_List;
       begin
         if Projects.Is_Empty then
           Define_Next_Message_Color (Promotion.Blue);
@@ -122,7 +125,7 @@ package body Promotion is
       Set_Message ("Promote all failed.");
     end Promote_All_Projects;
 
-    The_Name : Text.String;
+    The_Name : Strings.Element;
     The_Kind : Server.Promotion_Kind;
 
     use type Server.Promotion_Kind;
@@ -132,14 +135,14 @@ package body Promotion is
                   Kind : Server.Promotion_Kind)
     do
       The_Kind := Kind;
-      The_Name := Text.String_Of (Name);
+      The_Name := [Name];
       Control.Start;
     end Start;
     case The_Kind is
     when Server.All_Projects =>
       Promote_All_Projects;
     when others =>
-      Promote (Text.String_Of (The_Name));
+      Promote (+The_Name);
     end case;
     if The_Kind = Server.Run then
       if Project.Run then
@@ -159,7 +162,14 @@ package body Promotion is
 
   procedure Start (Name : String;
                    Kind : Server.Promotion_Kind) is
+    procedure Dispose is new Ada.Unchecked_Deallocation (Handler, Handler_Access);
   begin
+    if The_Handler /= null then
+      while not The_Handler'terminated loop
+        delay (0.001);
+      end loop;
+      Dispose (The_Handler);
+    end if;
     The_Handler := new Handler;
     The_Handler.Start (Name, Kind);
   end Start;
@@ -169,7 +179,7 @@ package body Promotion is
 
     procedure Start is
     begin
-      Text.Clear (The_Message);
+      Strings.Clear (The_Message);
       New_Message := False;
       New_Error := False;
       Is_Complete := False;
@@ -178,7 +188,7 @@ package body Promotion is
 
     procedure Set_Message_Text (Item : String) is
     begin
-      The_Message := Text.String_Of (Item);
+      The_Message :=[Item];
       New_Message := True;
     end Set_Message_Text;
 
@@ -188,8 +198,8 @@ package body Promotion is
                               At_Line   : Server.Line_Number := Server.Line_Number'first;
                               At_Column : Server.Column_Range := Server.Column_Range'first) is
     begin
-      The_Message := Text.String_Of (Item);
-      The_Filename := Text.String_Of (File);
+      The_Message := [Item];
+      The_Filename := [File];
       The_Line := At_Line;
       The_Column := At_Column;
       New_Message := False;
@@ -209,6 +219,8 @@ package body Promotion is
         Last_Message := The_Message;
         The_Result := True;
         New_Message := False;
+      else
+        The_Result := False;
       end if;
     end Get_Message_Ready;
 
@@ -219,19 +231,21 @@ package body Promotion is
         Last_Message := The_Message;
         The_Result := True;
         New_Error := False;
+      else
+        The_Result := False;
       end if;
     end Get_Error_Ready;
 
 
     function Actual_Message return String is
     begin
-      return Text.String_Of (Last_Message);
+      return +Last_Message;
     end Actual_Message;
 
 
     function Actual_Filename return String is
     begin
-      return Text.String_Of (The_Filename);
+      return +The_Filename;
     end Actual_Filename;
 
 

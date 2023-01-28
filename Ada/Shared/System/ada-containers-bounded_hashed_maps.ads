@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2004-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2004-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -36,6 +36,7 @@ with Ada.Iterator_Interfaces;
 private with Ada.Containers.Hash_Tables;
 private with Ada.Streams;
 private with Ada.Finalization;
+private with Ada.Strings.Text_Buffers;
 
 generic
    type Key_Type is private;
@@ -45,7 +46,9 @@ generic
    with function Equivalent_Keys (Left, Right : Key_Type) return Boolean;
    with function "=" (Left, Right : Element_Type) return Boolean is <>;
 
-package Ada.Containers.Bounded_Hashed_Maps is
+package Ada.Containers.Bounded_Hashed_Maps with
+  SPARK_Mode => Off
+is
    pragma Annotate (CodePeer, Skip_Analysis);
    pragma Pure;
    pragma Remote_Types;
@@ -54,16 +57,21 @@ package Ada.Containers.Bounded_Hashed_Maps is
       Constant_Indexing => Constant_Reference,
       Variable_Indexing => Reference,
       Default_Iterator  => Iterate,
-      Iterator_Element  => Element_Type;
+      Iterator_Element  => Element_Type,
+      Aggregate         => (Empty     => Empty,
+                            Add_Named => Insert),
+      Preelaborable_Initialization
+                        => Element_Type'Preelaborable_Initialization
+                             and
+                           Key_Type'Preelaborable_Initialization;
 
-   pragma Preelaborable_Initialization (Map);
-
-   type Cursor is private;
-   pragma Preelaborable_Initialization (Cursor);
+   type Cursor is private with Preelaborable_Initialization;
 
    Empty_Map : constant Map;
    --  Map objects declared without an initialization expression are
    --  initialized to the value Empty_Map.
+
+   function Empty (Capacity : Count_Type) return Map;
 
    No_Element : constant Cursor;
    --  Cursor objects declared without an initialization expression are
@@ -338,26 +346,30 @@ private
      new Hash_Tables.Generic_Bounded_Hash_Table_Types (Node_Type);
 
    type Map (Capacity : Count_Type; Modulus : Hash_Type) is
-      new HT_Types.Hash_Table_Type (Capacity, Modulus) with null record;
+      new HT_Types.Hash_Table_Type (Capacity, Modulus)
+      with null record with Put_Image => Put_Image;
+
+   procedure Put_Image
+     (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class; V : Map);
 
    use HT_Types, HT_Types.Implementation;
    use Ada.Streams;
    use Ada.Finalization;
 
    procedure Write
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : Map);
 
-   for Map'Write use Write;
+   for Map'write use Write;
 
    procedure Read
-     (Stream    : not null access Root_Stream_Type'Class;
+     (Stream    : not null access Root_Stream_Type'class;
       Container : out Map);
 
-   for Map'Read use Read;
+   for Map'read use Read;
 
    type Map_Access is access all Map;
-   for Map_Access'Storage_Size use 0;
+   for Map_Access'storage_size use 0;
 
    --  Note: If a Cursor object has no explicit initialization expression,
    --  it must default initialize to the same value as constant No_Element.
@@ -371,16 +383,16 @@ private
    end record;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Cursor);
 
-   for Cursor'Read use Read;
+   for Cursor'read use Read;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Cursor);
 
-   for Cursor'Write use Write;
+   for Cursor'write use Write;
 
    subtype Reference_Control_Type is Implementation.Reference_Control_Type;
    --  It is necessary to rename this here, so that the compiler can find it
@@ -396,16 +408,16 @@ private
       end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Constant_Reference_Type);
 
-   for Constant_Reference_Type'Write use Write;
+   for Constant_Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Constant_Reference_Type);
 
-   for Constant_Reference_Type'Read use Read;
+   for Constant_Reference_Type'read use Read;
 
    type Reference_Type (Element : not null access Element_Type) is record
       Control : Reference_Control_Type :=
@@ -416,24 +428,23 @@ private
    end record;
 
    procedure Write
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : Reference_Type);
 
-   for Reference_Type'Write use Write;
+   for Reference_Type'write use Write;
 
    procedure Read
-     (Stream : not null access Root_Stream_Type'Class;
+     (Stream : not null access Root_Stream_Type'class;
       Item   : out Reference_Type);
 
-   for Reference_Type'Read use Read;
+   for Reference_Type'read use Read;
 
-   --  Three operations are used to optimize in the expansion of "for ... of"
-   --  loops: the Next(Cursor) procedure in the visible part, and the following
-   --  Pseudo_Reference and Get_Element_Access functions. See Sem_Ch5 for
-   --  details.
+   --  See Ada.Containers.Vectors for documentation on the following
+
+   --!!! WE procedure _Next (Position : in out Cursor) renames Next;
 
    function Pseudo_Reference
-     (Container : aliased Map'Class) return Reference_Control_Type;
+     (Container : aliased Map'class) return Reference_Control_Type;
    pragma Inline (Pseudo_Reference);
    --  Creates an object of type Reference_Control_Type pointing to the
    --  container, and increments the Lock. Finalization of this object will

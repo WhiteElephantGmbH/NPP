@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                      (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                           *
+-- *                      (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                           *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -692,7 +692,7 @@ package Ada_95.Token.Data is
 
   type Aspect_Specification is array (Positive range <>) of Aspect_Element;
 
-  No_Aspects : constant Aspect_Specification(1..0) := (others => (others => <>));
+  No_Aspects : constant Aspect_Specification(1..0) := [others => (others => <>)];
 
   ----------------------------------------------------------------------------------------------------------------------
 

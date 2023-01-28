@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -91,7 +91,7 @@ package body Ada_95.Lexer is
 
   type Token_Start_Map is array (Character) of Token_Start_Kind;
 
-  Token_Start : constant Token_Start_Map := (Lowercase_Letter_Range => Name_Start,
+  Token_Start : constant Token_Start_Map := [Lowercase_Letter_Range => Name_Start,
                                              Uppercase_Letter_Range => Name_Start,
                                              Special_Letter_Range_1 => Name_Start,
                                              Special_Letter_Range_2 => Name_Start,
@@ -123,21 +123,21 @@ package body Ada_95.Lexer is
                                              At_Sign                => Symbol_Target_Name,
                                              Vertical_Line          => Symbol_Vertical_Line,
                                              Special_Id             => Symbol_Special_Id,
-                                             others                 => Unknown);
+                                             others                 => Unknown];
 
 
   type Name_Continuation_Kind is (Alpha_Numeric, Name_Separator, Separator);
 
   type Name_Continuation_Map is array (Character) of Name_Continuation_Kind;
 
-  Name_Continuation : constant Name_Continuation_Map := (Lowercase_Letter_Range => Alpha_Numeric,
+  Name_Continuation : constant Name_Continuation_Map := [Lowercase_Letter_Range => Alpha_Numeric,
                                                          Uppercase_Letter_Range => Alpha_Numeric,
                                                          Special_Letter_Range_1 => Alpha_Numeric,
                                                          Special_Letter_Range_2 => Alpha_Numeric,
                                                          Special_Letter_Range_3 => Alpha_Numeric,
                                                          Number_Range           => Alpha_Numeric,
                                                          Part_Separator         => Name_Separator,
-                                                         others                 => Separator);
+                                                         others                 => Separator];
 
   type Number_Continuation_Kind is
     (Base_Separator,
@@ -152,7 +152,7 @@ package body Ada_95.Lexer is
 
   type Number_Continuation_Map is array (Character) of Number_Continuation_Kind;
 
-  Number_Continuation : constant Number_Continuation_Map := (Base_Delimiter => Base_Separator,
+  Number_Continuation : constant Number_Continuation_Map := [Base_Delimiter => Base_Separator,
                                                              Period         => Radix_Point,
                                                              'a'| 'A'       => Hex_Extension,
                                                              'b'| 'B'       => Hex_Extension,
@@ -164,7 +164,7 @@ package body Ada_95.Lexer is
                                                              Plus           => Plus_Sign,
                                                              Number_Range   => Digit,
                                                              Part_Separator => Number_Separator,
-                                                             others         => Separator);
+                                                             others         => Separator];
 
   procedure Start is
   begin

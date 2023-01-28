@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 1992-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -30,32 +30,47 @@
 ------------------------------------------------------------------------------
 
 --  This package contains the routines for supporting the Image attribute for
---  unsigned (modular) integer types larger than Size Unsigned'Size, and also
---  for conversion operations required in Text_IO.Modular_IO for such types.
+--  modular integer types larger than Unsigned, and also for conversion
+--  operations required in Text_IO.Modular_IO for such types.
 
+--  Preconditions in this unit are meant for analysis only, not for run-time
+--  checking, so that the expected exceptions are raised. This is enforced by
+--  setting the corresponding assertion policy to Ignore. Postconditions and
+--  contract cases should not be executed at runtime as well, in order not to
+--  slow down the execution of these functions.
+
+pragma Assertion_Policy (Pre                => Ignore,
+                         Post               => Ignore,
+                         Contract_Cases     => Ignore,
+                         Ghost              => Ignore,
+                         Subprogram_Variant => Ignore);
+
+with System.Image_U;
 with System.Unsigned_Types;
+with System.Val_LLU;
+with System.Wid_LLU;
 
-package System.Img_LLU is
-   pragma Pure;
+package System.Img_LLU
+  with SPARK_Mode
+is
+   subtype Long_Long_Unsigned is Unsigned_Types.Long_Long_Unsigned;
+
+   package Impl is new Image_U
+     (Uns                  => Long_Long_Unsigned,
+      Unsigned_Width_Ghost =>
+         Wid_LLU.Width_Long_Long_Unsigned (0, Long_Long_Unsigned'Last),
+      Uns_Params           => System.Val_LLU.Impl.Spec.Uns_Params);
 
    procedure Image_Long_Long_Unsigned
-     (V : System.Unsigned_Types.Long_Long_Unsigned;
+     (V : Long_Long_Unsigned;
       S : in out String;
-      P : out Natural);
-   pragma Inline (Image_Long_Long_Unsigned);
-
-   --  Computes Long_Long_Unsigned'Image (V) and stores the result in
-   --  S (1 .. P) setting the resulting value of P. The caller guarantees
-   --  that S is long enough to hold the result, and that S'First is 1.
+      P : out Natural)
+     renames Impl.Image_Unsigned;
 
    procedure Set_Image_Long_Long_Unsigned
-     (V : System.Unsigned_Types.Long_Long_Unsigned;
+     (V : Long_Long_Unsigned;
       S : in out String;
-      P : in out Natural);
-   --  Stores the image of V in S starting at S (P + 1), P is updated to point
-   --  to the last character stored. The value stored is identical to the value
-   --  of Long_Long_Unsigned'Image (V) except that no leading space is stored.
-   --  The caller guarantees that S is long enough to hold the result. S need
-   --  not have a lower bound of 1.
+      P : in out Natural)
+     renames Impl.Set_Image_Unsigned;
 
 end System.Img_LLU;

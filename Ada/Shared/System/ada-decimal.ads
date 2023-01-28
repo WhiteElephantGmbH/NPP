@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 1992-2020, Free Software Foundation, Inc.         --
+--            Copyright (C) 2020-2022, Free Software Foundation, Inc.       --
 --                                                                          --
 -- This specification is derived from the Ada Reference Manual for use with --
 -- GNAT. The copyright notice above, and the license provisions that follow --
@@ -19,9 +19,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -33,21 +33,23 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+--  This is the 128-bit version of this package
+
 package Ada.Decimal is
    pragma Pure;
 
    --  The compiler makes a number of assumptions based on the following five
    --  constants (e.g. there is an assumption that decimal values can always
-   --  be represented in 64-bit signed binary form), so code modifications are
+   --  be represented in 128-bit signed binary form), so code modifications are
    --  required to increase these constants.
 
-   Max_Scale : constant := +18;
-   Min_Scale : constant := -18;
+   Max_Scale : constant := +38;
+   Min_Scale : constant := -38;
 
-   Min_Delta : constant := 1.0E-18;
-   Max_Delta : constant := 1.0E+18;
+   Min_Delta : constant := 1.0E-38;
+   Max_Delta : constant := 1.0E+38;
 
-   Max_Decimal_Digits : constant := 18;
+   Max_Decimal_Digits : constant := 38;
 
    generic
       type Dividend_Type  is delta <> digits <>;

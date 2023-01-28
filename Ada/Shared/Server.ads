@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -15,7 +15,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with String_List;
+with Strings;
 
 package Server is
 
@@ -120,7 +120,7 @@ package Server is
 
   type Tokens is array (Positive range <>) of Token_Info with Pack;
 
-  No_Tokens : constant Tokens(1..0) := (others => (1, 1, 1, 1, Is_Others));
+  No_Tokens : constant Tokens(1..0) := [others => (1, 1, 1, 1, Is_Others)];
 
   type Case_Change is (No_Change, Change);
   for Case_Change'size use 1;
@@ -135,7 +135,7 @@ package Server is
 
   type Case_Data is array (Positive range <>) of Case_Info with Pack;
 
-  No_Case_Data : constant Case_Data(1..0) := (others => (1, 1, 0));
+  No_Case_Data : constant Case_Data(1..0) := [others => (1, 1, 0)];
 
   function Is_In_Project (Name : String) return Boolean;
 
@@ -186,6 +186,8 @@ package Server is
 
   function Message return String;
 
-  function Names_Of (Item : String_List.Item) return String; -- for servers
+  Names_Separator : constant String := [Ascii.Nul];
+
+  function Names_Of (Item : Strings.List) return String; -- for servers
 
 end Server;

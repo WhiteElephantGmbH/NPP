@@ -47,24 +47,39 @@ package Standard is
   function ">=" (Left, Right : Long_Long_Integer) return Boolean;
   function ">"  (Left, Right : Long_Long_Integer) return Boolean;
 
-  type Float is digits 6 -- 23 bit fraction, 8 bit exponent
-    range -3.40282E+38 ..  3.40282E+38;
+  type Long_Long_Long_Integer is range -(2 ** 127) .. +(2 ** 127 - 1);
+
+  function "<"  (Left, Right : Long_Long_Long_Integer) return Boolean;
+  function "<=" (Left, Right : Long_Long_Long_Integer) return Boolean;
+  function ">=" (Left, Right : Long_Long_Long_Integer) return Boolean;
+  function ">"  (Left, Right : Long_Long_Long_Integer) return Boolean;
+
+  type Short_Float is digits 6 range -16#0.FFFF_FF#E+32 .. 16#0.FFFF_FF#E+32;
+  -- range -3.40282E+38 .. 3.40282E+38, size 32 bit
+
+  function "<"  (Left, Right : Short_Float) return Boolean;
+  function "<=" (Left, Right : Short_Float) return Boolean;
+  function ">=" (Left, Right : Short_Float) return Boolean;
+  function ">"  (Left, Right : Short_Float) return Boolean;
+
+  type Float is digits 6 range -16#0.FFFF_FF#E+32 .. 16#0.FFFF_FF#E+32;
+  -- range -3.40282E+38 .. 3.40282E+38, size 32 bit
 
   function "<"  (Left, Right : Float) return Boolean;
   function "<=" (Left, Right : Float) return Boolean;
   function ">=" (Left, Right : Float) return Boolean;
   function ">"  (Left, Right : Float) return Boolean;
 
-  type Long_Float is digits 15 -- 52 bit fraction, 11 bit exponent
-    range -1.79769313486232E+308 .. 1.79769313486232E+308;
+  type Long_Float is digits 15 range -16#0.FFFF_FFFF_FFFF_F8#E+256 .. 16#0.FFFF_FFFF_FFFF_F8#E+256;
+  -- range -1.79769313486232E+308 .. 1.79769313486232E+308, size 64 bit
 
   function "<"  (Left, Right : Long_Float) return Boolean;
   function "<=" (Left, Right : Long_Float) return Boolean;
   function ">=" (Left, Right : Long_Float) return Boolean;
   function ">"  (Left, Right : Long_Float) return Boolean;
 
-  type Long_Long_Float is digits 19 -- 64 bit fraction 15 bit exponent
-    range -1.189731495357231765E+4932 ..  1.189731495357231765E+4932;
+  type Long_Long_Float is digits 18 range -16#0.FFFF_FFFF_FFFF_FFFF#E+4096 .. 16#0.FFFF_FFFF_FFFF_FFFF#E+4096;
+  -- range -1.18973149535723177E+4932 .. 1.18973149535723177E+4932, size 80 bit
 
   function "<"  (Left, Right : Long_Long_Float) return Boolean;
   function "<=" (Left, Right : Long_Long_Float) return Boolean;

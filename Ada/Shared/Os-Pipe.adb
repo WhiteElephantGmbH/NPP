@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -434,7 +434,7 @@ package body Os.Pipe is
 
         type Handles is array (0..1) of aliased Win32.Winnt.HANDLE;
 
-        Event_Handles : Handles := (From_Pipe.Read_Overlapped.hEvent, From_Pipe.Item_Event);
+        Event_Handles : Handles := [From_Pipe.Read_Overlapped.hEvent, From_Pipe.Item_Event];
       begin
         Set_Timeout_For (From_Pipe, Wait_Time);
         if Win32.Winbase.ReadFile

@@ -6,7 +6,7 @@
 --                                                                          --
 --                                 S p e c                                  --
 --                                                                          --
---          Copyright (C) 2000-2020, Free Software Foundation, Inc.         --
+--          Copyright (C) 2000-2022, Free Software Foundation, Inc.         --
 --                                                                          --
 -- GNAT is free software;  you can  redistribute it  and/or modify it under --
 -- terms of the  GNU General Public License as published  by the Free Soft- --
@@ -15,9 +15,9 @@
 -- OUT ANY WARRANTY;  without even the  implied warranty of MERCHANTABILITY --
 -- or FITNESS FOR A PARTICULAR PURPOSE.                                     --
 --                                                                          --
---                                                                          --
---                                                                          --
---                                                                          --
+-- As a special exception under Section 7 of GPL version 3, you are granted --
+-- additional permissions described in the GCC Runtime Library Exception,   --
+-- version 3.1, as published by the Free Software Foundation.               --
 --                                                                          --
 -- You should have received a copy of the GNU General Public License and    --
 -- a copy of the GCC Runtime Library Exception along with this program;     --
@@ -38,7 +38,7 @@ pragma Style_Checks ("M32766");
 
 --  This file is generated automatically, do not modify it by hand! Instead,
 --  make changes to s-oscons-tmplt.c and rebuild the GNAT runtime library.
---  This is the version for x86_64-pc-mingw32
+--  This is the version for x86_64-w64-mingw32
 
 with Interfaces.C;
 with System.Win32;
@@ -57,7 +57,7 @@ package System.OS_Constants is
    --  equality with a constant value to implement conditional compilation,
    --  which normally generates a constant condition warning.
 
-   Target_Name                   : constant String  := "x86_64-pc-mingw32";
+   Target_Name                   : constant String  := "x86_64-w64-mingw32";
    SIZEOF_unsigned_int           : constant := 4;           --  Size of unsigned int
    subtype Serial_Port_Descriptor is System.Win32.HANDLE;
 
@@ -193,11 +193,11 @@ package System.OS_Constants is
 
    AI_PASSIVE                    : constant := 1;           --  NULL nodename for accepting
    AI_CANONNAME                  : constant := 2;           --  Get the host official name
-   AI_NUMERICSERV                : constant := -1;          --  Service is a numeric string
+   AI_NUMERICSERV                : constant := 8;           --  Service is a numeric string
    AI_NUMERICHOST                : constant := 4;           --  Node is a numeric IP address
-   AI_ADDRCONFIG                 : constant := -1;          --  Returns addresses for only locally configured families
-   AI_V4MAPPED                   : constant := -1;          --  Returns IPv4 mapped to IPv6
-   AI_ALL                        : constant := -1;          --  Change AI_V4MAPPED behavior for unavailavle IPv6 addresses
+   AI_ADDRCONFIG                 : constant := 1024;        --  Returns addresses for only locally configured families
+   AI_V4MAPPED                   : constant := 2048;        --  Returns IPv4 mapped to IPv6
+   AI_ALL                        : constant := 256;         --  Change AI_V4MAPPED behavior for unavailavle IPv6 addresses
    NI_NAMEREQD                   : constant := 4;           --  Error if the hostname cannot be determined
    NI_DGRAM                      : constant := 16;          --  Service is datagram
    NI_NOFQDN                     : constant := 1;           --  Return only the hostname part for local hosts
@@ -280,6 +280,9 @@ package System.OS_Constants is
    --------------------
 
    TCP_NODELAY                   : constant := 1;           --  Do not coalesce packets
+   TCP_KEEPCNT                   : constant := 16;          --  Maximum number of keepalive probes
+   TCP_KEEPIDLE                  : constant := 3;           --  Idle time before TCP starts sending keepalive probes
+   TCP_KEEPINTVL                 : constant := 17;          --  Time between individual keepalive probes
    SO_REUSEADDR                  : constant := 4;           --  Bind reuse local address
    SO_REUSEPORT                  : constant := -1;          --  Bind reuse port number
    SO_KEEPALIVE                  : constant := 8;           --  Enable keep-alive msgs
@@ -297,12 +300,12 @@ package System.OS_Constants is
    IP_ADD_MEMBERSHIP             : constant := 12;          --  Join a multicast group
    IP_DROP_MEMBERSHIP            : constant := 13;          --  Leave a multicast group
    IP_PKTINFO                    : constant := 19;          --  Get datagram info
-   IP_RECVERR                    : constant := -1;          --  Extended reliable error message passing
+   IP_RECVERR                    : constant := 75;          --  Extended reliable error message passing
    IPV6_ADDRFORM                 : constant := -1;          --  Turn IPv6 socket into different address family
    IPV6_ADD_MEMBERSHIP           : constant := 12;          --  Join IPv6 multicast group
    IPV6_DROP_MEMBERSHIP          : constant := 13;          --  Leave IPv6 multicast group
-   IPV6_MTU                      : constant := -1;          --  Set/get MTU used for the socket
-   IPV6_MTU_DISCOVER             : constant := -1;          --  Control path-MTU discovery on the socket
+   IPV6_MTU                      : constant := 72;          --  Set/get MTU used for the socket
+   IPV6_MTU_DISCOVER             : constant := 71;          --  Control path-MTU discovery on the socket
    IPV6_MULTICAST_HOPS           : constant := 10;          --  Set the multicast hop limit for the socket
    IPV6_MULTICAST_IF             : constant := 9;           --  Set/get IPv6 mcast interface
    IPV6_MULTICAST_LOOP           : constant := 11;          --  Set/get mcast loopback
@@ -314,7 +317,7 @@ package System.OS_Constants is
    IPV6_HOPOPTS                  : constant := 1;           --  Set the hop options delivery
    IPV6_FLOWINFO                 : constant := -1;          --  Set the flow ID delivery
    IPV6_HOPLIMIT                 : constant := 21;          --  Set the hop count of the packet delivery
-   IPV6_RECVERR                  : constant := -1;          --  Extended reliable error message passing
+   IPV6_RECVERR                  : constant := 75;          --  Extended reliable error message passing
    IPV6_ROUTER_ALERT             : constant := -1;          --  Pass forwarded router alert hop-by-hop option
    IPV6_UNICAST_HOPS             : constant := 4;           --  Set the unicast hop limit
    IPV6_V6ONLY                   : constant := 27;          --  Restricted to IPv6 communications only
@@ -338,8 +341,20 @@ package System.OS_Constants is
    FD_SETSIZE                    : constant := 1024;        --  Max fd value
    SIZEOF_struct_hostent         : constant := 32;          --  struct hostent
    SIZEOF_struct_servent         : constant := 32;          --  struct servent
+   SIZEOF_nfds_t                 : constant := 32;          --  Size of nfds_t
    SIZEOF_socklen_t              : constant := 8;           --  Size of socklen_t
+   SIZEOF_fd_type                : constant := 64;          --  Size of socket fd
+   SIZEOF_pollfd_events          : constant := 16;          --  Size of pollfd.events
    IF_NAMESIZE                   : constant := -1;          --  Max size of interface name with 0 terminator
+
+   --  Poll values
+
+   POLLIN                        : constant := 768;         --  There is data to read
+   POLLPRI                       : constant := 0;           --  Urgent data to read
+   POLLOUT                       : constant := 16;          --  Writing will not block
+   POLLERR                       : constant := 1;           --  Error (output only)
+   POLLHUP                       : constant := 2;           --  Hang up (output only)
+   POLLNVAL                      : constant := 4;           --  Invalid request
 
    --  Fields of struct msghdr
    subtype Msg_Iovlen_T is Interfaces.C.size_t;
@@ -356,6 +371,7 @@ package System.OS_Constants is
 
    Inet_Pton_Linkname            : constant String  := "__gnat_inet_pton";
    Inet_Ntop_Linkname            : constant String  := "__gnat_inet_ntop";
+   Poll_Linkname                 : constant String  := "WSAPoll";
 
    ---------------------
    -- Threads support --

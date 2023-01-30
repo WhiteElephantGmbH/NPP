@@ -5,6 +5,7 @@
 pragma Style_White_Elephant;
 
 with Ada.Unchecked_Deallocation;
+with Exceptions;
 with Log;
 with Target;
 with Project;
@@ -70,8 +71,8 @@ package body Promotion is
       Target.Promote (Name);
       Set_Message ("Promotion of " & Name & " successfully completed.");
     exception
-    when Error =>
-      Log.Write ("Promotion Error");
+    when Text: Error =>
+      Log.Write (Exceptions.Name_Of (Text));
     when Item: others =>
       Log.Write ("Promotion.Handler.Promote", Item);
       Set_Message ("Promotion of " & Name & " failed.");
@@ -293,7 +294,7 @@ package body Promotion is
                        At_Column : Server.Column_Range := Server.Column_Range'first) is
   begin
     Control.Set_Error_Text (Item, File, At_Line, At_Column);
-    raise Error;
+    raise Error with Item;
   end Set_Error;
 
 

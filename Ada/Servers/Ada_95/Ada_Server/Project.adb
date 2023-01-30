@@ -140,10 +140,6 @@ package body Project is
 
   function Name return String is (+The_Project_Name);
 
-  function Modifier_Tool return String is (+The_Modifier_Tool);
-
-  function Modifier_Parameters return String is (+The_Modifier_Parameters);
-
   function Binary_Folder return String is (The_Binary_Root & [Files.Separator]);
 
   function Source_Folder return String is (The_Source_Root & [Files.Separator]);
@@ -157,6 +153,27 @@ package body Project is
   function Product return String is (Product_Directory & Product_Sub_Path & Files.Separator & Name & Product_Extension);
 
   function Legacy_Interface_Name return String is (Name & "_Interface");
+
+  function Modifier_Tool return String is (+The_Modifier_Tool);
+
+
+  function Modifier_Parameters return String is
+
+    Product_Id : constant String := "%Product%";
+
+    The_Parameters : Strings.Element := The_Modifier_Parameters;
+
+    From_Index : constant Natural := Strings.Location_Of (Product_Id, In_String => The_Parameters);
+
+  begin
+    if From_Index /= Strings.Not_Found then
+      Strings.Replace_Slice (Source => The_Parameters,
+                             Low    => From_Index,
+                             High   => From_Index + Product_Id'length - 1,
+                             By     => Product);
+    end if;
+    return +The_Parameters;
+  end Modifier_Parameters;
 
 
   function Ada_Version return String is
@@ -629,10 +646,6 @@ package body Project is
       Tool      : constant String := (if Items.Count > 0 then Strings.Trimmed (Items(Strings.First_Index)) else "");
       Parameter : constant String := (if Items.Count = 2 then Strings.Trimmed (Items(Strings.First_Index + 1)) else "");
 
-      Product_Id : constant String := "%Product%";
-
-      From_Index : Natural;
-
     begin
       if Modifier = "" then
         return;
@@ -647,14 +660,7 @@ package body Project is
       Log.Write ("||| Modifier - Tool       : " & Modifier_Tool);
       if Items.Count = 2 then
         The_Modifier_Parameters := [Parameter];
-        From_Index :=  Strings.Location_Of (Product_Id, In_String => The_Modifier_Parameters);
-        if From_Index /= Strings.Not_Found then
-          Strings.Replace_Slice (Source => The_Modifier_Parameters,
-                                 Low    => From_Index,
-                                 High   => From_Index + Product_Id'length - 1,
-                                 By     => Product);
-          Log.Write ("|||          - Parameters : " & Modifier_Parameters);
-        end if;
+        Log.Write ("|||          - Parameters : " & The_Modifier_Parameters);
       end if;
     end Define_Modifier;
 

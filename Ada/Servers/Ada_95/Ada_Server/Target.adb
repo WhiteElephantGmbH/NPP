@@ -265,13 +265,14 @@ package body Target is
     Modifier : constant String := Project.Modifier_Tool;
   begin
     if Modifier /= "" then
-      Log_Execution ("Modify: " & Project.Product);
+      Promotion.Set_Message ("Modify " & Project.Modifier_Parameters);
       declare
-        Result : constant String := Os.Process.Execution_Of (Executable => Modifier,
-                                                             Parameters => Project.Modifier_Parameters);
+        Result : constant String
+          := Strings.Trimmed (Os.Process.Execution_Of (Executable => Modifier,
+                                                       Parameters => Project.Modifier_Parameters));
       begin
         if Result /= "" then
-          Log_Execution ("Modify Result: " & Result);
+          Promotion.Set_Error (Result);
         end if;
       end;
     end if;

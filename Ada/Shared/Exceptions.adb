@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -22,7 +22,7 @@ package body Exceptions is
 
   function Name_Of (Occurrence : Ada.Exceptions.Exception_Occurrence) return String is
     Message : constant String := Strings.Trimmed (Ada.Exceptions.Exception_Message (Occurrence));
-    Name    : constant String := Ada.Exceptions.Exception_Name (Occurrence);
+    Name    : constant String := Strings.Legible_Of (Ada.Exceptions.Exception_Name (Occurrence));
   begin
     if Message = "" then
       return Name;

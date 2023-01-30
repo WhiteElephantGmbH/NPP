@@ -1070,7 +1070,7 @@ package body Ada_95.Token.Data is
          Parent      => null,
          Parent_Type => null,
          Definition  => new Array_Definition'(Dimension      => 1,
-                                              Index_Subtypes => [1 => Root_Integer_Type],
+                                              Index_Subtypes => [Root_Integer_Type],
                                               Component_Type => Boolean_Type));
     end Do_Initialize;
 

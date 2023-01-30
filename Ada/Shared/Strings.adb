@@ -138,7 +138,7 @@ package body Strings is
                         The_Direction : Direction := Forward) return Natural is
   begin
     return Ada.Strings.Fixed.Index (Source  => In_String,
-                                    Pattern => [1 => The_Character],
+                                    Pattern => [The_Character],
                                     Going   => Ada.Strings.Direction(The_Direction));
   end Location_Of;
 
@@ -149,7 +149,7 @@ package body Strings is
                         The_Direction : Direction := Forward) return Natural is
   begin
     return Ada.Strings.Fixed.Index (Source  => In_String,
-                                    Pattern => [1 => The_Character],
+                                    Pattern => [The_Character],
                                     From    => From,
                                     Going   => Ada.Strings.Direction(The_Direction));
   end Location_Of;
@@ -421,8 +421,8 @@ package body Strings is
       if The_Character = '_' then
         The_Character := Space; -- Substitute underscores with spaces
       end if;
-      if The_Character = Space then
-        if Am_In_Gap then  -- Multiple space
+      if The_Character in Space | '.' then
+        if Am_In_Gap then  -- Multiple space or '.'
           The_Size := The_Size - 1;  -- Overwrite previous
         else
           Am_In_Gap := True;

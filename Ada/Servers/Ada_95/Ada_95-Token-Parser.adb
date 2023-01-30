@@ -4,10 +4,8 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
---TEST----------
---with Ada.Tags;
-----------------
 with Ada.Strings.Equal_Case_Insensitive;
+with Ada.Tags;
 with Ada_95.Build;
 with Ada_95.Token.Checker;
 with Indefinite_Doubly_Linked_Lists;
@@ -3676,6 +3674,15 @@ package body Ada_95.Token.Parser is
              | Lexical.Is_Not
           =>
             The_Result_Type := Expression (Within);
+            if Termination_Element = Lexical.Right_Bracket then
+              if The_Result_Type /= null and then
+                Data.Base_Type_Of (The_Result_Type).all in Data.Discrete_Type'class
+              then
+                Log.Write ("%%% Root_String for " & Ada.Tags.External_Tag (The_Result_Type.all'tag));
+                The_Result_Type := Data.Predefined_Root_String;
+                exit;
+              end if;
+            end if;
             if Element_Is (Lexical.Range_Delimiter) then
               The_Result_Type := Expression ((Within.Scope, The_Result_Type));
             end if;
@@ -3747,9 +3754,9 @@ package body Ada_95.Token.Parser is
         not ((Within.Sub_Type.all in Data.Type_Declaration'class) or
              (Within.Sub_Type.all in Data.Instantiated_Type'class))
       then
-        --TEST---------------------------------------
+        --TEST------------------------------------------
         --Write_Log ("-> AGGREGATE OF UNKNOWN SUBTYPE");
-        ---------------------------------------------
+        ------------------------------------------------
         Unknown_Aggregate;
       else
         --TEST-----------------------------------------------------------------------------
@@ -3779,6 +3786,11 @@ package body Ada_95.Token.Parser is
               --Write_Log ("  Result Type Name: " & Data.Full_Name_Of (The_Type));
               --Write_Log ("              Type: " & Ada.Tags.External_Tag (The_Type.all'tag));
               --------------------------------------------------------------------------------
+              if Termination_Element = Lexical.Right_Bracket then
+                if Data.Base_Type_Of (The_Type).all in Data.Discrete_Type'class | Data.Access_Type'class then
+                  return Within.Sub_Type;
+                end if;
+              end if;
               return The_Type; -- qualified expresssion
             end if;
             The_Token := Saved_Token;
@@ -3882,6 +3894,13 @@ package body Ada_95.Token.Parser is
         Unknown_Aggregate;
       end if;
       Get_Element (Termination_Element);
+      --TEST-------------------------------------------------------------------------------
+      --if The_Result_Type = null then
+      --  Write_Log ("Aggregate type: NULL");
+      --else
+      --  Write_Log ("Aggregate type: " & Ada.Tags.External_Tag (The_Result_Type.all'tag));
+      --end if;
+      --TEST-------------------------------------------------------------------------------
       return The_Result_Type;
     end Aggregate;
 
@@ -8566,7 +8585,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Is_With =>
           if Found_Declaration then
             The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Self, Profile);
-            Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
+            Aspect_Specification ((The_Unit, null), [The_Identifier]);
             Get_Element (Lexical.Semicolon);
           else
             if Is_Basic then
@@ -8614,13 +8633,13 @@ package body Ada_95.Token.Parser is
                   The_Unit := Expression_Function (The_Identifier, Scope, Profile);
                 else
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
-                  Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
+                  Aspect_Specification ((The_Unit, null), [The_Identifier]);
                 end if;
                 Get_Element (Lexical.Semicolon);
               else
                 if Is_Basic then
                   The_Unit := Data.New_Subprogram_Declaration (The_Identifier, Scope, Profile);
-                  Aspect_Specification ((The_Unit, null), [1 => The_Identifier]);
+                  Aspect_Specification ((The_Unit, null), [The_Identifier]);
                   Get_Element (Lexical.Semicolon);
                 else
                   The_Unit := Data.New_Subprogram_Body (The_Identifier, Scope, Profile);
@@ -10190,7 +10209,7 @@ package body Ada_95.Token.Parser is
             end if;
             if Is_Constant then
               Get_Element (Lexical.Assignment);
-              Data.New_Constants (Names         => [1 => Object_Id],
+              Data.New_Constants (Names         => [Object_Id],
                                   Subtype_Mark  => Data.Root_Type_Of (Expression ((Return_Block, The_Subtype))),
                                   Is_Class_Wide => Is_Class_Wide_Type,
                                   Has_Default   => True,
@@ -10991,8 +11010,8 @@ package body Ada_95.Token.Parser is
       Report_Error (Error.End_Of_File_Expected, The_Token); -- only one compilation unit per file
     end if;
   exception
-  --when Reported_Error =>
-  --  null;
+  when Reported_Error =>
+    null;
   when Occurrence: others =>
     Log.Write ("!!! PARSER EXCEPTION", Occurrence);
   end Process;

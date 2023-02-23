@@ -268,8 +268,9 @@ package body Target is
       Promotion.Set_Message ("Modify " & Project.Modifier_Parameters);
       declare
         Result : constant String
-          := Strings.Trimmed (Os.Process.Execution_Of (Executable => Modifier,
-                                                       Parameters => Project.Modifier_Parameters));
+          := Strings.Trimmed (Os.Process.Execution_Of (Executable    => Modifier,
+                                                       Parameters    => Project.Modifier_Parameters,
+                                                       Handle_Output => False));
       begin
         if Result /= "" then
           Promotion.Set_Error (Result);

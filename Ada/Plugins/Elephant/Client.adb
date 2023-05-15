@@ -406,6 +406,7 @@ package body Client is
             Cursor_Mark   : constant Character := Character'val(149);
             Line          : constant String := The_Line_Images (The_Location.Image_Index);
             At_Position   : constant Natural := Line'first + Positive(The_Location.Cursor.Column) - 1;
+            At_Line       : constant String := Strings.Trimmed (The_Location.Cursor.Line'image);
             Last_Position : Natural := Line'last;
             use type Strings.Element;
             use type Server.Line_Counter;
@@ -422,7 +423,7 @@ package body Client is
               end;
             end if;
             if Strings.Is_Null (The_Line) then
-              The_Line := [Strings.Trimmed (Line(Line'first .. At_Position - 1))];
+              The_Line := [At_Line & ' ' & Strings.Trimmed (Line(Line'first .. At_Position - 1))];
             end if;
             The_Line := The_Line & Cursor_Mark & Line(At_Position .. Last_Position);
             if Last_Position = Line'last then
@@ -620,15 +621,7 @@ package body Client is
   end Tree_View_Location_Handler;
 
 
-  procedure Focus_Lost_Handler (Unused : System.Address) is
-    Editor : Scintilla.Object;
-  begin
-    Scintilla.Create (Editor, Npp.Plugin.Edit_View);
-    Scintilla.Hide_Cursor_Line (Editor);
-  end Focus_Lost_Handler;
-
 begin
-  Npp.Tree_View.Install (Double_Click => Tree_View_Location_Handler'access,
-                         Focus_Lost   => Focus_Lost_Handler'access);
+  Npp.Tree_View.Install (Double_Click => Tree_View_Location_Handler'access);
   Npp.Message.Install;
 end Client;

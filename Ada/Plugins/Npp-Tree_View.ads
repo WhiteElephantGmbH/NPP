@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -25,8 +25,7 @@ package Npp.Tree_View is
 
   No_Data : constant System.Address := System.Null_Address;
 
-  procedure Install (Double_Click : Notify_Handler;
-                     Focus_Lost   : Notify_Handler := null);
+  procedure Install (Double_Click : Notify_Handler);
   -- Precondition: Must be called first and only ones
 
   procedure Clear;

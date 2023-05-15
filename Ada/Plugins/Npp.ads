@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -41,9 +41,9 @@ package Npp with Pure => True is
     STATUSBAR_UNICODE_TYPE : constant := 4;
     STATUSBAR_TYPING_MODE  : constant := 5;
 
-  M_DMMREGASDCKDLG : constant := M_FIRST + 33;
-
-  M_ADDTOOLBARICON : constant := M_FIRST + 41;
+  M_DMMREGASDCKDLG  : constant := M_FIRST + 33;
+  M_DMMVIEWOTHERTAB : constant := M_FIRST + 35;
+  M_ADDTOOLBARICON  : constant := M_FIRST + 41;
 
   type Toolbar_Icons is record
     Bmp  : Win.HBITMAP := System.Null_Address;

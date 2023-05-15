@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -136,6 +136,7 @@ package body Npp.Message is
 
   procedure Clear is
   begin
+    Win.Send_Message (Plugin.Handle, M_DMMVIEWOTHERTAB, 0, Convert(Initial_Title'address));
     Win.Send_Message (The_Messages,
                       Win.WM_SETTEXT,
                       Win.WPARAM(0),

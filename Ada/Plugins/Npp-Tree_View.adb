@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -33,7 +33,6 @@ package body Npp.Tree_View is
   The_Dialog_Id : Win.INT;
 
   Double_Click_Handler : Notify_Handler;
-  Focus_Lost_Handler   : Notify_Handler;
 
   procedure Create_Tree_View_Window is
 
@@ -179,23 +178,12 @@ package body Npp.Tree_View is
   end Double_Click_Handling;
 
 
-  procedure Kill_Focus (Handle : Win.HWND) is
-  begin
-    if Focus_Lost_Handler /= null then
-      Focus_Lost_Handler (Handle);
-    end if;
-  end Kill_Focus;
-
-
-  procedure Install (Double_Click : Notify_Handler;
-                     Focus_Lost   : Notify_Handler := null) is
+  procedure Install (Double_Click : Notify_Handler) is
   begin
     Plugin.Install (Tb_Modification => Create_Tree_View_Window'access);
     The_Dialog_Id := Plugin.Last_Dialog_Id;
     Plugin.Add_Notify_Handler (Double_Click_Handling'access, Win.NM_DBLCLK);
-    Plugin.Add_Notify_Handler (Kill_Focus'access, Win.NM_KILLFOCUS);
-    Double_Click_Handler := Double_Click;
-    Focus_Lost_Handler := Focus_Lost;
+    Double_Click_Handler := Double_Click;    --Focus_Lost_Handler := Focus_Lost;
   end Install;
 
 

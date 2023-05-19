@@ -476,11 +476,11 @@ package body Server is
     end Usage_Message;
 
   begin -- Usage
-    --TEST-------------------------------------------------------
-    --Log.Write ("<== Usage of " & Filename &
-    --           " at line" & Server.Line_Number'image(Line) &
-    --           ", column" & Server.Column_Range'image(Column));
-    -------------------------------------------------------------
+    --TEST----------------------------------------------------------
+    --Log.Write ("<== Usage of " & The_Filename &
+    --           " at line" & Server.Line_Number'image(At_Line) &
+    --           ", column" & Server.Column_Range'image(At_Column));
+    ----------------------------------------------------------------
     if not Project.Is_Defined then
       return No_Reference_Data;
     elsif not Ada_95.Token.Is_Used (Used_Token) and then Used_Token_Image = "" then

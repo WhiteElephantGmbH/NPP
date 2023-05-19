@@ -258,8 +258,7 @@ package Strings is
 
 
   function To_Data (The_Item  : Item;
-                    Separator : String := "") return String with Inline;
-
+                    Separator : String := "") return String;
   function To_Data (The_List  : List;
                     Separator : String := "") return String;
 
@@ -267,6 +266,10 @@ package Strings is
                     Separator : Character;
                     Purge     : Boolean := True;
                     Symbols   : String := "") return Item;
+  function List_Of (Data      : String;
+                    Separator : Character;
+                    Purge     : Boolean := True;
+                    Symbols   : String := "") return List;
   -- Returns the splitted strings from Data.
   --   Example: Data = "," and Separator = ',' and Purge = False results in two empty strings.
   -- Per default (Purge = True) empty strings are removed.

@@ -745,6 +745,34 @@ package body Strings is
   end Item_Of;
 
 
+  function List_Of (Data      : String;
+                    Separator : Character;
+                    Purge     : Boolean := True;
+                    Symbols   : String := "") return List is
+    The_List  : List;
+    The_First : Natural := Data'first;
+  begin
+    for Index in Data'range loop
+      if Data(Index) = Separator then
+        if not Purge or else Index /= The_First then
+          The_List.Append (Data(The_First .. Index - 1));
+        end if;
+        The_First := Index + 1;
+      elsif Found (Data(Index), Symbols) then
+        if not Purge or else Index /= The_First then
+          The_List.Append (Data(The_First .. Index - 1));
+        end if;
+        The_List.Append (Data(Index .. Index));
+        The_First := Index + 1;
+      end if;
+    end loop;
+    if not Purge or else The_First <= Data'last then
+      The_List.Append (Data(The_First .. Data'last));
+    end if;
+    return The_List;
+  end List_Of;
+
+
   function Part (The_Item  : Item;
                  From      : Element_Index;
                  To        : Element_Count) return Item is

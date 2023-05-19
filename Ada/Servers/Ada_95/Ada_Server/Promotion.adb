@@ -85,9 +85,22 @@ package body Promotion is
       begin
         Set_Message ("Promote " & Module);
         Target.Promote (Module);
-        Define_Next_Message_Color (Promotion.Green);
+        Define_Next_Message_Color (Promotion.Blue);
         Set_Message ("Promotion of " & Module & " successfully completed.");
       end Build;
+
+      Has_Warnings : Boolean := False;
+
+      procedure Check_Unused is
+        References : constant Server.Reference_Data := Server.Unused;
+        Filenames  : constant Strings.List := Strings.List_Of (References.Filenames, Ascii.Nul);
+      begin
+        for The_Filename of Filenames loop
+          Define_Next_Message_Color (Promotion.Orange);
+          Set_Message ("Unused items in " & The_Filename);
+          Has_Warnings := True;
+        end loop;
+      end Check_Unused;
 
       Actual_Project : constant String := Project.Actual;
 
@@ -104,17 +117,24 @@ package body Promotion is
             if Project.Must_Be_Build_First (The_Project) then
               Project.Change_To (The_Project);
               Build (The_Project);
+              Check_Unused;
             end if;
           end loop;
           for The_Project of Projects loop
             if not Project.Must_Be_Build_First (The_Project) then
               Project.Change_To (The_Project);
               Build (The_Project);
+              Check_Unused;
             end if;
           end loop;
           Project.Change_To (Actual_Project);
-          Define_Next_Message_Color (Promotion.Blue);
-          Set_Message ("Promote all successfully completed.");
+          if Has_Warnings then
+            Define_Next_Message_Color (Promotion.Orange);
+            Set_Message ("Promote all completed with warnings.");
+          else
+            Define_Next_Message_Color (Promotion.Green);
+            Set_Message ("Promote all successfully completed.");
+          end if;
         end if;
       end;
     exception
@@ -281,6 +301,8 @@ package body Promotion is
       Control.Set_Message_Text ("%b" & Item);
     when Green =>
       Control.Set_Message_Text ("%g" & Item);
+    when Orange =>
+      Control.Set_Message_Text ("%o" & Item);
     when Red =>
       Control.Set_Message_Text ("%r" & Item);
     end case;

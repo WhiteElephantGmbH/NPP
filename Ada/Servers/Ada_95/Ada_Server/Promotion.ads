@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2021 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,7 +13,7 @@ package Promotion is
   procedure Start (Name : String;
                    Kind : Server.Promotion_Kind);
 
-  type Color is (Black, Blue, Green, Red);
+  type Color is (Black, Blue, Green, Orange, Red);
 
   procedure Define_Next_Message_Color (Item : Color);
 

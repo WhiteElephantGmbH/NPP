@@ -15,6 +15,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Containers.Indefinite_Vectors;
 with Ada.Text_IO;
 with Ada.Unchecked_Conversion;
 with Ada.Unchecked_Deallocation;
@@ -276,7 +277,11 @@ package body Client is
 
   use type Location_Stack.Item;
 
-  type Filenames is access Strings.Item;
+  package Lists is new Ada.Containers.Indefinite_Vectors (Element_Type => String, Index_Type => Positive);
+
+  subtype List is Lists.Vector;
+
+  subtype Filenames is List;
   type Locations is access Server.File_References;
 
   The_Filenames : Filenames;
@@ -364,12 +369,23 @@ package body Client is
   procedure Show_References (References : Server.References;
                              Expand     : Boolean := False) is
 
-    function Strings_Of (Names : String) return Strings.Item is
+    function List_Of (Names : String) return List is
+      The_List  : List;
+      The_First : Natural := Names'first;
     begin
-      return Strings.Item_Of (Names, Ascii.Nul);
-    end Strings_Of;
+      for Index in Names'range loop
+        if Names(Index) = Ascii.Nul then
+          The_List.Append (Names(The_First .. Index - 1));
+          The_First := Index + 1;
+        end if;
+      end loop;
+      if The_First <= Names'last then
+        The_List.Append (Names(The_First .. Names'last));
+      end if;
+      return The_List;
+    end List_Of;
 
-    The_Line_Images : constant Strings.Item := Strings_Of (References.Line_Images);
+    The_Line_Images : constant List := List_Of (References.Line_Images);
     The_File_Index  : Natural := 0;
 
     use type Server.References;
@@ -378,14 +394,10 @@ package body Client is
     Unused        : Npp.Tree_View.Item;
     The_Line      : Strings.Element;
 
-    procedure Dispose is new Ada.Unchecked_Deallocation (Strings.Item, Filenames);
     procedure Dispose is new Ada.Unchecked_Deallocation (Server.File_References, Locations);
 
-  begin
-    if The_Filenames /= null then
-      Dispose (The_Filenames);
-    end if;
-    The_Filenames := new Strings.Item'(Strings_Of (References.Filenames));
+  begin -- Show_References
+    The_Filenames := List_Of (References.Filenames);
     if The_Locations /= null then
       Dispose (The_Locations);
     end if;
@@ -402,7 +414,7 @@ package body Client is
               Npp.Tree_View.Expand (Filename_Item);
             end if;
             The_File_Index := The_File_Index + 1;
-            Filename_Item := Npp.Tree_View.Add (The_Filenames.all(The_File_Index));
+            Filename_Item := Npp.Tree_View.Add (The_Filenames(The_File_Index));
           end if;
           declare
             Cursor_Mark   : constant Character := Character'val(149);
@@ -612,7 +624,7 @@ package body Client is
       At_Location : constant File_Reference_Access := Convert(Data);
     begin
       declare
-        Filename : constant String := The_Filenames.all(At_Location.File_Index);
+        Filename : constant String := The_Filenames(At_Location.File_Index);
       begin
         Reference (Filename, At_Location.Cursor, Show_Cursor_Line => True);
       end;

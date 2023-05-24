@@ -95,11 +95,13 @@ package body Promotion is
         References : constant Server.Reference_Data := Server.Unused;
         Filenames  : constant Strings.List := Strings.List_Of (References.Filenames, Ascii.Nul);
       begin
-        for The_Filename of Filenames loop
-          Define_Next_Message_Color (Promotion.Orange);
-          Set_Message ("Unused items in " & The_Filename);
-          Has_Warnings := True;
-        end loop;
+        if Project.Has_Style then
+          for The_Filename of Filenames loop
+            Define_Next_Message_Color (Promotion.Orange);
+            Set_Message ("Unused items in " & The_Filename);
+            Has_Warnings := True;
+          end loop;
+        end if;
       end Check_Unused;
 
       Actual_Project : constant String := Project.Actual;

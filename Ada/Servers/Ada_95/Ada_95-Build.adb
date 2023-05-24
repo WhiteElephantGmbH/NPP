@@ -134,6 +134,9 @@ package body Ada_95.Build is
   function Actual_Company return String is (+The_Company);
 
 
+  function Has_Style return Boolean is (Actual_Company /= "");
+
+
   procedure Define_Description (Item : String) is
   begin
     The_Description := [Item];

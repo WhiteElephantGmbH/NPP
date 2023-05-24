@@ -232,6 +232,16 @@ package body Project is
   end Is_Dll;
 
 
+  function Has_Style return Boolean is
+  begin
+    if Build.Is_Defined then
+      return Build.Has_Style;
+    else
+      return False;
+    end if;
+  end Has_Style;
+
+
   function Is_Defined return Boolean is
   begin
     Log.Write ("||| Project.Is_Defined: " & Project_Is_Defined'img);

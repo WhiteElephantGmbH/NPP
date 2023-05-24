@@ -13,6 +13,8 @@ with Log;
 
 package body Project.Resource is
 
+  Copyright : constant String := "© ";
+
   Object_Name : constant String := "resources.o";
 
 
@@ -109,7 +111,7 @@ package body Project.Resource is
     Put ("  BEGIN");
     Put ("    BLOCK ""040904E4""");
     Put ("    BEGIN");
-    Put ("      VALUE ""LegalCopyright"", ""Copyright © " & Build.Actual_Company & Actual_Year'img & "\0""");
+    Put ("      VALUE ""LegalCopyright"", """ & Copyright & Build.Actual_Company & Actual_Year'img & "\0""");
     Put ("      VALUE ""FileDescription"", """ & Build.Actual_Description & "\0""");
     Put ("      VALUE ""OriginalFilename"", """ & Name & (if Build.Is_Dll then ".dll" else ".exe") & "\0""");
     Put ("      VALUE ""InternalName"", """ & Name & "\0""");

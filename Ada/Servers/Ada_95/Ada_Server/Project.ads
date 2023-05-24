@@ -28,6 +28,8 @@ package Project is
   function Product_Sub_Path return String;
 
   function Is_Dll return Boolean;
+  
+  function Has_Style return Boolean;
 
   function Product return String;
 

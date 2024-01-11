@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -49,6 +49,22 @@ package body Command is
     procedure Read_Data is
     begin
       Os.Pipe.Read (The_Pipe, The_Data'address, The_Length);
+    exception
+    when Os.Pipe.More_Data =>
+      Log.Write ("!!! File length > 2 ** 20");
+      loop
+        begin
+          Os.Pipe.Read (The_Pipe, The_Data'address, The_Length); -- flush all data
+          The_Length := 0;
+          exit;
+        exception
+        when Os.Pipe.More_Data =>
+          null;
+        when others =>
+          The_Length := 0;
+          exit;
+        end;
+      end loop;
     end Read_Data;
 
     function Read_Buffer return String is
@@ -90,6 +106,9 @@ package body Command is
     function Read_Line_Number return Server.Line_Number is
     begin
       return Server.Line_Number(Read_Natural);
+    exception
+    when others =>
+      return Server.Line_Number'last;
     end Read_Line_Number;
 
     function Read_Column_Position return Server.Column_Range is

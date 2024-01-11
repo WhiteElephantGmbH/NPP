@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -194,12 +194,15 @@ package body Target is
       begin
         if File.Exists (Filename) then
           declare
-            Line   : constant Server.Line_Number  := Server.Line_Number'value(Next_String_Until (Separator));
-            Column : constant Server.Column_Range := Server.Column_Range'value(Next_String_Until (Separator));
+            The_Line : Natural  := Natural'value(Next_String_Until (Separator));
+            Column   : constant Server.Column_Range := Server.Column_Range'value(Next_String_Until (Separator));
           begin
+            if The_Line > Natural(Server.Line_Number'last) then
+              The_Line := Natural(Server.Line_Number'last);
+            end if;
             Promotion.Set_Error (Item      => Next_String_Until (End_Of_Text),
                                  File      => Filename,
-                                 At_Line   => Line,
+                                 At_Line   => Server.Line_Number(The_Line),
                                  At_Column => Column);
           end;
         else

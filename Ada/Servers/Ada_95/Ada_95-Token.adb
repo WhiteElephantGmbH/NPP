@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -408,6 +408,9 @@ package body Ada_95.Token is
       The_Line_Handle := Line_Handle(The_Handle);
     end if;
     while The_Line_Handle /= null loop
+      if The_Line_Number > Line_Number'last - The_Line_Handle.Count then
+        return Line_Number'last;
+      end if;
       The_Line_Number := The_Line_Number + The_Line_Handle.Count;
       The_Line_Handle := The_Line_Handle.Previous_Line;
     end loop;

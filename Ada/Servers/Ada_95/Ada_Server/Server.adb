@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -298,6 +298,9 @@ package body Server is
             Handle_Visible_Token (Ada_95.Token.Area_Of (The_Token.all));
           end case;
           if The_Token.all in Ada_95.Token.Line_Object'class then
+            if The_Line > Line_Number'last - Ada_95.Token.Line_Handle (The_Token).Count then
+              return No_Tokens; -- file too big
+            end if;
             The_Line := The_Line + Ada_95.Token.Line_Handle (The_Token).Count;
           end if;
           The_Token := The_Token.Next;

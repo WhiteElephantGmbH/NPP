@@ -234,8 +234,10 @@ package body Os.Process is
       end if;
     end loop;
     Unused := Base.CloseHandle (Inbound); -- No longer used
+    if Strings.Length(The_Result) > Max_Result_Length then
+      return Strings.Slice (The_Result, Strings.First_Index, Max_Result_Length);
+    end if;
     return +The_Result;
-
   exception
   when Execution_Failed =>
     raise;

@@ -45,6 +45,7 @@ package Os.Process is
   -- Note: If the current folder is set to the null string then the current folder of new process
   --       is set to equal the current folder of the parent (creating process)
   --
+  Max_Result_Length : constant := 10000; -- bigger returns are limited
 
   function Execution_Of (Executable     : String;
                          Parameters     : String;

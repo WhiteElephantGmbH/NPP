@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -9589,11 +9589,11 @@ package body Ada_95.Token.Parser is
       begin
         Conditional_Aspect_Specification ((Scope, null));
         if Element_Is (Lexical.Is_Is) then
-          Protected_Definition (Data.New_Protected_Declaration (Id, Scope));
           if Element_Is (Lexical.Is_New) then
             Unused_Interfaces := Interface_List (Scope);
             Get_Element (Lexical.Is_With);
           end if;
+          Protected_Definition (Data.New_Protected_Declaration (Id, Scope));
         else
           Not_Implemented ("Incomplete protected definition");
         end if;

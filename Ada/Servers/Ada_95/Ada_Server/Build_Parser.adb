@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -9,7 +9,7 @@ with Build;
 with File;
 with Log;
 with Project;
-with Strings;
+with Text;
 
 package body Build_Parser is
 
@@ -124,18 +124,18 @@ package body Build_Parser is
       while Found ("pragma") loop
         declare
           Pragma_Name : constant String := Next_Token;
-          The_Name    : Strings.Element;
+          The_Name    : Text.String;
 
           function Actual_Name return String is
-            use type Strings.Element;
+            use type Text.String;
           begin
-            if Strings.Is_Null (The_Name) then
+            if Text.Is_Null (The_Name) then
               return Next_Token;
             else
               declare
                 Name : constant String := +The_Name;
               begin
-                Strings.Clear (The_Name);
+                Text.Clear (The_Name);
                 return Name;
               end;
             end if;
@@ -181,7 +181,7 @@ package body Build_Parser is
                 end Define_Kind;
 
                 procedure Define_Libraries is
-                  The_Libraries : Strings.List;
+                  The_Libraries : Text.List;
                 begin
                   The_Libraries.Append (Attribute);
                   loop
@@ -196,7 +196,7 @@ package body Build_Parser is
                 end Define_Libraries;
 
                 procedure Define_Interface is
-                  The_Interface : Strings.List;
+                  The_Interface : Text.List;
                 begin
                   The_Interface.Append (Attribute);
                   loop

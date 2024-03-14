@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -155,7 +155,7 @@ package body Project.Gpr is
     Gpr_Directory : constant String := File.Containing_Directory_Of (The_Filename);
 
     procedure Parse_Gpr is
-      The_Tokens : Strings.List;
+      The_Tokens : Text.List;
 
       function Next_Token return String is
       begin
@@ -165,7 +165,7 @@ package body Project.Gpr is
           end if;
           declare
             Line   : constant String := Ada.Text_IO.Get_Line (The_File);
-            Tokens : constant Strings.Item := Strings.Item_Of (Line, Separator => ' ', Symbols=>")(;");
+            Tokens : constant Text.Strings := Text.Strings_Of (Line, Separator => ' ', Symbols=>")(;");
           begin
             The_Tokens := Tokens.To_List;
           end;
@@ -191,7 +191,7 @@ package body Project.Gpr is
             Next_Token = "use" and then Next_Token = "("
           then
             declare
-              Source_Path : constant String := Strings.Trimmed (Next_Token, '"');
+              Source_Path : constant String := Text.Trimmed (Next_Token, '"');
             begin
               The_Gpr.Source_Path := [File.Full_Name_Of (Name_Or_Directory => Source_Path,
                                                          Current_Directory => Gpr_Directory)];

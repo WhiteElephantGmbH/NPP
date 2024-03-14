@@ -19,7 +19,7 @@ with Ada.Command_Line;
 with Log;
 with Project;
 with Server;
-with Strings;
+with Text;
 with Unsigned;
 with Os.Pipe;
 
@@ -38,8 +38,8 @@ package body Command is
 
     The_Pipe     : Os.Pipe.Handle;
     The_Length   : Natural;
-    The_Filename : Strings.Element;
-    The_Message  : Strings.Element;
+    The_Filename : Text.String;
+    The_Message  : Text.String;
 
     procedure Write_Confirmation is
     begin
@@ -121,8 +121,8 @@ package body Command is
       Os.Pipe.Write (The_Pipe, Item'address, Item'length);
     end Write;
 
-    procedure Write (Item : Strings.Element) is
-      use type Strings.Element;
+    procedure Write (Item : Text.String) is
+      use type Text.String;
     begin
       Write (String'(+Item));
     end Write;

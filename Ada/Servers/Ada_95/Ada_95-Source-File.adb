@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada.Unchecked_Deallocation;
 with File;
-with Strings;
+with Text;
 
 package body Ada_95.Source.File is
 
@@ -31,7 +31,7 @@ package body Ada_95.Source.File is
   procedure Open (The_Object : Item) is
   begin
     Ada.Text_IO.Open (The_Object.The_File.all, Ada.Text_IO.In_File, The_Object.Id);
-    if Strings.Has_Skipped_Bom_8 (The_Object.The_File.all) then
+    if Text.Has_Skipped_Bom_8 (The_Object.The_File.all) then
       null;
     end if;
   end Open;

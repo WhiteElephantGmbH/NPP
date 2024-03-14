@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada_95.Name;
 with Ada_95.Source;
-with Strings;
+with Text;
 
 package Ada_95.File is
 
@@ -50,7 +50,7 @@ package Ada_95.File is
                                           Location    => Unknown,
                                           Update_Time => Source.Undefined_Time);
 
-  procedure Define_Work_Path (List : Strings.List);
+  procedure Define_Work_Path (List : Text.List);
 
   function Name_And_Extension_Of (Filename : String) return String;
 

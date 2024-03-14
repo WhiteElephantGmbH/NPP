@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,7 +13,7 @@ with Ada_95.Reader;
 with Ada_95.Token;
 with Display;
 with Log;
-with Strings;
+with Text;
 
 package body Ada_95.Rename is
 
@@ -148,7 +148,7 @@ package body Ada_95.Rename is
       New_Name                : constant String := File.Path_Of (Name) & "\" & New_Name_With_Extension;
 
     begin
-      if Strings.Is_Equal (Name, New_Name) then
+      if Text.Matches (Name, New_Name) then
         Ada.Directories.Rename (Name, New_Name & '_');
         Ada.Directories.Rename (New_Name & '_', New_Name);
       else

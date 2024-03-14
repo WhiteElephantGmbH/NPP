@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,7 +10,7 @@ with Ada_95.Lexical;
 with Ada_95.Name;
 with Ada_95.Number;
 with Ada_95.Source;
-with Ada_95.Text;
+with Ada_95.Texts;
 with Memory;
 with Server;
 
@@ -184,7 +184,7 @@ package Ada_95.Token is
   procedure Append_Literal (Item           : Number.Handle;
                             Is_Real_Number : Boolean) with Inline;
 
-  procedure Append_Literal (Item         : Text.Handle;
+  procedure Append_Literal (Item         : Texts.Handle;
                             First_Column : Column_Position;
                             Last_Column  : Column_Position) with Inline;
 
@@ -454,7 +454,7 @@ package Ada_95.Token is
   ----------------------------------------------------------------------------------------------------------------------
 
   type String_Literal is new Lexical_Object with record
-    Handle       : Text.Handle;
+    Handle       : Texts.Handle;
     First_Column : Column_Position; -- screen position
     Last_Column  : Column_Position; -- screen position
   end record;

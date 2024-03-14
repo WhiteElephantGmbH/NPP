@@ -1,11 +1,11 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 pragma Build (Description => "Ada Renamer",
-              Version     => (45, 1, 0 ,4),
+              Version     => (45, 1, 0, 5),
               Kind        => Console,
               Icon        => False,
               Compiler    => "GNATPRO\23.0");

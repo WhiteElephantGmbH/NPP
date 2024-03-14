@@ -1,11 +1,11 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada.Containers.Indefinite_Ordered_Maps;
-with Strings;
+with Text;
 
 package Project is
 
@@ -71,7 +71,7 @@ package Project is
 
   function Promotion_Areas return String;
 
-  function Promotion_List return Strings.List;
+  function Promotion_List return Text.List;
 
   function Must_Be_Build_First (Filename : String) return Boolean;
 
@@ -103,7 +103,7 @@ private
 
   function Program_Unit_Name return String;
 
-  function Source_Directories return Strings.List;
+  function Source_Directories return Text.List;
 
   function Target_Directory return String;
 
@@ -123,6 +123,6 @@ private
   The_Library_Names       : Names.Map;
   The_Library_Sources     : Names.Map;
 
-  The_Libraries : Strings.List;
+  The_Libraries : Text.List;
 
 end Project;

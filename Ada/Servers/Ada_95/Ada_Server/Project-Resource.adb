@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -58,7 +58,7 @@ package body Project.Resource is
     end Put;
 
     function File_Version_Image return String is
-      function Image_Of is new Strings.Image_Of (Build.Version_Number);
+      function Image_Of is new Text.Image_Of (Build.Version_Number);
       Version : constant Build.Version := Build.Actual_Version;
     begin
       return Image_Of (Version.Major) & ','
@@ -149,16 +149,16 @@ package body Project.Resource is
         while not Ada.Text_IO.End_Of_File (The_File) loop
           declare
             Line  : constant String := Ada.Text_IO.Get_Line (The_File);
-            Items : constant Strings.Item := Strings.Item_Of (Line, Separator => ' ', Symbols => ",;""\");
+            Items : constant Text.Strings := Text.Strings_Of (Line, Separator => ' ', Symbols => ",;""\");
           begin
             if Items.Count >= 7 then
-              if Items(Strings.First_Index) = "VALUE" then
+              if Items(Text.First_Index) = "VALUE" then
                 declare
-                  The_Index : Natural := Strings.First_Index;
+                  The_Index : Natural := Text.First_Index;
 
                   function Next_Item return String is
                   begin
-                    if The_Index >= Strings.First_Index + Items.Count - 1 then
+                    if The_Index >= Text.First_Index + Items.Count - 1 then
                       return "";
                     end if;
                     The_Index := The_Index + 1;
@@ -168,7 +168,7 @@ package body Project.Resource is
                   procedure Get_Next (Item : String) is
                   begin
                     if Next_Item /= Item then
-                      Set_Error (Item & " expected in " & Filename & " at line " & Strings.Trimmed (Line));
+                      Set_Error (Item & " expected in " & Filename & " at line " & Text.Trimmed (Line));
                     end if;
                   end Get_Next;
 
@@ -213,7 +213,7 @@ package body Project.Resource is
                                                                                  then "(year missing)"
                                                                                  else Year) & " in " & Filename);
                             end;
-                            Defined := Build.Defined_Compiler ("GNAT\" & Strings.Trimmed (The_Year'img));
+                            Defined := Build.Defined_Compiler ("GNAT\" & Text.Trimmed (The_Year'img));
                           end;
                         elsif Compiler = "GNATPRO" then
                           Defined := Build.Defined_Compiler ("GNATPRO\" & Legacy_Product_Version);

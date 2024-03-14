@@ -1,10 +1,10 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Strings;
+with Text;
 
 package body Ada_95.Source.Buffer is
 
@@ -35,8 +35,8 @@ package body Ada_95.Source.Buffer is
   procedure Open (The_Object : Item) is
     pragma Unreferenced (The_Object);
   begin
-    if Strings.Has_Bom_8 (The_Data) then
-      The_Index := The_Data'first + Strings.Bom_8'length;
+    if Text.Has_Bom_8 (The_Data) then
+      The_Index := The_Data'first + Text.Bom_8'length;
     else
       The_Index := The_Data'first;
     end if;

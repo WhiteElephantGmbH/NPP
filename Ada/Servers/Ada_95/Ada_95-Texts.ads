@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Memory;
 
-package Ada_95.Text is
+package Ada_95.Texts is
 
   type Handle is private;
 
@@ -21,4 +21,4 @@ package Ada_95.Text is
 private
   type Handle is access String;
   for Handle'storage_pool use Memory.Pool.all;
-end Ada_95.Text;
+end Ada_95.Texts;

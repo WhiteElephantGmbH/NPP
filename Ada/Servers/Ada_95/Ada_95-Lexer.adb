@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,7 +13,7 @@ with Ada_95.Lexical;
 with Ada_95.Name;
 with Ada_95.Number;
 with Ada_95.Symbol;
-with Ada_95.Text;
+with Ada_95.Texts;
 with Log;
 with Memory;
 
@@ -464,7 +464,7 @@ package body Ada_95.Lexer is
 
         procedure Append_Literal is
         begin
-          Token.Append_Literal (Item         => Text.New_String (String(Line(Token.Position + 1 .. The_Index - 1))),
+          Token.Append_Literal (Item         => Texts.New_String (String(Line(Token.Position + 1 .. The_Index - 1))),
                                 First_Column => Start_Column,
                                 Last_Column  => The_Index - The_Utf8_Offset);
         end Append_Literal;

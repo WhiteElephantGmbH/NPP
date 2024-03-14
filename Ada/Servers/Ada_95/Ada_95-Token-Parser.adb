@@ -10,7 +10,7 @@ with Ada_95.Build;
 with Ada_95.Token.Checker;
 with Indefinite_Doubly_Linked_Lists;
 with Log;
-with Strings;
+with Text;
 
 package body Ada_95.Token.Parser is
 
@@ -4159,7 +4159,7 @@ package body Ada_95.Token.Parser is
         package Library_List is new Indefinite_Doubly_Linked_Lists (Library_Info);
 
         The_Library_List   : Library_List.Item;
-        The_Libraries      : Strings.List;
+        The_Libraries      : Text.List;
 
         procedure Parse_Libraries is
         begin
@@ -4234,7 +4234,7 @@ package body Ada_95.Token.Parser is
             end;
           end Image_Of_Unit;
 
-          The_Interface : Strings.List;
+          The_Interface : Text.List;
 
         begin
           loop

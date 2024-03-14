@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2020 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,7 +10,7 @@ with Ada_95.Rename;
 with Display;
 with File;
 with Log;
-with Strings;
+with Text;
 
 package body Work is
 
@@ -72,7 +72,7 @@ package body Work is
       begin
         The_Start_Time := Ada.Calendar.Clock;
         Ada_95.Rename.Start;
-        if Rename (Strings.Trimmed (Directory)) then
+        if Rename (Text.Trimmed (Directory)) then
           Ada_95.Rename.Finalize;
           Display.Show ("Processed" & Natural'image (Number_Of_Files) & " files in" &
                          Duration'image(Ada.Calendar.Clock - The_Start_Time) & " seconds");

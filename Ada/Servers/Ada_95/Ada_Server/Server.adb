@@ -353,8 +353,8 @@ package body Server is
 
     Used_Token_Image : constant String := Ada_95.Project.Full_Name_Of (Used_Token);
 
-    The_Filenames   : Strings.List;
-    The_Line_Images : Strings.List;
+    The_Filenames   : Text.List;
+    The_Line_Images : Text.List;
     The_References  : Reference_List.Item;
 
     use type Reference_List.Item;
@@ -522,8 +522,8 @@ package body Server is
 
   function Unused return Reference_Data is
 
-    The_Filenames   : Strings.List;
-    The_Line_Images : Strings.List;
+    The_Filenames   : Text.List;
+    The_Line_Images : Text.List;
     The_References  : Reference_List.Item;
 
     use type Reference_List.Item;
@@ -739,7 +739,7 @@ package body Server is
   end Column;
 
 
-  function Names_Of (Item : Strings.List) return String is
+  function Names_Of (Item : Text.List) return String is
   begin
     return Item.To_Data (Names_Separator);
   end Names_Of;

@@ -15,7 +15,7 @@ with Project.Gpr;
 with Project.Resource;
 with Promotion;
 with Server;
-with Strings;
+with Text;
 
 package body Target is
 
@@ -37,7 +37,7 @@ package body Target is
 
     function Error_Image return String is
     begin
-      return Strings.Legible_Of (Ada_95.Project.Error_Kind'image(Ada_95.Project.Error_Kind_Of(The_Error_Token)));
+      return Text.Legible_Of (Ada_95.Project.Error_Kind'image(Ada_95.Project.Error_Kind_Of(The_Error_Token)));
     end Error_Image;
 
     use type Ada_95.Token.Handle;
@@ -57,11 +57,11 @@ package body Target is
 
     Windres : constant String := Project.Tools_Folder & "windres.exe";
 
-    The_Resource_Name : Strings.Element := [Project.Name];
+    The_Resource_Name : Text.String := [Project.Name];
 
-    The_Source_Directory : Strings.Element := [Project.Directory];
+    The_Source_Directory : Text.String := [Project.Directory];
 
-    use type Strings.Element;
+    use type Text.String;
 
     function Resource_Name return String is
     begin
@@ -90,7 +90,7 @@ package body Target is
     function Changed_To_Parent_Resource return Boolean is
       Parent_Directory : constant String := Files.Directory_Of (Source_Directory);
     begin
-      if Strings.Is_Equal (Parent_Directory, Project.Language_Directory) or else
+      if Text.Matches (Parent_Directory, Project.Language_Directory) or else
         not File.Directory_Exists (Parent_Directory)
       then
         if Project.Gpr.File_Is_Generated then
@@ -118,7 +118,7 @@ package body Target is
       Result : constant String := Os.Process.Execution_Of (Executable     => Windres,
                                                            Parameters     => Parameters,
                                                            Current_Folder => Source_Directory);
-      Error_Text : constant String := Strings.Trimmed (Result);
+      Error_Text : constant String := Text.Trimmed (Result);
     begin
       if Error_Text /= "" then
         Log_Error (Error_Text);
@@ -161,13 +161,13 @@ package body Target is
                                                            Parameters     => Gpr_Parameters,
                                                            Environment    => Project.Environment,
                                                            Current_Folder => Project.Created_Target_Folder);
-      Result_Text : constant String := Strings.Trimmed (Result);
+      Result_Text : constant String := Text.Trimmed (Result);
     begin
       if Result_Text = "" then
         return;
       end if;
       Log.Write ("   OUTPUT: <" & Result_Text & ">");
-      if Strings.Location_Of ("Memory region", Result_Text, Result_Text'first) = Result_Text'first then
+      if Text.Location_Of ("Memory region", Result_Text, Result_Text'first) = Result_Text'first then
         return;
       end if;
       declare
@@ -179,7 +179,7 @@ package body Target is
           if Separator = End_Of_Text then
             The_Index := Result_Text'last + 1;
           else
-            The_Index := Strings.Location_Of (Separator, Result_Text, First_Index);
+            The_Index := Text.Location_Of (Separator, Result_Text, First_Index);
           end if;
           declare
             The_Text : constant String := Result_Text(First_Index .. The_Index - 1);
@@ -228,7 +228,7 @@ package body Target is
 
   procedure Compile (Filename : String) is
   begin
-    if Strings.Lowercase_Of(Filename(Filename'last - 2 .. Filename'last)) = "ads" then
+    if Text.Lowercase_Of(Filename(Filename'last - 2 .. Filename'last)) = "ads" then
       Promotion.Set_Message ("Check " & Filename);
       --TEST------------------------------------
       Log_Execution ("Check: " & Filename);
@@ -271,9 +271,9 @@ package body Target is
       Promotion.Set_Message ("Modify " & Project.Modifier_Parameters);
       declare
         Result : constant String
-          := Strings.Trimmed (Os.Process.Execution_Of (Executable    => Modifier,
-                                                       Parameters    => Project.Modifier_Parameters,
-                                                       Handle_Output => False));
+          := Text.Trimmed (Os.Process.Execution_Of (Executable    => Modifier,
+                                                    Parameters    => Project.Modifier_Parameters,
+                                                    Handle_Output => False));
       begin
         if Result /= "" then
           Promotion.Set_Error (Result);

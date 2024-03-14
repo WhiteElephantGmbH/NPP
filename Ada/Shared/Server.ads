@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -15,7 +15,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Strings;
+with Text;
 
 package Server is
 
@@ -188,6 +188,6 @@ package Server is
 
   Names_Separator : constant String := [Ascii.Nul];
 
-  function Names_Of (Item : Strings.List) return String; -- for servers
+  function Names_Of (Item : Text.List) return String; -- for servers
 
 end Server;

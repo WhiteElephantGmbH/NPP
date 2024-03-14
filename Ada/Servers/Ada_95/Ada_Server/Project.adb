@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -28,9 +28,9 @@ package body Project is
 
   Default_Ada_Version : constant String := "gnat2012";
 
-  use type Strings.Item;
+  use type Text.Strings;
 
-  Leaf_Directory_Exceptions : constant Strings.Item := ["$Osx", "$Linux"] + Build.Sub_Directories;
+  Leaf_Directory_Exceptions : constant Text.Strings := ["$Osx", "$Linux"] + Build.Sub_Directories;
 
 
   procedure Set_Confirmation (Message : String := "") is
@@ -48,55 +48,55 @@ package body Project is
   end Confirmation_Message;
 
 
-  The_Actual_Project     : Strings.Element;
-  The_Project_Name       : Strings.Element;
-  The_Project_Directory  : Strings.Element;
-  The_Language_Directory : Strings.Element;
-  The_Source_Root        : Strings.Element;
-  The_Binary_Root        : Strings.Element;
-  The_Product_Directory  : Strings.Element;
-  The_Product_Sub_Path   : Strings.Element;
-  The_Promotion_Areas    : Strings.Element;
-  The_Library_Path       : Strings.Element;
+  The_Actual_Project     : Text.String;
+  The_Project_Name       : Text.String;
+  The_Project_Directory  : Text.String;
+  The_Language_Directory : Text.String;
+  The_Source_Root        : Text.String;
+  The_Binary_Root        : Text.String;
+  The_Product_Directory  : Text.String;
+  The_Product_Sub_Path   : Text.String;
+  The_Promotion_Areas    : Text.String;
+  The_Library_Path       : Text.String;
 
-  The_Ada_Version : Strings.Element;
+  The_Ada_Version : Text.String;
 
-  The_Modifier_Tool       : Strings.Element;
-  The_Modifier_Parameters : Strings.Element;
+  The_Modifier_Tool       : Text.String;
+  The_Modifier_Parameters : Text.String;
 
-  The_Source_Directories : Strings.List;
-  The_Ignore_Areas       : Strings.List;
-  The_Implied_Areas      : Strings.List;
-  The_Reference_Areas    : Strings.List;
-  The_Base_Path          : Strings.List;
-  The_Promotion_List     : Strings.List;
+  The_Source_Directories : Text.List;
+  The_Ignore_Areas       : Text.List;
+  The_Implied_Areas      : Text.List;
+  The_Reference_Areas    : Text.List;
+  The_Base_Path          : Text.List;
+  The_Promotion_List     : Text.List;
 
   Project_Is_Defined      : Boolean := False;
   The_Case_Handling_Style : Case_Modification;
 
-  The_Actual_Tools_Directory : Strings.Element;
+  The_Actual_Tools_Directory : Text.String;
 
   Ada_Project_Path : constant String := "ADA_PROJECT_PATH";
 
-  use type Strings.Element;
+  use type Text.String;
 
 
   procedure Set_Project_Undefined is
   begin
-    Strings.Clear (The_Actual_Project);
-    Strings.Clear (The_Project_Name);
-    Strings.Clear (The_Project_Directory);
-    Strings.Clear (The_Language_Directory);
-    Strings.Clear (The_Source_Root);
-    Strings.Clear (The_Binary_Root);
-    Strings.Clear (The_Product_Directory);
-    Strings.Clear (The_Product_Sub_Path);
-    Strings.Clear (The_Promotion_Areas);
-    Strings.Clear (The_Library_Path);
-    Strings.Clear (The_Ada_Version);
-    Strings.Clear (The_Modifier_Tool);
-    Strings.Clear (The_Modifier_Parameters);
-    Strings.Clear (The_Actual_Tools_Directory);
+    Text.Clear (The_Actual_Project);
+    Text.Clear (The_Project_Name);
+    Text.Clear (The_Project_Directory);
+    Text.Clear (The_Language_Directory);
+    Text.Clear (The_Source_Root);
+    Text.Clear (The_Binary_Root);
+    Text.Clear (The_Product_Directory);
+    Text.Clear (The_Product_Sub_Path);
+    Text.Clear (The_Promotion_Areas);
+    Text.Clear (The_Library_Path);
+    Text.Clear (The_Ada_Version);
+    Text.Clear (The_Modifier_Tool);
+    Text.Clear (The_Modifier_Parameters);
+    Text.Clear (The_Actual_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
     The_Reference_Areas.Clear;
@@ -161,17 +161,10 @@ package body Project is
 
     Product_Id : constant String := "%Product%";
 
-    The_Parameters : Strings.Element := The_Modifier_Parameters;
-
-    From_Index : constant Natural := Strings.Location_Of (Product_Id, In_String => The_Parameters);
+    The_Parameters : Text.String := The_Modifier_Parameters;
 
   begin
-    if From_Index /= Strings.Not_Found then
-      Strings.Replace_Slice (Source => The_Parameters,
-                             Low    => From_Index,
-                             High   => From_Index + Product_Id'length - 1,
-                             By     => Product);
-    end if;
+    The_Parameters.Replace (Product_Id, By => Product);
     return +The_Parameters;
   end Modifier_Parameters;
 
@@ -187,7 +180,7 @@ package body Project is
 
 
   function Product_Name return String is
-    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
+    Tools_Directory_Parts : constant Text.Strings := Text.Strings_Of (Tools_Directory, Files.Separator);
   begin
     if Tools_Directory_Parts.Count >= 2 then
       return Tools_Directory_Parts(Tools_Directory_Parts.Count - 2);
@@ -198,7 +191,7 @@ package body Project is
 
 
   function Product_Version return String is
-    Tools_Directory_Parts : constant Strings.Item := Strings.Item_Of (Tools_Directory, Files.Separator);
+    Tools_Directory_Parts : constant Text.Strings := Text.Strings_Of (Tools_Directory, Files.Separator);
   begin
     if Tools_Directory_Parts.Count >= 2 then
       return Tools_Directory_Parts(Tools_Directory_Parts.Count - 1);
@@ -282,7 +275,7 @@ package body Project is
   function Is_To_Ignore (The_Directory : String) return Boolean is
   begin
     for Area of The_Ignore_Areas loop
-      if Strings.Is_Equal (The_Directory, Source_Folder & Area) then
+      if Text.Matches (The_Directory, Source_Folder & Area) then
         return True;
       end if;
     end loop;
@@ -290,7 +283,7 @@ package body Project is
   end Is_To_Ignore;
 
 
-  function Reference_Areas return Strings.List is
+  function Reference_Areas return Text.List is
   begin
     return The_Reference_Areas;
   end Reference_Areas;
@@ -312,8 +305,8 @@ package body Project is
   end Project_Subdirectory;
 
 
-  function Source_Directories return Strings.List is
-    use type Strings.List;
+  function Source_Directories return Text.List is
+    use type Text.List;
   begin
     if File.Directory_Exists (Project_Subdirectory) then
       return Project_Subdirectory + The_Source_Directories;
@@ -382,7 +375,7 @@ package body Project is
       end if;
       declare
         Path_Value : constant String := Ada.Environment_Variables.Value (Ada_Project_Path);
-        Path_List  : constant Strings.Item := Strings.Item_Of (Path_Value, Separator => ';');
+        Path_List  : constant Text.Strings := Text.Strings_Of (Path_Value, Separator => ';');
       begin
         for Path of Path_List loop
           if File.Exists (Path & Files.Separator & Gpr_File) then
@@ -425,7 +418,7 @@ package body Project is
     else
       Resource.Evaluate_Legacy;
     end if;
-    Strings.Clear (The_Library_Path);
+    Text.Clear (The_Library_Path);
     for Library of The_Libraries loop
       declare
         Gpr_File : constant String := Library & Gpr.File_Extension;
@@ -442,7 +435,7 @@ package body Project is
         when Build.Library_Id_Not_Found =>
           Set_Error ("Library id <" & Library & "> from " & Filename & " not found in " & Definition_File);
         when Build.Library_Id_Ok =>
-          Strings.Append (The_Library_Path, The_Library_Directories.Element(Library) & ";");
+          Text.Append (The_Library_Path, The_Library_Directories.Element(Library) & ";");
         when Build.Library_Ok =>
           null;
         end case;
@@ -515,8 +508,8 @@ package body Project is
   end Has_New_Resource;
 
 
-  procedure Create_Work_Area_For (Project_Parts :     Strings.Item;
-                                  The_Work_Path : out Strings.List) is
+  procedure Create_Work_Area_For (Project_Parts :     Text.Vector;
+                                  The_Work_Path : out Text.List) is
 
     function Part_Of (Index : Positive) return String is
     begin
@@ -525,9 +518,9 @@ package body Project is
 
   begin -- Create_Work_Area_For
     The_Work_Path := The_Base_Path;
-    Strings.Clear (The_Source_Directories);
+    Text.Clear (The_Source_Directories);
     The_Project_Directory := The_Language_Directory;
-    for Index in Strings.First_Index .. Project_Parts.Count - 1 loop
+    for Index in Text.First_Index .. Project_Parts.Count - 1 loop
       declare
         Path : constant String := Ada_95.File.Normalized (Folder & Part_Of (Index));
       begin
@@ -550,17 +543,17 @@ package body Project is
       The_Source_Directories.Append (Source_Folder & Area);
     end loop;
     The_Project_Name := [Part_Of (Project_Parts.Count - 1)];
-    Strings.Clear (The_Product_Sub_Path);
-    for Index in Strings.First_Index .. Project_Parts.Count - 2 loop
+    Text.Clear (The_Product_Sub_Path);
+    for Index in Text.First_Index .. Project_Parts.Count - 2 loop
       declare
         The_Part : constant String := Part_Of (Index);
       begin
-        if Strings.Is_Equal (The_Part, +The_Project_Name) then
+        if Text.Matches (The_Part, The_Project_Name) then
           declare
-            The_Items : constant Strings.Item := Project_Parts.Part (From => Index,
-                                                                     To   => Project_Parts.Count - 2);
+            The_Items : constant Text.Vector := Project_Parts.Part (From => Index,
+                                                                    To   => Project_Parts.Count - 2);
 
-            The_Text : constant String := The_Items.To_Data (Separator => "\");
+            The_Text : constant String := The_Items.To_List.To_Data (Separator => "\");
           begin
             if The_Text /= "" then
               The_Product_Sub_Path := [Ada_95.File.Normalized_Folder ("\" & The_Text)];
@@ -588,7 +581,7 @@ package body Project is
   end Create_Work_Area_For;
 
 
-  procedure Initialize_Project (The_Work_Path : Strings.List) is
+  procedure Initialize_Project (The_Work_Path : Text.List) is
   begin
     Ada_95.Project.Initialize (The_Work_Path);
   end Initialize_Project;
@@ -617,7 +610,7 @@ package body Project is
     end Element_Of;
 
 
-    procedure Define_Location (The_Item    : out Strings.Element;
+    procedure Define_Location (The_Item    : out Text.String;
                                Key         :     String;
                                Application :     String;
                                Root        :     String := "") is
@@ -635,13 +628,13 @@ package body Project is
 
     procedure Define_Ada_Version is
 
-      The_Version : constant String := Strings.Trimmed (Element_For (Application => "Ada", Key => "Version"));
+      The_Version : constant String := Text.Trimmed (Element_For (Application => "Ada", Key => "Version"));
 
     begin
      if The_Version = "" then
        The_Ada_Version := [Default_Ada_Version];
      else
-       The_Ada_Version := [Strings.Lowercase_Of (The_Version)];
+       The_Ada_Version := [Text.Lowercase_Of (The_Version)];
        if not (Ada_Version in "gnat83" | "gnat95" | "gnat05" | "gnat2005" | "gnat12" | "gnat2012" | "gnat2022") then
          Set_Error ("Ada version " & The_Version & " unknown - latest supported version: gnat2022");
        end if;
@@ -652,9 +645,9 @@ package body Project is
     procedure Define_Modifier is
 
       Modifier  : constant String := Element_Of (Application => "Product", Key => "Modifier", Must_Exist => False);
-      Items     : constant Strings.Item := Strings.Item_Of (Modifier, Separator => '|');
-      Tool      : constant String := (if Items.Count > 0 then Strings.Trimmed (Items(Strings.First_Index)) else "");
-      Parameter : constant String := (if Items.Count = 2 then Strings.Trimmed (Items(Strings.First_Index + 1)) else "");
+      Items     : constant Text.Strings := Text.Strings_Of (Modifier, Separator => '|');
+      Tool      : constant String := (if Items.Count > 0 then Text.Trimmed (Items(Text.First_Index)) else "");
+      Parameter : constant String := (if Items.Count = 2 then Text.Trimmed (Items(Text.First_Index + 1)) else "");
 
     begin
       if Modifier = "" then
@@ -677,7 +670,7 @@ package body Project is
 
     procedure Define_Global_Tools is
 
-      The_Directory : constant String := Strings.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
+      The_Directory : constant String := Text.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
 
     begin
      if The_Directory /= "" then
@@ -690,19 +683,19 @@ package body Project is
 
 
     procedure Define_Source_Path (Path_Name  :        String;
-                                  The_Areas  : out    Strings.List;
-                                  The_Path   : in out Strings.List;
+                                  The_Areas  : out    Text.List;
+                                  The_Path   : in out Text.List;
                                   Must_Exist :        Boolean := True) is
 
       Source_Path : constant String := Element_Of (Key         => Path_Name,
                                                    Application => "Source",
                                                    Must_Exist  => Must_Exist);
-      Areas : constant Strings.Item := Strings.Item_Of (Source_Path, Separator => ';');
+      Areas : constant Text.Strings := Text.Strings_Of (Source_Path, Separator => ';');
 
     begin
-      for Index in Strings.First_Index .. Areas.Count loop
+      for Index in Text.First_Index .. Areas.Count loop
         declare
-          Area          : constant String := Strings.Trimmed (Areas(Index));
+          Area          : constant String := Text.Trimmed (Areas(Index));
           The_Directory : constant String := Source_Folder & Area;
         begin
           if not File.Directory_Exists (The_Directory) then
@@ -720,7 +713,7 @@ package body Project is
     begin
       if List /= "" then
         declare
-          Library_Ids : constant Strings.Item := Strings.Item_Of (Strings.Purge_Of (List), Separator => ',');
+          Library_Ids : constant Text.Strings := Text.Strings_Of (Text.Purge_Of (List), Separator => ',');
         begin
           for Library of Library_Ids loop
             declare
@@ -766,7 +759,7 @@ package body Project is
         Actual_Directory : constant String := File.Containing_Directory_Of (Actual_Name);
         Directory_Name   : constant String := File.Base_Name_Of (Actual_Directory);
       begin
-        if Strings.Contains (Build.Sub_Directories, Directory_Name) then
+        if Text.Contains (Build.Sub_Directories, Directory_Name) then
           declare
             Application_Name : constant String := Application_From (File.Containing_Directory_Of (Actual_Directory));
           begin
@@ -785,9 +778,9 @@ package body Project is
 
     Project_Name : constant String :=  Project_Filename_Of (Filename);
 
-    Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Project_Name, Language, The_Language_Directory);
+    Project_Parts : constant Text.Vector := Files.Project_Parts_Of (Project_Name, Language, The_Language_Directory);
 
-    The_Work_Path : Strings.List;
+    The_Work_Path : Text.List;
 
   begin -- Initialized
     Log.Write ("||| Project.Initialize: " & Filename);
@@ -797,7 +790,7 @@ package body Project is
     if The_Configuration_Handle = null then -- only first time because language directory does not change
       The_Configuration_Handle := new Configuration.File_Handle'(Configuration.Handle_For (Definition_File));
     end if;
-    if Strings.Is_Null (The_Language_Directory) then
+    if Text.Is_Null (The_Language_Directory) then
       Set_Error ("Unknown " & Language & " Project for " & Filename);
     elsif not File.Exists (Definition_File) then
       Set_Error ("Project definition file missing: " & Definition_File);
@@ -829,7 +822,7 @@ package body Project is
     Define_Modifier;
     declare
       Case_Update : constant String := Element_Of (Key => "Case_Update", Application => "Style", Must_Exist => False);
-      Token_Kind  : constant String := Strings.Legible_Of (Case_Update);
+      Token_Kind  : constant String := Text.Legible_Of (Case_Update);
     begin
       if Token_Kind = "None" then
         The_Case_Handling_Style := No_Change;
@@ -868,14 +861,14 @@ package body Project is
 
   procedure Change_To (Filename : String) is
 
-    The_Directory : Strings.Element;
+    The_Directory : Text.String;
 
-    Project_Parts : constant Strings.Item := Files.Project_Parts_Of (Filename, Language, The_Directory);
+    Project_Parts : constant Text.Vector := Files.Project_Parts_Of (Filename, Language, The_Directory);
 
-    The_Work_Path : Strings.List;
+    The_Work_Path : Text.List;
 
   begin
-    if not Strings.Is_Equal (+The_Directory, +The_Language_Directory) then
+    if not Text.Matches (The_Directory, The_Language_Directory) then
       raise Program_Error;
     end if;
     The_Phase := Promoting;
@@ -906,9 +899,9 @@ package body Project is
     The_Directory : constant String := Files.Directory_Of (Filename);
   begin
     for Area of Reference_Areas loop
-      if Strings.Is_Equal (The_Directory, Source_Folder & Area) then
+      if Text.Matches (The_Directory, Source_Folder & Area) then
         return True;
-      elsif Strings.Is_Equal (The_Directory, Area) then
+      elsif Text.Matches (The_Directory, Area) then
         return True;
       end if;
     end loop;
@@ -924,7 +917,7 @@ package body Project is
 
   function Is_Program_Unit (Filename : String) return Boolean is
   begin
-    return Strings.Is_Equal (Filename, Program_Unit);
+    return Text.Matches (Filename, Program_Unit);
   end Is_Program_Unit;
 
 
@@ -933,7 +926,7 @@ package body Project is
 
   function Environment return String is
 
-    The_Environment : Strings.Element;
+    The_Environment : Text.String;
 
     function New_Path return String is
     begin
@@ -943,27 +936,27 @@ package body Project is
     procedure Add (Id    : String;
                    Value : String) is
     begin
-      if Strings.Is_Equal (Id, "path") then
-        Strings.Append (The_Environment, Id & '=' & New_Path & Ascii.Nul);
-      elsif Strings.Is_Null (The_Library_Path) then
-        Strings.Append (The_Environment, Id & '=' & Value & Ascii.Nul);
-      elsif Strings.Is_Equal (Id, "gpr_project_path") then
+      if Text.Matches (Id, "path") then
+        Text.Append (The_Environment, Id & '=' & New_Path & Ascii.Nul);
+      elsif Text.Is_Null (The_Library_Path) then
+        Text.Append (The_Environment, Id & '=' & Value & Ascii.Nul);
+      elsif Text.Matches (Id, "gpr_project_path") then
         Log.Write ("||| " & Id & " ignored");
-      elsif Strings.Is_Equal (Id, Ada_Project_Path) then
+      elsif Text.Matches (Id, Ada_Project_Path) then
         null;
       else
-        Strings.Append (The_Environment, Id & '=' & Value & Ascii.Nul);
+        Text.Append (The_Environment, Id & '=' & Value & Ascii.Nul);
       end if;
     end Add;
 
   begin -- Environment
     Ada.Environment_Variables.Iterate (Add'access);
-    if not Strings.Is_Null (The_Library_Path) then
+    if not Text.Is_Null (The_Library_Path) then
       declare
         Ada_Path : constant String := Ada_Project_Path & "=" & The_Library_Path;
       begin
         Log.Write ("||| Environment: " & Ada_Path);
-        Strings.Append (The_Environment, Ada_Path & Ascii.Nul);
+        Text.Append (The_Environment, Ada_Path & Ascii.Nul);
       end;
     end if;
     return +The_Environment;
@@ -997,7 +990,7 @@ package body Project is
         Entry_Name     : constant String := FS.Simple_Name (The_Entry);
         Directory_Name : constant String := FS.Full_Name (The_Entry);
       begin
-        if Strings.Is_Equal (Entry_Name, Area) then
+        if Text.Matches (Entry_Name, Area) then
           return Directory_Name;
         end if;
       end;
@@ -1031,25 +1024,25 @@ package body Project is
 
   function Promotion_Areas return String is (+The_Promotion_Areas);
 
-  function Promotion_List return Strings.List is
+  function Promotion_List return Text.List is
 
-    use type Strings.List;
+    use type Text.List;
 
     Area_List : constant String := Element_For (Key         => "All",
                                                 Application => "Promote");
 
-    Areas : constant Strings.Item := Strings.Item_Of (Area_List, Separator => '+', Symbols => "-");
+    Areas : constant Text.Strings := Text.Strings_Of (Area_List, Separator => '+', Symbols => "-");
 
     Remove_Area : Boolean := False;
 
     Header : constant String := "[Promote] All = " & Area_List & " -> ";
 
   begin -- Define_Promotion_List
-    Strings.Clear (The_Promotion_Areas);
+    Text.Clear (The_Promotion_Areas);
     The_Promotion_List.Clear;
-    for Index in Strings.First_Index .. Areas.Count loop
+    for Index in Text.First_Index .. Areas.Count loop
       declare
-        Item : constant String := Strings.Trimmed (Areas(Index));
+        Item : constant String := Text.Trimmed (Areas(Index));
       begin
         if Item = "-" then
           Remove_Area := True;

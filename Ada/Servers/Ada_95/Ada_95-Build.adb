@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2021 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,27 +13,27 @@ package body Ada_95.Build is
 
   type Tools_Kind is (Size_32, Size_64);
 
-  type Directories is array (Tools_Kind) of Strings.Element;
+  type Directories is array (Tools_Kind) of Text.String;
 
-  The_Project_Folder         : Strings.Element;
+  The_Project_Folder         : Text.String;
   Build_Defined              : Boolean;
   Use_Icon                   : Boolean;
   The_Version                : Version;
   The_Kind                   : Kind;
-  The_Company                : Strings.Element;
-  The_Description            : Strings.Element;
-  The_Global_Tools_Directory : Strings.Element;
+  The_Company                : Text.String;
+  The_Description            : Text.String;
+  The_Global_Tools_Directory : Text.String;
   Global_Tools_In_Use        : Boolean;
-  The_Tools_Directory        : Strings.Element;
+  The_Tools_Directory        : Text.String;
   The_Tools_Kind             : Tools_Kind;
   The_Tools_Directories      : Directories;
   Has_Second_Tools           : Boolean;
-  The_Libraries              : Strings.List;
-  The_Resource               : Strings.Element;
-  The_Interface              : Strings.List;
+  The_Libraries              : Text.List;
+  The_Resource               : Text.String;
+  The_Interface              : Text.List;
   Library_Check              : Library_Check_Function;
 
-  use type Strings.Element;
+  use type Text.String;
 
 
   procedure Initialize (Filename   : String;
@@ -47,17 +47,17 @@ package body Ada_95.Build is
     The_Kind := Windows_Application;
     The_Version := (others => <>);
     if Is_Startup then
-      Strings.Clear (The_Global_Tools_Directory);
-      Strings.Clear (The_Tools_Directory);
-      Strings.Clear (The_Tools_Directories(Size_32));
-      Strings.Clear (The_Tools_Directories(Size_64));
+      Text.Clear (The_Global_Tools_Directory);
+      Text.Clear (The_Tools_Directory);
+      Text.Clear (The_Tools_Directories(Size_32));
+      Text.Clear (The_Tools_Directories(Size_64));
       Has_Second_Tools := False;
     end if;
-    Strings.Clear (The_Company);
-    Strings.Clear (The_Description);
-    Strings.Clear (The_Resource);
-    Strings.Clear (The_Interface);
-    Strings.Clear (The_Libraries);
+    Text.Clear (The_Company);
+    Text.Clear (The_Description);
+    Text.Clear (The_Resource);
+    Text.Clear (The_Interface);
+    Text.Clear (The_Libraries);
   end Initialize;
 
 
@@ -110,12 +110,12 @@ package body Ada_95.Build is
   end Application_Kind_Image;
 
 
-  procedure Define_Interface (Item : Strings.List) is
+  procedure Define_Interface (Item : Text.List) is
   begin
     The_Interface := Item;
   end Define_Interface;
 
-  function Actual_Interface return Strings.List is (The_Interface);
+  function Actual_Interface return Text.List is (The_Interface);
 
 
   procedure Define (Item : Version) is
@@ -194,8 +194,8 @@ package body Ada_95.Build is
     begin
       if Files.Directory_Exists (The_Directory) then
         Has_Second_Tools := False;
-        Strings.Clear (The_Tools_Directories(Size_32));
-        Strings.Clear (The_Tools_Directories(Size_64));
+        Text.Clear (The_Tools_Directories(Size_32));
+        Text.Clear (The_Tools_Directories(Size_64));
         Define_Tools_Directory (The_Directory);
         return True;
       end if;
@@ -222,7 +222,7 @@ package body Ada_95.Build is
     else
       The_Tools_Kind := Size_64;
     end if;
-    if Strings.Is_Null (The_Tools_Directories(The_Tools_Kind)) then
+    if Text.Is_Null (The_Tools_Directories(The_Tools_Kind)) then
       Log.Write ("||| Tools Directory " & Directories_Area & " : " & Location);
       The_Tools_Directories(The_Tools_Kind) := [Location];
       return True;
@@ -240,9 +240,9 @@ package body Ada_95.Build is
     declare
       First_Location : constant String := Tools_Location_Of (First, Global_Tools_In_Use);
     begin
-      Strings.Clear (The_Tools_Directory);
-      Strings.Clear (The_Tools_Directories(Size_32));
-      Strings.Clear (The_Tools_Directories(Size_64));
+      Text.Clear (The_Tools_Directory);
+      Text.Clear (The_Tools_Directories(Size_32));
+      Text.Clear (The_Tools_Directories(Size_64));
       Has_Second_Tools := False;
       if Files.Directory_Exists (First_Location) then
         if Second = "" then
@@ -285,11 +285,11 @@ package body Ada_95.Build is
   end Define_Tools_Directory;
 
 
-  function Has_Global_Tools_Directory return Boolean is (not Strings.Is_Null (The_Global_Tools_Directory));
+  function Has_Global_Tools_Directory return Boolean is (not Text.Is_Null (The_Global_Tools_Directory));
 
-  function Has_Tools_Directory return Boolean is (not Strings.Is_Null (The_Tools_Directory));
+  function Has_Tools_Directory return Boolean is (not Text.Is_Null (The_Tools_Directory));
 
-  function Has_Tools_Directories return Boolean is (not Strings.Is_Null (The_Tools_Directories(The_Tools_Kind)));
+  function Has_Tools_Directories return Boolean is (not Text.Is_Null (The_Tools_Directories(The_Tools_Kind)));
 
   function Compiler_Area return String is (if Has_Tools_Directories then Files.Separator & Directories_Area else "");
 
@@ -361,14 +361,14 @@ package body Ada_95.Build is
   end Check_Of;
 
 
-  procedure Define_Libraries (Item : Strings.List) is
+  procedure Define_Libraries (Item : Text.List) is
   begin
     The_Libraries := Item;
   end Define_Libraries;
 
 
-  function Actual_Libraries return Strings.List is
-    New_Library : Strings.List;
+  function Actual_Libraries return Text.List is
+    New_Library : Text.List;
   begin
     if Has_Tools_Directories then
       for The_Library of The_Libraries loop
@@ -390,7 +390,7 @@ package body Ada_95.Build is
     return False;
   end Defined_Resource;
 
-  function Has_Resource return Boolean is (not Strings.Is_Null (The_Resource));
+  function Has_Resource return Boolean is (not Text.Is_Null (The_Resource));
 
   function Actual_Resource return String is (+The_Resource);
 

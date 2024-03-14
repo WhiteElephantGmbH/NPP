@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,11 +13,11 @@ package body Ada_95.File is
 
   Unit_Separator : constant Character := '-';
 
-  The_Work_Path : Strings.List;
+  The_Work_Path : Text.List;
 
 
   function Normalized (Item : String) return String is
-    The_Item : String := Strings.Trimmed (Item);
+    The_Item : String := Text.Trimmed (Item);
   begin
     for Index in The_Item'range loop
       if The_Item(Index) = Files.Other_Separator then
@@ -41,7 +41,7 @@ package body Ada_95.File is
   end Normalized_Folder;
 
 
-  procedure Define_Work_Path (List : Strings.List) is
+  procedure Define_Work_Path (List : Text.List) is
   begin
     The_Work_Path := List;
   end Define_Work_Path;
@@ -159,7 +159,7 @@ package body Ada_95.File is
 
     The_Attributes : Attributes;
 
-    Filename : constant String := Strings.Trimmed (Name.Image_Of (Id, Separator => Unit_Separator));
+    Filename : constant String := Text.Trimmed (Name.Image_Of (Id, Separator => Unit_Separator));
 
     function Found return Boolean is
       use type Source.Handle;

@@ -1,10 +1,10 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Strings;
+with Text;
 
 package Files is
 
@@ -50,5 +50,5 @@ package Files is
 
   function Project_Parts_Of (Name          :     String;
                              Area          :     String;
-                             The_Directory : out Strings.Element) return Strings.Item;
+                             The_Directory : out Text.String) return Text.Vector;
 end Files;

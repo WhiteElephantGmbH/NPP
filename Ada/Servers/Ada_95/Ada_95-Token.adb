@@ -827,7 +827,7 @@ package body Ada_95.Token is
 
   function Image_Of (Item : String_Literal) return String is
   begin
-    return Text.Image_Of (Item.Handle);
+    return Texts.Image_Of (Item.Handle);
   end Image_Of;
 
   function Kind_Of (Item : String_Literal) return Kind is
@@ -1225,14 +1225,14 @@ package body Ada_95.Token is
   end Operator_Id_Of;
 
 
-  procedure Append_Literal (Item         : Text.Handle;
+  procedure Append_Literal (Item         : Texts.Handle;
                             First_Column : Column_Position;
                             Last_Column  : Column_Position) is
   begin
     Append_Comments_Or_Lines;
     if Next_Is_Identifier or In_Pragma_Call then
       declare
-        Designator : constant String := Text.Operator_Of (Item);
+        Designator : constant String := Texts.Operator_Of (Item);
       begin
         if Designator /= "" then
           if (Designator = "=") or (Designator = "/=") then
@@ -1316,7 +1316,7 @@ package body Ada_95.Token is
       Last_Was_Apostrophe := Item = Lexical.Apostrophe;
       if Last_String /= null then
         declare
-          Designator : constant String := Text.Operator_Of (Last_String.Handle);
+          Designator : constant String := Texts.Operator_Of (Last_String.Handle);
         begin
           if Designator /= "" then
             Replace_String_With_Operator (Designator, Last_String);

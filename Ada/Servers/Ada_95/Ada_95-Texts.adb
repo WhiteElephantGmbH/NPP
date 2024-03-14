@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada.Characters.Handling;
 
-package body Ada_95.Text is
+package body Ada_95.Texts is
 
   function New_String (Item : String) return Handle is
   begin
@@ -66,4 +66,4 @@ package body Ada_95.Text is
     return Item'length + 2;
   end Length_Of;
 
-end Ada_95.Text;
+end Ada_95.Texts;

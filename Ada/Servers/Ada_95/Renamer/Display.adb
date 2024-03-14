@@ -1,12 +1,12 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 with Ada.Text_IO;
 with Log;
-with Strings;
+with Text;
 
 package body Display is
 
@@ -37,7 +37,7 @@ package body Display is
     if The_Error_Count = 0 then
       Show ("No errors found");
     else
-      Show (Strings.Trimmed (The_Error_Count'img) & " error" & (if The_Error_Count > 1 then "s" else "") & " found");
+      Show (Text.Trimmed (The_Error_Count'img) & " error" & (if The_Error_Count > 1 then "s" else "") & " found");
     end if;
   end Show_Result;
 

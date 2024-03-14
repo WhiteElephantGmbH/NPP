@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,7 +13,7 @@ with Log;
 
 package body Ada_95.Project is
 
-  procedure Initialize (Work_Path : Strings.List) is
+  procedure Initialize (Work_Path : Text.List) is
   begin
     File.Define_Work_Path (Work_Path);
     Library.Start;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -16,7 +16,7 @@
 pragma Style_White_Elephant;
 
 with Ada.Unchecked_Conversion;
-with Strings;
+with Text;
 with System;
 with Win32;
 with Win32.Winbase;
@@ -217,7 +217,7 @@ package body Os.Application is
                              The_Name'address,
                              The_Name'length) /= Win32.FALSE
     then
-      The_Index := Strings.Location_Of (Ascii.Nul, The_Name);
+      The_Index := Text.Location_Of (Ascii.Nul, The_Name);
       return The_Name (The_Name'first .. The_Index - 1);
     end if;
     return "";
@@ -320,10 +320,10 @@ package body Os.Application is
   when others =>
     declare
       Version_Numbers : constant Unsigned.Word_String := Unsigned.String_Of (Version);
-      Major_Id        : constant String := Strings.Trimmed (Version_Numbers(Version_Numbers'first + 3)'img);
-      Minor_Id        : constant String := Strings.Trimmed (Version_Numbers(Version_Numbers'first + 2)'img);
-      Variant         : constant String := Strings.Trimmed (Version_Numbers(Version_Numbers'first + 1)'img);
-      Revision        : constant String := Strings.Trimmed (Version_Numbers(Version_Numbers'first)'img);
+      Major_Id        : constant String := Text.Trimmed (Version_Numbers(Version_Numbers'first + 3)'img);
+      Minor_Id        : constant String := Text.Trimmed (Version_Numbers(Version_Numbers'first + 2)'img);
+      Variant         : constant String := Text.Trimmed (Version_Numbers(Version_Numbers'first + 1)'img);
+      Revision        : constant String := Text.Trimmed (Version_Numbers(Version_Numbers'first)'img);
     begin
       return Major_Id & '.' & Minor_Id & '/' & Variant & '-' & Revision;
     end;

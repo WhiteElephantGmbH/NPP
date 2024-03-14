@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -272,7 +272,7 @@ package body Files is
 
 
   function Normalized (Item : String) return String is
-    The_Item : String := Strings.Trimmed (Item);
+    The_Item : String := Text.Trimmed (Item);
   begin
     for Index in The_Item'range loop
       if The_Item(Index) = Other_Separator then
@@ -452,10 +452,10 @@ package body Files is
 
   function Project_Parts_Of (Name          :     String;
                              Area          :     String;
-                             The_Directory : out Strings.Element) return Strings.Item is
+                             The_Directory : out Text.String) return Text.Vector is
 
     The_Index : Natural := Name'first;
-    The_List  : Strings.Item;
+    The_Parts : Text.Vector;
 
   begin
     for Index in Name'range loop
@@ -473,7 +473,7 @@ package body Files is
                     Inner_Part : constant String := Name(Inner_Index + 1 .. The_Index);
                   begin
                     if Inner_Part /= "" then
-                      The_List.Prepend (Inner_Part);
+                      The_Parts.Prepend (Inner_Part);
                     end if;
                   end;
                   The_Index := Inner_Index - 1;
@@ -486,7 +486,7 @@ package body Files is
         The_Index := Index;
       end if;
     end loop;
-    return The_List;
+    return The_Parts;
   end Project_Parts_Of;
 
 end Files;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -8,7 +8,7 @@ with Ada.Tags;
 with Ada_95.Library;
 with Ada.Unchecked_Conversion;
 with Log;
-with Strings;
+with Text;
 with System;
 
 package body Ada_95.Token.Data is
@@ -5363,11 +5363,11 @@ package body Ada_95.Token.Data is
     Image      : constant String := Token.Image_Of(Identifier_Handle(Id).all);
     Annotation : constant Special_Comment_Handle := Line_End_Special_Comment (Id);
   begin
-    if Strings.Location_Of ("Unused", Image) /= Strings.Not_Found then
+    if Text.Location_Of ("Unused", Image) /= Text.Not_Found then
       return True;
-    elsif Strings.Location_Of ("Ignored", Image) /= Strings.Not_Found then
+    elsif Text.Location_Of ("Ignored", Image) /= Text.Not_Found then
       return True;
-    elsif Strings.Location_Of ("Dummy", Image) /= Strings.Not_Found then
+    elsif Text.Location_Of ("Dummy", Image) /= Text.Not_Found then
       return True;
     elsif The_Data /= null and then The_Data.all in Parameter'class then
       return Is_Marked ("UP", Annotation);

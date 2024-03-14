@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -18,7 +18,7 @@ pragma Style_White_Elephant;
 with Ada.Calendar;
 with Ada.Directories;
 with Ada.Iterator_Interfaces;
-with Strings;
+with Text;
 
 package File is
 
@@ -91,11 +91,11 @@ package File is
                   Form          : String := "") renames Ada.Directories.Copy_File;
 
   function Is_Leaf_Directory (Directory  : String;
-                              Exceptions : Strings.Item := Strings.None) return Boolean;
+                              Exceptions : Text.Strings := Text.None) return Boolean;
 
   procedure Iterate_Over_Leaf_Directories (From_Directory : String;
                                            Iterator       : access procedure (Leaf_Directory : String);
-                                           Exceptions     : Strings.Item := Strings.None);
+                                           Exceptions     : Text.Strings := Text.None);
 
   function Found_Directory (Simple_Name  : String;
                             In_Directory : String) return String;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -27,7 +27,7 @@ with Npp.Message;
 with Npp.Plugin;
 with Npp.Tree_View;
 with Scintilla;
-with Strings;
+with Text;
 with System;
 with Win;
 
@@ -84,7 +84,7 @@ package body Client is
 
 
   function No_Buffer return Boolean is
-    Buffer_Filename : constant String := Strings.Trimmed (Buffer_Name);
+    Buffer_Filename : constant String := Text.Trimmed (Buffer_Name);
   begin
     if Buffer_Filename(Buffer_Filename'first .. Buffer_Filename'first + 2) = "new" then
       return True;
@@ -392,7 +392,7 @@ package body Client is
 
     Filename_Item : Npp.Tree_View.Item := Npp.Tree_View.Root;
     Unused        : Npp.Tree_View.Item;
-    The_Line      : Strings.Element;
+    The_Line      : Text.String;
 
     procedure Dispose is new Ada.Unchecked_Deallocation (Server.File_References, Locations);
 
@@ -420,9 +420,9 @@ package body Client is
             Cursor_Mark   : constant Character := Character'val(149);
             Line          : constant String := The_Line_Images (The_Location.Image_Index);
             At_Position   : constant Natural := Line'first + Positive(The_Location.Cursor.Column) - 1;
-            At_Line       : constant String := Strings.Trimmed (The_Location.Cursor.Line'image);
+            At_Line       : constant String := Text.Trimmed (The_Location.Cursor.Line'image);
             Last_Position : Natural := Line'last;
-            use type Strings.Element;
+            use type Text.String;
             use type Server.Line_Counter;
           begin
             if Index /= The_Locations'last then
@@ -436,15 +436,15 @@ package body Client is
                 end if;
               end;
             end if;
-            if Strings.Is_Null (The_Line) then
-              The_Line := [At_Line & ' ' & Strings.Trimmed (Line(Line'first .. At_Position - 1))];
+            if Text.Is_Null (The_Line) then
+              The_Line := [At_Line & ' ' & Text.Trimmed (Line(Line'first .. At_Position - 1))];
             end if;
-            The_Line := The_Line & Cursor_Mark & Line(At_Position .. Last_Position);
+            The_Line.Append (Cursor_Mark & Line(At_Position .. Last_Position));
             if Last_Position = Line'last then
               Unused := Npp.Tree_View.Add (Parent => Filename_Item,
                                            Data   => The_Location'address,
                                            Title  => +The_Line);
-              Strings.Clear (The_Line);
+              Text.Clear (The_Line);
             end if;
           end;
         end;
@@ -489,7 +489,7 @@ package body Client is
   -- Notifications
   ------------------
 
-  The_Known_Extensions : Strings.Element;
+  The_Known_Extensions : Text.String;
 
   procedure Open_Project is
   begin
@@ -519,7 +519,7 @@ package body Client is
         return;
       end if;
       Project_Is_Open := False;
-      Strings.Clear (The_Known_Extensions);
+      Text.Clear (The_Known_Extensions);
       Server.Close_Project;
       Show ("Project closed");
     end if;
@@ -536,9 +536,9 @@ package body Client is
         declare
           Editor    : Scintilla.Object;
           Filename  : constant String := Buffer_Name;
-          Extension : constant String := "|" & Strings.File_Extension_Of (Filename) & "|";
+          Extension : constant String := "|" & Text.File_Extension_Of (Filename) & "|";
         begin
-          if Strings.Location_Of (Extension, The_Known_Extensions) /= Strings.Not_Found then
+          if The_Known_Extensions.Index_Of (Extension) /= Text.Not_Found then
             Scintilla.Create (Editor, Npp.Plugin.Edit_View);
             Scintilla.Define_Styles (Editor);
             Update_Style (Filename, Editor);
@@ -576,7 +576,7 @@ package body Client is
               while not IO.End_Of_File (The_Input_File) loop
                 declare
                   Input_Line  : constant String := IO.Get_Line (The_Input_File);
-                  Output_Line : constant String := Strings.Trimmed_Trailing (Input_Line);
+                  Output_Line : constant String := Text.Trimmed_Trailing (Input_Line);
                 begin
                   if Input_Line'length /= Output_Line'length then
                     Is_Modified := True;

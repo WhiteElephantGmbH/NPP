@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -9,11 +9,11 @@ with Exceptions;
 with Log;
 with Target;
 with Project;
-with Strings;
+with Text;
 
 package body Promotion is
 
-  use type Strings.Element;
+  use type Text.String;
 
 
   task type Handler is
@@ -48,12 +48,12 @@ package body Promotion is
     function Actual_Column return Server.Column_Range;
 
   private
-    The_Message  : Strings.Element;
+    The_Message  : Text.String;
     New_Message  : Boolean := False;
     New_Error    : Boolean := False;
     Is_Complete  : Boolean := False;
-    Last_Message : Strings.Element;
-    The_Filename : Strings.Element;
+    Last_Message : Text.String;
+    The_Filename : Text.String;
     The_Line     : Server.Line_Number;
     The_Column   : Server.Column_Range;
   end Control;
@@ -71,8 +71,8 @@ package body Promotion is
       Target.Promote (Name);
       Set_Message ("Promotion of " & Name & " successfully completed.");
     exception
-    when Text: Error =>
-      Log.Write (Exceptions.Name_Of (Text));
+    when Item: Error =>
+      Log.Write (Exceptions.Name_Of (Item));
     when Item: others =>
       Log.Write ("Promotion.Handler.Promote", Item);
       Set_Message ("Promotion of " & Name & " failed.");
@@ -93,7 +93,7 @@ package body Promotion is
 
       procedure Check_Unused is
         References : constant Server.Reference_Data := Server.Unused;
-        Filenames  : constant Strings.List := Strings.List_Of (References.Filenames, Ascii.Nul);
+        Filenames  : constant Text.List := Text.List_Of (References.Filenames, Ascii.Nul);
       begin
         if Project.Has_Style then
           for The_Filename of Filenames loop
@@ -108,7 +108,7 @@ package body Promotion is
 
     begin -- Promote_All_Projects
       declare
-        Projects : constant Strings.List := Project.Promotion_List;
+        Projects : constant Text.List := Project.Promotion_List;
       begin
         if Projects.Is_Empty then
           Define_Next_Message_Color (Promotion.Blue);
@@ -148,7 +148,7 @@ package body Promotion is
       Set_Message ("Promote all failed.");
     end Promote_All_Projects;
 
-    The_Name : Strings.Element;
+    The_Name : Text.String;
     The_Kind : Server.Promotion_Kind;
 
     use type Server.Promotion_Kind;
@@ -202,7 +202,7 @@ package body Promotion is
 
     procedure Start is
     begin
-      Strings.Clear (The_Message);
+      Text.Clear (The_Message);
       New_Message := False;
       New_Error := False;
       Is_Complete := False;

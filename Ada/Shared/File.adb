@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -172,7 +172,7 @@ package body File is
 
 
   function Is_Leaf_Directory (Directory  : String;
-                              Exceptions : Strings.Item := Strings.None) return Boolean is
+                              Exceptions : Text.Strings := Text.None) return Boolean is
 
     The_Count : Natural := 0;
 
@@ -181,7 +181,7 @@ package body File is
       declare
         Name : constant String := FS.Simple_Name(Directory_Entry);
       begin
-        if not (Name(Name'first) = '.') and then not Strings.Contains (Exceptions, Name) then
+        if not (Name(Name'first) = '.') and then not Exceptions.Contains (Name) then
           The_Count := The_Count + 1;
         end if;
       end;
@@ -204,7 +204,7 @@ package body File is
 
   procedure Iterate_Over_Leaf_Directories (From_Directory : String;
                                            Iterator       : access procedure (Leaf_Directory : String);
-                                           Exceptions     : Strings.Item := Strings.None) is
+                                           Exceptions     : Text.Strings := Text.None) is
     The_Count : Natural := 0;
 
     procedure Iterate_For (Directory_Entry : FS.Directory_Entry_Type) is
@@ -213,7 +213,7 @@ package body File is
         Name      : constant String := FS.Simple_Name(Directory_Entry);
         Directory : constant String := FS.Full_Name(Directory_Entry);
       begin
-        if not (Name(Name'first) in '.') and then not Strings.Contains (Exceptions, Name) then
+        if not (Name(Name'first) in '.') and then not Exceptions.Contains (Name) then
           The_Count := The_Count + 1;
           Iterate_Over_Leaf_Directories (Directory, Iterator, Exceptions);
         end if;
@@ -251,7 +251,7 @@ package body File is
         Name      : constant String := FS.Simple_Name (The_Entry);
         Directory : constant String := FS.Full_Name (The_Entry);
       begin
-        if Strings.Is_Equal (Name, Simple_Name) then
+        if Text.Matches (Name, Simple_Name) then
           return Directory;
         elsif Name(Name'first) = '.' then
           null;

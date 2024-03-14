@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -31,9 +31,9 @@ package body Server is
   The_Data   : aliased Source_Buffer;
   for The_Data'alignment use 4;
 
-  The_Message : Strings.Element;
+  The_Message : Text.String;
 
-  use type Strings.Element;
+  use type Text.String;
 
 
   procedure Read_Data is
@@ -240,7 +240,7 @@ package body Server is
 
   The_Actual_Column   : Column_Range;
   The_Actual_Line     : Line_Number;
-  The_Actual_Filename : Strings.Element;
+  The_Actual_Filename : Text.String;
 
 
   procedure Read_Filename is
@@ -411,7 +411,7 @@ package body Server is
   end Line;
 
 
-  function Names_Of (Item : Strings.List) return String is
+  function Names_Of (Item : Text.List) return String is
   begin
     raise Program_Error;
     return "";

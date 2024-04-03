@@ -196,6 +196,11 @@ package body Ada_95.Build is
         Has_Second_Tools := False;
         Text.Clear (The_Tools_Directories(Size_32));
         Text.Clear (The_Tools_Directories(Size_64));
+        if Is_Size_32 (The_Directory) then
+          The_Tools_Kind := Size_32;
+        else
+          The_Tools_Kind := Size_64;
+        end if;
         Define_Tools_Directory (The_Directory);
         return True;
       end if;

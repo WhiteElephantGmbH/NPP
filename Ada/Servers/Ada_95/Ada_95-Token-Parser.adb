@@ -10179,7 +10179,16 @@ package body Ada_95.Token.Parser is
         if Profile.Result_Type = null then
           Dummy := Expression ((Scope, null));
         else
-          Dummy := Expression ((Scope, Profile.Result_Type));
+          declare
+            Saved_Token : constant Lexical_Handle := The_Token;
+            Result_Type : Data_Handle;
+          begin
+            Result_Type := Expression ((Scope, Profile.Result_Type));
+            if Result_Type = null then -- if no result (tagged type ?)
+              The_Token := Saved_Token;
+              Result_Type := Expression ((Scope, null)); -- don't use profile
+            end if;
+          end;
         end if;
         if Element_Is (Lexical.Colon) then
           declare

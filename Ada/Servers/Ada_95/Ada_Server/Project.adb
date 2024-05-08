@@ -26,7 +26,8 @@ package body Project is
 
   Body_Extension : constant String := ".adb";
 
-  Default_Ada_Version : constant String := "gnat2012";
+  Default_Ada_Version : constant String := "gnat2022";
+  Legacy_Ada_Version  : constant String := "gnat2012";
 
   use type Text.Strings;
 
@@ -172,7 +173,7 @@ package body Project is
   function Ada_Version return String is
   begin
     if Product_Version = Legacy_Product_Version then
-      return Default_Ada_Version;
+      return Legacy_Ada_Version;
     else
       return +The_Ada_Version;
     end if;

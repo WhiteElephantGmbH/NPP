@@ -249,7 +249,7 @@ package body Build_Parser is
                   Define_Compiler;
                 elsif Attribute_Name = "Compilers" then
                   Define_Compilers;
-                elsif Attribute_Name = "Desciption" then
+                elsif Attribute_Name = "Description" then
                   Build.Define_Description (Attribute);
                 elsif Attribute_Name = "Kind" then
                   Define_Kind;

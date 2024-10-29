@@ -2069,6 +2069,10 @@ package body Ada_95.Token.Data is
       if Unit.Parent = Data.Type_Handle(The_Type).Parent then
         The_Methods.Prepend (Data_Handle(Unit));
         Unit.Is_Used := True;
+      elsif Unit.Parent.Data_Kind_Of = Is_Private_Block then
+        if Unit.Parent.Parent = Data.Type_Handle(The_Type).Parent then
+          The_Methods.Prepend (Data_Handle(Unit));
+        end if;
       end if;
     end Prepend_Unit_To;
 
@@ -3365,9 +3369,13 @@ package body Ada_95.Token.Data is
                                    Overload      => null,
                                    Declarations  => Tree.Empty);
     end if;
-    return Declared_Subprogram (Id   => Id,
-                                To   => Parent,
-                                Item => Self);
+    Self := Declared_Subprogram (Id   => Id,
+                                 To   => Parent,
+                                 Item => Self);
+    if Subprogram_Body_Handle(Self).Specification = null then
+      Handle_Methods (Profile, Self);
+    end if;
+    return Self;
   end New_Subprogram_Body;
 
   ----------------------------------------------------------------------------------------------------------------------

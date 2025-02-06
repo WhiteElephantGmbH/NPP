@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -268,19 +268,39 @@ package body Target is
     Modifier : constant String := Project.Modifier_Tool;
   begin
     if Modifier /= "" then
-      Promotion.Set_Message ("Modify " & Project.Modifier_Parameters);
+      if Project.Modifier_Success = "" then
+        Promotion.Set_Message ("Modify " & Project.Modifier_Parameters);
+      end if;
       declare
         Result : constant String
           := Text.Trimmed (Os.Process.Execution_Of (Executable    => Modifier,
                                                     Parameters    => Project.Modifier_Parameters,
                                                     Handle_Output => False));
       begin
-        if Result /= "" then
+        if Result = "" then
+          if Project.Modifier_Success /= "" then
+            Promotion.Set_Message (Project.Modifier_Success);
+          end if;
+        else
           Promotion.Set_Error (Result);
         end if;
       end;
     end if;
   end Modifier_Handling;
+
+
+  procedure Installation_Handling is
+    Destination : constant String := Project.Installation_Destination;
+  begin
+    if Destination /= "" then
+      File.Delete (Destination);
+      File.Rename (Project.Product, Destination);
+      Promotion.Set_Message ("Successfully installed " & Project.Name);
+    end if;
+  exception
+  when others =>
+    Promotion.Set_Error ("Installation of " & Project.Name & " failed");
+  end Installation_Handling;
 
 
   procedure Promote (Filename : String) is
@@ -295,6 +315,7 @@ package body Target is
         end if;
         Build (Filename);
         Modifier_Handling;
+        Installation_Handling;
       else
         if Project.Is_Maching (Filename) then
           Compile (Filename);

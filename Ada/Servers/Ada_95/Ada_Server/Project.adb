@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -21,6 +21,9 @@ with Server;
 with Target;
 
 package body Project is
+
+  package Installations is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
+                                                                       Element_Type => String);
 
   Language : constant String := "Ada";
 
@@ -64,6 +67,9 @@ package body Project is
 
   The_Modifier_Tool       : Text.String;
   The_Modifier_Parameters : Text.String;
+  The_Modifier_Message    : Text.String;
+
+  The_Installation_Map : Installations.Map;
 
   The_Source_Directories : Text.List;
   The_Ignore_Areas       : Text.List;
@@ -97,6 +103,7 @@ package body Project is
     Text.Clear (The_Ada_Version);
     Text.Clear (The_Modifier_Tool);
     Text.Clear (The_Modifier_Parameters);
+    Text.Clear (The_Modifier_Message);
     Text.Clear (The_Actual_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
@@ -108,6 +115,7 @@ package body Project is
     The_Library_Directories.Clear;
     The_Library_Names.Clear;
     The_Library_Sources.Clear;
+    The_Installation_Map.Clear;
     Project_Is_Defined := False;
   end Set_Project_Undefined;
 
@@ -168,6 +176,23 @@ package body Project is
     The_Parameters.Replace (Product_Id, By => Product);
     return +The_Parameters;
   end Modifier_Parameters;
+
+
+  function Installation_Destination return String is
+    Cursor : constant Installations.Cursor := The_Installation_Map.Find (Name);
+  begin
+    if Installations.Has_Element (Cursor) then
+      return Installations.Element (Cursor);
+    else
+      return "";
+    end if;
+  end Installation_Destination;
+
+
+  function Modifier_Success return String is
+  begin
+    return +The_Modifier_Message;
+  end Modifier_Success;
 
 
   function Ada_Version return String is
@@ -597,6 +622,12 @@ package body Project is
 
   function Initialized (Filename : String) return Boolean is
 
+    procedure Ini_Error (Message : String) with No_Return is
+    begin
+      Set_Error ("Error in '" & Definition_File & "' - " & Message);
+    end Ini_Error;
+
+
     function Element_Of (Key         : String;
                          Application : String;
                          Must_Exist  : Boolean := True) return String is
@@ -605,7 +636,7 @@ package body Project is
 
     begin
       if Must_Exist and Element = "" then
-        Set_Error ("<[" & Application & "] " & Key & "> undefined in " & Definition_File);
+        Ini_Error ("<[" & Application & "] " & Key & "> undefined");
       end if;
       return Element;
     end Element_Of;
@@ -621,7 +652,7 @@ package body Project is
 
     begin
       if not File.Directory_Exists (The_Directory) then
-        Set_Error (Application & " " & Key & " <" & The_Directory & "> unknown");
+        Ini_Error (Application & " " & Key & " <" & The_Directory & "> unknown");
       end if;
       The_Item := [Ada_95.File.Normalized (Location)];
     end Define_Location;
@@ -637,7 +668,7 @@ package body Project is
      else
        The_Ada_Version := [Text.Lowercase_Of (The_Version)];
        if not (Ada_Version in "gnat83" | "gnat95" | "gnat05" | "gnat2005" | "gnat12" | "gnat2012" | "gnat2022") then
-         Set_Error ("Ada version " & The_Version & " unknown - latest supported version: gnat2022");
+         Ini_Error ("Ada version " & The_Version & " unknown - latest supported version: gnat2022");
        end if;
      end if;
     end Define_Ada_Version;
@@ -647,26 +678,80 @@ package body Project is
 
       Modifier  : constant String := Element_Of (Application => "Product", Key => "Modifier", Must_Exist => False);
       Items     : constant Text.Strings := Text.Strings_Of (Modifier, Separator => '|');
-      Tool      : constant String := (if Items.Count > 0 then Text.Trimmed (Items(Text.First_Index)) else "");
-      Parameter : constant String := (if Items.Count = 2 then Text.Trimmed (Items(Text.First_Index + 1)) else "");
+      Tool      : constant String := (if Items.Count > 0 then Items(Text.First_Index) else "");
+      Parameter : constant String := (if Items.Count > 1 then Items(Text.First_Index + 1) else "");
+      Message   : constant String := (if Items.Count = 3 then Items(Text.First_Index + 2) else "");
 
     begin
       if Modifier = "" then
         return;
-      elsif Items.Count > 2 then
-        Set_Error ("Modifier incorrect parameters");
+      elsif Items.Count > 3 then
+        Ini_Error ("Product syntax: Modifier = 'tool' ['parameters' ['success message']]");
       elsif Tool = "" then
-        Set_Error ("Product Modifier not defined");
+        Ini_Error ("Product Modifier <tool> not defined");
       elsif not File.Exists (Tool) then
-        Set_Error ("Product Modifier <" & Tool & "> unknown");
+        Ini_Error ("Product Modifier <" & Tool & "> unknown");
       end if;
       The_Modifier_Tool := [Tool];
       Log.Write ("||| Modifier - Tool       : " & Modifier_Tool);
-      if Items.Count = 2 then
+      if Items.Count >= 2 then
         The_Modifier_Parameters := [Parameter];
         Log.Write ("|||          - Parameters : " & The_Modifier_Parameters);
       end if;
+      if Items.Count = 3 then
+        The_Modifier_Message := [Message];
+        Log.Write ("|||          - Message : " & The_Modifier_Message);
+      end if;
     end Define_Modifier;
+
+
+    function Is_Product_Name (Base_Name : String) return Boolean is
+
+      Product_Exists : Boolean := False;
+
+      procedure Iterator (The_Directory : String) is
+      begin
+         if File.Base_Name_Of (The_Directory) = Base_Name then
+           Product_Exists := True;
+         end if;
+      end Iterator;
+
+    begin -- Is_Product_Name
+      File.Iterate_Over_Leaf_Directories (Language_Directory, Iterator'access);
+      return Product_Exists;
+    end Is_Product_Name;
+
+
+    procedure Define_Installations is
+
+      procedure Add_Installation (Item : Text.Strings) is
+        Install_Name : constant String := (if Item.Count > 0 then Item(Text.First_Index) else "");
+        Destination  : constant String := (if Item.Count > 1 then Item(Text.First_Index + 1) else "");
+      begin
+        if Item.Count /= 2 then
+          Ini_Error ("Product syntax: Install = [item {'|' item}] - Item => 'project name' > 'destination filename'");
+        elsif not Is_Product_Name (Install_Name) then
+          Ini_Error ("Product Install: project name '" & Install_Name & "' not found");
+        elsif File.Directory_Exists (Destination) then
+          Ini_Error ("Product Install: destination '" & Destination & "' is not a file");
+        elsif not File.Directory_Exists (File.Containing_Directory_Of (Destination)) then
+          Ini_Error ("Product Install: destination directory for '" & Destination & "' not found");
+        end if;
+        The_Installation_Map.Include (Install_Name, Destination);
+        Log.Write ("||| Install - " & Install_Name & " -> " & Destination);
+      end Add_Installation;
+
+      Install_List : constant String := Element_Of (Application => "Product", Key => "Install", Must_Exist => False);
+      Items        : constant Text.Strings := Text.Strings_Of (Install_List, Separator => '|');
+
+    begin -- Define_Installations
+      if Items.Count = 0 then
+        return;
+      end if;
+      for Installation of Items loop
+        Add_Installation (Text.Strings_Of (Installation, Separator => '>'));
+      end loop;
+    end Define_Installations;
 
 
     procedure Define_Global_Tools is
@@ -676,7 +761,7 @@ package body Project is
     begin
      if The_Directory /= "" then
        if not File.Directory_Exists (The_Directory) then
-         Set_Error ("Tools Directory <" & The_Directory & "> Unknown");
+         Ini_Error ("Tools Directory <" & The_Directory & "> Unknown");
        end if;
        Build.Define_Global_Tools_Directory (The_Directory);
      end if;
@@ -700,7 +785,7 @@ package body Project is
           The_Directory : constant String := Source_Folder & Area;
         begin
           if not File.Directory_Exists (The_Directory) then
-            Set_Error ("Unknown source directory <" & The_Directory & ">");
+            Ini_Error ("Unknown source directory <" & The_Directory & ">");
           end if;
           The_Areas.Append (Ada_95.File.Normalized (Area));
           The_Path.Append (Ada_95.File.Normalized_Folder (The_Directory));
@@ -722,7 +807,7 @@ package body Project is
               Gpr_File : constant String := File.Name_Of (Gpr_Name, Gpr.File_Extension);
             begin
               if not File.Exists(Gpr_File) then
-                Set_Error ("File " & Gpr_File & " not found for " & Library & " in " & Definition_File);
+                Ini_Error ("File " & Gpr_File & " not found for " & Library);
               end if;
               declare
                 Gpr_Info         : constant Gpr.Information := Gpr.Information_Of (Gpr_File);
@@ -731,15 +816,15 @@ package body Project is
                 Gpr_Source_Path  : constant String := +Gpr_Info.Source_Path;
               begin
                 if Gpr_Project_Name = "" then
-                  Set_Error ("Library project name for " & Library & " not found in " & Gpr_File);
+                  Ini_Error ("Library project name for " & Library & " not found in " & Gpr_File);
                 end if;
                 if Gpr_Source_Path = "" then
-                  Set_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
+                  Ini_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
                 elsif not File.Directory_Exists (Gpr_Source_Path) then
-                  Set_Error (Gpr_Source_Path & " for " & Library & " not found in " & Gpr_File);
+                  Ini_Error (Gpr_Source_Path & " for " & Library & " not found in " & Gpr_File);
                 end if;
                 if The_Library_Names.Contains (Library) then
-                  Set_Error ("Library " & Library & " defined twice in " & Definition_File);
+                  Ini_Error ("Library " & Library & " defined twice in " & Definition_File);
                 end if;
                 The_Library_Names.Insert (Key => Library, New_Item => Gpr_Project_Name);
                 The_Library_Directories.Insert (Key => Library, New_Item => Gpr_Directory);
@@ -821,6 +906,7 @@ package body Project is
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
     Define_Ada_Version;
     Define_Modifier;
+    Define_Installations;
     declare
       Case_Update : constant String := Element_Of (Key => "Case_Update", Application => "Style", Must_Exist => False);
       Token_Kind  : constant String := Text.Legible_Of (Case_Update);

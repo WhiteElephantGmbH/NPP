@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -28,7 +28,7 @@ package Project is
   function Product_Sub_Path return String;
 
   function Is_Dll return Boolean;
-  
+
   function Has_Style return Boolean;
 
   function Product return String;
@@ -62,6 +62,10 @@ package Project is
   function Modifier_Tool return String;
 
   function Modifier_Parameters return String;
+
+  function Modifier_Success return String;
+
+  function Installation_Destination return String;
 
   function Language_Directory return String;
 

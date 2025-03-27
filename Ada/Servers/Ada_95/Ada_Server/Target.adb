@@ -294,7 +294,7 @@ package body Target is
   begin
     if Destination /= "" then
       File.Delete (Destination);
-      File.Rename (Project.Product, Destination);
+      File.Copy (Project.Product, Destination, "mode=overwrite,preserve=timestamps");
       Promotion.Set_Message ("Successfully installed " & Project.Name);
     end if;
   exception

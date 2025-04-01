@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -20,6 +20,8 @@ with Scintilla;
 package Npp.Plugin is
 
   type Callback is access procedure;
+
+  procedure Install_Termination (Handler : Callback);
 
   Too_Many_Commands : exception;
 
@@ -52,6 +54,18 @@ package Npp.Plugin is
   function Edit_View return Win.HWND;
 
   function All_Files_Saved return Boolean;
+
+  procedure Hide_Menu;
+
+  procedure Show_Menu;
+
+  procedure Hide_Tab_Bar;
+
+  procedure Show_Tab_Bar;
+
+  procedure Hide_Tool_Bar;
+
+  procedure Show_Tool_Bar;
 
 
   ---------------

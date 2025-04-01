@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -21,15 +21,23 @@ with Definite_Doubly_Linked_Lists;
 
 package body Npp.Plugin is
 
+  Client_Termination : Callback := null;
+
+  procedure Install_Termination (Handler : Callback) is
+  begin
+    Client_Termination := Handler;
+  end Install_Termination;
+
+
   Max_Functions : constant := 8;
 
-  subtype Function_Count is Win.INT range 0..Max_Functions;
+  subtype Function_Count is Win.INT range 0 .. Max_Functions;
 
-  subtype Function_Range is Function_Count range 1..Function_Count'last;
+  subtype Function_Range is Function_Count range 1 .. Function_Count'last;
 
   Item_Name_Length : constant := 64;
 
-  subtype Item_Name is Win.WCHAR_Array (1..Item_Name_Length);
+  subtype Item_Name is Win.WCHAR_Array (1 .. Item_Name_Length);
 
   type Callbacks is array (Function_Range) of Callback;
 
@@ -48,11 +56,11 @@ package body Npp.Plugin is
   function Convert is new Ada.Unchecked_Conversion (System.Address, Win.LPARAM);
 
 
-  The_Name : aliased Wide_String (1..256) := [others => Wide_Nul];
+  The_Name : aliased Wide_String (1 .. 256) := [others => Wide_Nul];
 
   procedure Define (Wide_Name : Wide_String) is
   begin
-    The_Name(1..Wide_Name'length) := Wide_Name;
+    The_Name(1 .. Wide_Name'length) := Wide_Name;
   end Define;
 
 
@@ -286,6 +294,66 @@ package body Npp.Plugin is
   end All_Files_Saved;
 
 
+  procedure Hide_Menu is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDEMENU,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.TRUE));
+  end Hide_Menu;
+
+
+  procedure Show_Menu is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDEMENU,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.FALSE));
+  end Show_Menu;
+
+
+  procedure Hide_Tab_Bar is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDETABBAR,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.TRUE));
+  end Hide_Tab_Bar;
+
+
+  procedure Show_Tab_Bar is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDETABBAR,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.FALSE));
+  end Show_Tab_Bar;
+
+
+  procedure Hide_Tool_Bar is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDETOOLBAR,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.TRUE));
+  end Hide_Tool_Bar;
+
+
+  procedure Show_Tool_Bar is
+    Dummy : Win.LRESULT;
+  begin
+    Dummy := Win.Send_Message (To   => The_Info.Npp_Handle,
+                               Msg  => Npp.M_HIDETOOLBAR,
+                               Wpar => 0,
+                               Lpar => Win.LPARAM(Win.FALSE));
+  end Show_Tool_Bar;
+
+
   ---------------
   -- Interface --
   ---------------
@@ -355,7 +423,9 @@ package body Npp.Plugin is
     when Npp.N_FILESAVED =>
       Call (File_Saved_Callbacks);
     when Npp.N_SHUTDOWN =>
-      null;
+      if Client_Termination /= null then
+        Client_Termination.all;
+      end if;
     when Scintilla.SCN_UPDATEUI =>
       Call (Buffer_Updated_Callbacks);
     when others =>

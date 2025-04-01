@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -223,9 +223,19 @@ package body Client is
   -- Promoting --
   ---------------
 
-  Error_Is_Set : Boolean := False;
+  task type Control is
 
-  procedure Promote (Kind : Server.Promotion_Kind := Server.Normal) is
+    entry Promote (Kind : Server.Promotion_Kind);
+
+    entry Termination;
+
+  end Control;
+
+
+  Error_Is_Set : Boolean := False;
+  The_Control  : access Control;
+
+  procedure Promoting (Kind : Server.Promotion_Kind := Server.Normal) is
     Editor : Scintilla.Object;
   begin
     Npp.Message.Clear;
@@ -255,9 +265,62 @@ package body Client is
       end if;
     end if;
   exception
-  when others =>
-    Show_Error ("Promotion Failed");
-    raise;
+  when Item: others =>
+    Log.Write ("Client.Promoting", Item);
+    Show_Error ("Promoting failed");
+  end Promoting;
+
+
+  task body Control is
+    The_Kind : Server.Promotion_Kind;
+  begin
+    Log.Write ("Client.Control.Started");
+    loop
+      select
+        accept Promote (Kind : Server.Promotion_Kind) do
+          The_Kind := Kind;
+        end Promote;
+        Promoting (The_Kind);
+        Npp.Plugin.Show_Menu;
+        Npp.Plugin.Show_Tab_Bar;
+        Npp.Plugin.Show_Tool_Bar;
+      or
+        accept Termination;
+        exit;
+      end select;
+    end loop;
+    Log.Write ("Client.Control.Terminated");
+  exception
+  when Item: others =>
+    Log.Write ("Client.Control", Item);
+  end Control;
+
+
+  procedure Termination is
+  begin
+    The_Control.Termination;
+    The_Control := null;
+  exception
+  when Item: others =>
+    Log.Write ("Client.Termination", Item);
+  end Termination;
+
+
+  procedure Promote (Kind : Server.Promotion_Kind := Server.Normal) is
+  begin
+    case Kind is
+    when Server.All_Projects =>
+      if The_Control = null then
+        The_Control := new Control;
+        Npp.Plugin.Install_Termination (Termination'access);
+      end if;
+      Npp.Plugin.Hide_Menu;
+      Npp.Plugin.Hide_Tab_Bar;
+      Npp.Plugin.Hide_Tool_Bar;
+      The_Control.Promote (Kind);
+    when Server.Normal | Server.Run =>
+      Promoting (Kind);
+    end case;
   end Promote;
 
 

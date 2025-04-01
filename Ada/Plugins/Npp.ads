@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -54,6 +54,12 @@ package Npp with Pure => True is
 
   MSG : constant := Win.WM_USER + 1000;
 
+  M_DMMSHOW : constant := MSG + 30;
+  -- void NPPM_DMMSHOW(0, tTbData->hClient)
+
+  M_DMMHIDE	: constant := MSG + 31;
+  -- void NPPM_DMMHIDE(0, tTbData->hClient)
+
   M_SWITCHTOFILE : constant := MSG + 37;
   -- BOOL NPPM_SWITCHTOFILE(0, TCHAR *filePathName2switch)
   -- The return value is TRUE (1) if the operation is successful, otherwise FALSE (0).
@@ -64,6 +70,26 @@ package Npp with Pure => True is
 
   M_RELOADFILE : constant := MSG + 36;
   -- BOOL NPPM_RELOADFILE(BOOL withAlert, TCHAR *filePathName2Reload)
+
+  M_HIDETABBAR : constant := MSG + 51;
+  -- BOOL NPPM_HIDETABBAR(0, BOOL hideOrNot)
+  -- if hideOrNot is set as TRUE then tab bar will be hidden otherwise it'll be shown.
+  -- return value : the old status value
+
+  M_HIDETOOLBAR : constant := MSG + 70;
+  -- BOOL NPPM_HIDETOOLBAR(0, BOOL hideOrNot)
+  -- if hideOrNot is set as TRUE then tool bar will be hidden otherwise it'll be shown.
+  -- return value : the old status value
+
+  M_HIDEMENU : constant := MSG + 72;
+  -- BOOL NPPM_HIDEMENU(0, BOOL hideOrNot)
+  -- if hideOrNot is set as TRUE then menu will be hidden otherwise it'll be shown.
+  -- return value : the old status value
+
+  M_HIDESTATUSBAR : constant := MSG + 74;
+  -- BOOL NPPM_HIDEMENU(0, BOOL hideOrNot)
+  -- if hideOrNot is set as TRUE then status bar will be hidden otherwise it'll be shown.
+  -- return value : the old status value
 
   M_DOOPEN : constant := MSG + 77;
   -- BOOL NPPM_DOOPEN(0, const TCHAR *fullPathName2Open)

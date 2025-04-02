@@ -308,19 +308,14 @@ package body Client is
 
   procedure Promote (Kind : Server.Promotion_Kind := Server.Normal) is
   begin
-    case Kind is
-    when Server.All_Projects =>
-      if The_Control = null then
-        The_Control := new Control;
-        Npp.Plugin.Install_Termination (Termination'access);
-      end if;
-      Npp.Plugin.Hide_Menu;
-      Npp.Plugin.Hide_Tab_Bar;
-      Npp.Plugin.Hide_Tool_Bar;
-      The_Control.Promote (Kind);
-    when Server.Normal | Server.Run =>
-      Promoting (Kind);
-    end case;
+    Npp.Plugin.Hide_Menu;
+    Npp.Plugin.Hide_Tab_Bar;
+    Npp.Plugin.Hide_Tool_Bar;
+    if The_Control = null then
+      The_Control := new Control;
+      Npp.Plugin.Install_Termination (Termination'access);
+    end if;
+    The_Control.Promote (Kind);
   end Promote;
 
 

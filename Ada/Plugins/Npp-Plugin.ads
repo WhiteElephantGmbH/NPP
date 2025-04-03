@@ -67,6 +67,9 @@ package Npp.Plugin is
 
   procedure Show_Tool_Bar;
 
+  procedure Hide_Header;
+
+  procedure Show_Header;
 
   ---------------
   -- Interface --

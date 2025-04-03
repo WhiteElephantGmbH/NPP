@@ -70,6 +70,7 @@ package body Client is
 
   procedure Show_Error (Message : String) is
   begin
+    Npp.Plugin.Show_Header;
     Show ("%r" & Message);
   end Show_Error;
 
@@ -225,27 +226,25 @@ package body Client is
 
   task type Control is
 
-    entry Promote (Kind : Server.Promotion_Kind);
+    entry Promotion (Message : String);
 
     entry Termination;
 
   end Control;
 
-
   Error_Is_Set : Boolean := False;
   The_Control  : access Control;
 
-  procedure Promoting (Kind : Server.Promotion_Kind := Server.Normal) is
+
+  procedure Promoting (Message : String := "") is
     Editor : Scintilla.Object;
   begin
-    Npp.Message.Clear;
-    if No_Project or else not All_Saved then
-      return;
+    if Message /= "" then
+      Show (Message);
+      while Server.Has_Promotion_Message loop
+        Show (Server.Message);
+      end loop;
     end if;
-    Server.Promote (Buffer_Name, Kind);
-    while Server.Has_Promotion_Message loop
-      Show (Server.Message);
-    end loop;
     if Server.Has_Promotion_Error then
       Show_Error (Server.Message);
       if Server.Filename /= "" then
@@ -263,6 +262,8 @@ package body Client is
           Show_Error (Server.Filename & " - Column:" & Long_Integer(Server.Column)'img);
         end if;
       end if;
+    else
+      Npp.Plugin.Show_Header;
     end if;
   exception
   when Item: others =>
@@ -272,18 +273,15 @@ package body Client is
 
 
   task body Control is
-    The_Kind : Server.Promotion_Kind;
+    The_Message : Text.String;
   begin
     Log.Write ("Client.Control.Started");
     loop
       select
-        accept Promote (Kind : Server.Promotion_Kind) do
-          The_Kind := Kind;
-        end Promote;
-        Promoting (The_Kind);
-        Npp.Plugin.Show_Menu;
-        Npp.Plugin.Show_Tab_Bar;
-        Npp.Plugin.Show_Tool_Bar;
+        accept Promotion (Message : String) do
+          The_Message := [Message];
+        end Promotion;
+        Promoting (The_Message.To_String);
       or
         accept Termination;
         exit;
@@ -306,16 +304,41 @@ package body Client is
   end Termination;
 
 
-  procedure Promote (Kind : Server.Promotion_Kind := Server.Normal) is
+  procedure Controlled_Promoting (Message : String) is
   begin
-    Npp.Plugin.Hide_Menu;
-    Npp.Plugin.Hide_Tab_Bar;
-    Npp.Plugin.Hide_Tool_Bar;
+    Npp.Plugin.Hide_Header;
     if The_Control = null then
       The_Control := new Control;
       Npp.Plugin.Install_Termination (Termination'access);
     end if;
-    The_Control.Promote (Kind);
+    The_Control.Promotion (Message);
+  end Controlled_Promoting;
+
+
+  procedure Promote (Kind : Server.Promotion_Kind := Server.Normal) is
+
+     use type Server.Promotion_Kind;
+  begin
+    Npp.Message.Clear;
+    if No_Project or else not All_Saved then
+      return;
+    end if;
+    Server.Promote (Buffer_Name, Kind);
+    while Server.Has_Promotion_Message loop
+      declare
+        Message : constant String := Server.Message;
+        function Found (Item : String) return Boolean is
+          (Text.Location_Of (Item, Text.Lowercase_Of (Message)) /= Text.Not_Found);
+      begin
+        if Kind = Server.All_Projects or else (Found ("build") or Found ("link") or Found ("archive")) then
+          Controlled_Promoting (Message);
+          return;
+        else
+          Show (Message);
+        end if;
+      end;
+    end loop;
+    Promoting;
   end Promote;
 
 

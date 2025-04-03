@@ -354,6 +354,22 @@ package body Npp.Plugin is
   end Show_Tool_Bar;
 
 
+  procedure Hide_Header is
+  begin
+    Hide_Menu;
+    Hide_Tab_Bar;
+    Hide_Tool_Bar;
+  end Hide_Header;
+
+
+  procedure Show_Header is
+  begin
+    Show_Menu;
+    Show_Tab_Bar;
+    Show_Tool_Bar;
+  end Show_Header;
+
+
   ---------------
   -- Interface --
   ---------------

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -130,6 +130,7 @@ package body Elephant_Interface is
     Npp.Plugin.Add_Function ("Promote All", Promote_All'access, Promote_All_Toolbar);
     Npp.Plugin.Add_Function ("Run", Run'access, Run_Toolbar);
     Npp.Plugin.Add_Function ("Promote", Promote'access, Promote_Toolbar);
+    Npp.Plugin.Show_Header;
   exception
   when Item: others =>
     Log.Write (Interface_Prefix & "Initialize", Item);

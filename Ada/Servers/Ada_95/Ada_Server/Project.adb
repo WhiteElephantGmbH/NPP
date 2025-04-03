@@ -22,8 +22,10 @@ with Target;
 
 package body Project is
 
+  function "=" (Unused_Left, Unused_Right : Text.List) return Boolean is (False);
+
   package Installations is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
-                                                                       Element_Type => String);
+                                                                       Element_Type => Text.List);
 
   Language : constant String := "Ada";
 
@@ -178,15 +180,15 @@ package body Project is
   end Modifier_Parameters;
 
 
-  function Installation_Destination return String is
+  function Installation_Destinations return Text.List is
     Cursor : constant Installations.Cursor := The_Installation_Map.Find (Name);
   begin
     if Installations.Has_Element (Cursor) then
       return Installations.Element (Cursor);
     else
-      return "";
+      return [];
     end if;
-  end Installation_Destination;
+  end Installation_Destinations;
 
 
   function Modifier_Success return String is
@@ -724,21 +726,110 @@ package body Project is
 
     procedure Define_Installations is
 
-      procedure Add_Installation (Item : Text.Strings) is
-        Install_Name : constant String := (if Item.Count > 0 then Item(Text.First_Index) else "");
-        Destination  : constant String := (if Item.Count > 1 then Item(Text.First_Index + 1) else "");
+      procedure Install_Error (Message : String) is
       begin
+        Ini_Error ("Product Install: " &  Message & '.');
+      end Install_Error;
+
+
+      procedure Add_Installation (Item : Text.Strings) is
+
+        Syntax : constant String
+          := Item'image & Ascii.Cr &
+             "Syntax: Install => [Item {'|' Item}]" & Ascii.Cr &
+             "                Item => 'project' > [Dest [';' Dest]" & Ascii.Cr &
+             "                Dest => ['destination file' ['*' ('32' | '64')]";
+
+        Install_Name : constant String := (if Item.Count > 0 then Item(Text.First_Index) else "");
+
+
+        procedure Add_Destinations (Destinations : Text.Strings) is
+
+          The_Destinations : Text.List;
+
+          type State is (Get_Destination, Destination_Defined, Get_Constraint);
+
+          The_State : State := Get_Destination;
+
+          The_Destination : Text.String;
+
+          procedure Append_Destination (Constraint : String := "") is
+            Destination : constant String := The_Destination.To_String;
+          begin
+            if not File.Is_Legal (Destination) then
+              Install_Error ("Filename '" & Destination & "' is illegal");
+            end if;
+            declare
+              Destination_Folder : constant String := File.Containing_Directory_Of (Destination);
+            begin
+              if not File.Directory_Exists (Destination_Folder) then
+                Install_Error ("destination directory '" & Destination_Folder & "' is unknown");
+              end if;
+            end;
+            if File.Directory_Exists (Destination) then
+              Install_Error ("destination '" & Destination & "' is not a file");
+            end if;
+            The_Destinations.Append (Destination & Constraint);
+            Log.Write ("||| Install - " & Install_Name & " -> " & Destination & Constraint);
+          end Append_Destination;
+
+        begin -- Add_Destinations
+          if Item.Count = 0 then
+            Install_Error (Syntax);
+          else
+            for Token of Destinations loop
+              if Token = "" then
+                null; -- skip spaces between symbols
+              elsif Token = "," then
+                Install_Error ("illegal symbol ','");
+              elsif Token = "*" then
+                if The_State = Destination_Defined then
+                  The_State := Get_Constraint;
+                else
+                  Install_Error (Syntax);
+                end if;
+              elsif Token in "32" | "64" then
+                if The_State = Get_Constraint then
+                  Append_Destination (Constraint => '*' & Token);
+                  The_State := Get_Destination;
+                else
+                  Install_Error (Syntax);
+                end if;
+              else
+                case The_State  is
+                when Get_Destination =>
+                  The_Destination := [Token];
+                  The_State := Destination_Defined;
+                when Destination_Defined =>
+                  Append_Destination;
+                  The_Destination := [Token];
+                when Get_Constraint =>
+                  Install_Error (Syntax);
+                end case;
+              end if;
+            end loop;
+            if The_State = Destination_Defined then
+              Append_Destination;
+            end if;
+            The_Installation_Map.Include (Install_Name, The_Destinations);
+          end if;
+        exception
+        when Error_Set =>
+          raise;
+        when others =>
+          Install_Error (Syntax);
+        end Add_Destinations;
+
+        Destinations : constant String := (if Item.Count > 1 then Item(Text.First_Index + 1) else "");
+
+      begin -- Add_Installation
         if Item.Count /= 2 then
-          Ini_Error ("Product syntax: Install = [item {'|' item}] - Item => 'project name' > 'destination filename'");
+          Install_Error (Syntax);
         elsif not Is_Product_Name (Install_Name) then
-          Ini_Error ("Product Install: project name '" & Install_Name & "' not found");
-        elsif File.Directory_Exists (Destination) then
-          Ini_Error ("Product Install: destination '" & Destination & "' is not a file");
-        elsif not File.Directory_Exists (File.Containing_Directory_Of (Destination)) then
-          Ini_Error ("Product Install: destination directory for '" & Destination & "' not found");
+          Install_Error ("project name '" & Install_Name & "' not found");
+        else
+          Add_Destinations (Text.Strings_Of (Destinations, Separator => ';', Symbols => "*,"));
         end if;
-        The_Installation_Map.Include (Install_Name, Destination);
-        Log.Write ("||| Install - " & Install_Name & " -> " & Destination);
       end Add_Installation;
 
       Install_List : constant String := Element_Of (Application => "Product", Key => "Install", Must_Exist => False);

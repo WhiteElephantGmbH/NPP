@@ -65,7 +65,7 @@ package Project is
 
   function Modifier_Success return String;
 
-  function Installation_Destination return String;
+  function Installation_Destinations return Text.List;
 
   function Language_Directory return String;
 

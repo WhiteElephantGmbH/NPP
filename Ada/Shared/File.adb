@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -86,6 +86,19 @@ package body File is
     end if;
     return Ada.Directories.Full_Name (Current_Directory & '/' & Name_Or_Directory);
   end Full_Name_Of;
+
+
+  function Is_Legal (Name_Or_Directory : String) return Boolean is
+  begin
+    declare
+      Unused : constant String := Ada.Directories.Full_Name (Name_Or_Directory);
+    begin
+      return True;
+    end;
+  exception
+  when others =>
+    return False;
+  end Is_Legal;
 
 
   function Exists (Name : String) return Boolean is

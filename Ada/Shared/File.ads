@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2015 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2015 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -57,6 +57,8 @@ package File is
 
   function Full_Name_Of (Name_Or_Directory : String;
                          Current_Directory : String) return String;
+
+  function Is_Legal (Name_Or_Directory : String) return Boolean;
 
   function Exists (Name : String) return Boolean;
   -- no exception

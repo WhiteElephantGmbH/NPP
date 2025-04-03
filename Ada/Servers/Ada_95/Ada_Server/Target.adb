@@ -290,15 +290,23 @@ package body Target is
 
 
   procedure Installation_Handling is
-    Destination : constant String := Project.Installation_Destination;
+    Destinations : constant Text.List := Project.Installation_Destinations;
   begin
-    if Destination /= "" then
-      File.Delete (Destination);
-      File.Copy (Project.Product, Destination, "mode=overwrite,preserve=timestamps");
-      Promotion.Set_Message ("Successfully installed " & Project.Name);
-    end if;
+    for Destination of Destinations loop
+      declare
+        Items     : constant Text.Strings := Text.Strings_Of (Destination, Separator => '*');
+        Directory : constant String       := Items(1);
+        Tool_Kind : constant String       := (if Items.Count = 2 then Items(2) else "");
+      begin
+        if Tool_Kind = Project.Tools_Kind then
+          File.Copy (Project.Product, Directory, "mode=overwrite,preserve=timestamps");
+          Promotion.Set_Message ("Successfully installed " & Project.Name & " in " & Directory);
+        end if;
+      end;
+    end loop;
   exception
-  when others =>
+  when Occurance: others =>
+    Log.Write ("Target.Installation_Handling:", Occurance);
     Promotion.Set_Error ("Installation of " & Project.Name & " failed");
   end Installation_Handling;
 

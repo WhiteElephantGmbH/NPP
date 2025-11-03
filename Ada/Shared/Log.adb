@@ -22,8 +22,8 @@ with Configuration;
 with Date_Time;
 with Exceptions;
 with File;
-with Os;
-with System;
+with Os.Application;
+with System.Address_Image;
 with Text;
 
 package body Log is
@@ -246,6 +246,12 @@ package body Log is
       end;
       Io.Put_Line (The_File, Text.Bom_8 & Address_Size & Application.Name &" version " & Application.Version);
       Io.Put_Line (The_File, "Log created " & Date_And_Time);
+      begin
+        Io.Put_Line (The_File, "Base address " & System.Address_Image (Os.Application.Base_Address));
+      exception
+      when Os.Application.No_Base_Address =>
+        Io.Put_Line (The_File, "Base address unknown");
+      end;
       if Categories = All_Categories then
         Io.Put_Line (The_File, "Logging all categories");
       elsif Categories = No_Categories then

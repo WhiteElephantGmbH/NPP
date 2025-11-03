@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -17,8 +17,8 @@ pragma Style_White_Elephant;
 
 with Ada.Unchecked_Conversion;
 with Text;
-with System;
 with Win32;
+with Win32.Misc;
 with Win32.Winbase;
 with Win32.Windef;
 with Win32.Winnt;
@@ -31,24 +31,9 @@ package body Os.Application is
   package Base renames Win32.Winbase;
   package Nt   renames Win32.Winnt;
 
-  No_Module_Information    : exception;
-
   subtype Hmodule is Nt.HANDLE;
 
   use type Win32.DWORD;
-
-  Hmodule_Length : constant Win32.DWORD := Hmodule'size / 8;
-
-
-  type Hmodule_Array is array (Positive range <>) of Hmodule;
-
-  type Module_Information is record
-    Base_Address       : Win32.LPVOID;
-    Module_Size        : Win32.DWORD;
-    Entry_Point        : Win32.LPVOID with Unreferenced;
-  end record
-  with Convention => C;
-
 
   pragma Linker_Options ("-lntdll");
 
@@ -87,16 +72,6 @@ package body Os.Application is
 
   pragma Linker_Options ("-lpsapi");
 
-  function Get_Module_Information (Handle      :        Nt.HANDLE;
-                                   Module      :        Hmodule;
-                                   Module_Info : access Module_Information;
-                                   Cb          :        Win32.DWORD)
-    return Win32.BOOL
-  with
-    Import        => True,
-    Convention    => Stdcall,
-    External_Name => "GetModuleInformation";
-
 
   function Get_Module_Base_Name (Handle   : Nt.HANDLE;
                                  Module   : Hmodule;
@@ -109,78 +84,9 @@ package body Os.Application is
     External_Name => "GetModuleBaseNameA";
 
 
-  function Module_From_Address (The_Address : System.Address) return Hmodule is
-    The_Count          : aliased Win32.DWORD;
-    Unused             :         Win32.BOOL;
-    use type Nt.HANDLE;
-    use type Win32.BOOL;
-    Max_Int_Bit : constant := Standard'address_size - 1;
-    type Int is range -2 ** (Max_Int_Bit) .. 2 ** Max_Int_Bit - 1;
-    function Convert is new Ada.Unchecked_Conversion (System.Address, Int);
-    function Get_Modules_Count (Handle    :        Nt.HANDLE;
-                                Hmodules  : access Nt.HANDLE; -- dummy
-                                Cb        :        Win32.DWORD;
-                                Cb_Needed : access Win32.DWORD)
-      return Win32.BOOL
-    with
-      Import        => True,
-      Convention    => Stdcall,
-      External_Name => "EnumProcessModules";
-  begin
-    if Get_Modules_Count (Current_Process,
-                          null,
-                          0,
-                          The_Count'access) /= Win32.FALSE
-    then
-      declare
-        type Modules is new Hmodule_Array(1 .. Positive(The_Count / Hmodule_Length));
-
-        function Enum_Process_Modules (Handle    :        Nt.HANDLE;
-                                       Hmodules  : access Modules;
-                                       Cb        :        Win32.DWORD;
-                                       Cb_Needed : access Win32.DWORD)
-          return Win32.BOOL
-        with
-          Import        => True,
-          Convention    => Stdcall,
-          External_Name => "EnumProcessModules";
-
-        The_Modules     : aliased Modules;
-        Actual_Count    : aliased Win32.DWORD;
-        The_Information : aliased Module_Information;
-        Info_Size       : constant Win32.DWORD := Module_Information'size / 8;
-      begin
-        if Enum_Process_Modules (Current_Process,
-                                 The_Modules'access,
-                                 The_Count,
-                                 Actual_Count'access) /= Win32.FALSE
-        then
-          if Actual_Count /= The_Count then
-            raise No_Module_Information;
-          end if;
-          for The_Module of The_Modules loop
-            if Get_Module_Information (Current_Process,
-                                       The_Module,
-                                       The_Information'access,
-                                       Info_Size) /= Win32.FALSE
-            then
-              if (The_Address >= The_Information.Base_Address) and then
-                (Convert(The_Address) <= Convert(The_Information.Base_Address) + Int(The_Information.Module_Size))
-              then
-                return The_Module;
-              end if;
-            end if;
-          end loop;
-        end if;
-      end;
-    end if;
-    raise No_Module_Information;
-  end Module_From_Address;
-
-
   function Origin_Folder return String is
     Module        : constant Hmodule
-                  := Module_From_Address (Origin_Folder'address);
+                  := Win32.Misc.Module_From_Address (Origin_Folder'address);
     Size          : Natural;
     Return_String : aliased String (1..300);
     function Convert is new Ada.Unchecked_Conversion (System.Address, Win32.PSTR);
@@ -193,6 +99,19 @@ package body Os.Application is
     end loop;
     return Return_String (Return_String'first..Return_String'first + Size - 1);
   end Origin_Folder;
+
+
+  function Base_Address return System.Address is
+  begin
+    declare
+      Module : constant Win32.Winnt.HANDLE := Win32.Misc.Module_From_Address (Base_Address'address);
+    begin
+      return Win32.Misc.Get_Base_Address_Of (Module);
+    end;
+  exception
+  when others =>
+    raise No_Base_Address;
+  end Base_Address;
 
 
   The_Language_Id : Unsigned.Longword := 16#040904E4#; -- US English, Multilingual codepage
@@ -224,7 +143,7 @@ package body Os.Application is
   end Base_Name_Of;
 
 
-  The_Module  : constant Hmodule := Module_From_Address (Set_Language_Id'address);
+  The_Module  : constant Hmodule := Win32.Misc.Module_From_Address (Set_Language_Id'address);
   Module_Name : constant String  := Base_Name_Of (The_Module);
 
 
@@ -306,7 +225,7 @@ package body Os.Application is
   exception
   when others =>
     declare
-      Module : constant Hmodule := Module_From_Address (Name'address);
+      Module : constant Hmodule := Win32.Misc.Module_From_Address (Name'address);
     begin
       return Name_Of (Module);
     end;

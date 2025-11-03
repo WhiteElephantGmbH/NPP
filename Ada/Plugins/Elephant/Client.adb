@@ -48,7 +48,7 @@ package body Client is
   procedure Show (Message : String) is
     The_Color : Win.COLORREF;
   begin
-    if Message(Message'first) = '%' then
+    if Message'length > 1 and then Message(Message'first) = '%' then
       case Message(Message'first + 1) is
       when 'g' =>
         The_Color := Win.RGB (Red => 0, Green => 192, Blue => 0);

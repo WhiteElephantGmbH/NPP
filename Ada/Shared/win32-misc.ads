@@ -1,6 +1,6 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
--- *                                               www.white-elephant.ch                                               *
+-- *                       (c) 2021 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                                           www.white-elephant.ch                                                   *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
 -- *    Public License as published by the Free Software Foundation; either version 2 of the License, or               *
@@ -15,16 +15,18 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Elephant_Interface;
+with Win32.Winnt;
 
-pragma Build (Description   => "Elephant Nodepad++ Plugin",
-              Version       => (45, 2, 0, 8),
-              Kind          => Dll,
-              Use_Interface => Elephant_Interface,
-              Resource      => "Bit_Maps",
-              Compiler      => "GNATPRO\23.0");
+package Win32.Misc is
+--
+-- This package contains miscellaneous routines to help interface with Microsoft Windows.
+--
 
-procedure Elephant is
-begin
-  null;
-end Elephant;
+  No_Information : exception;
+
+  function Module_From_Address (The_Address : System.Address) return Win32.Winnt.HANDLE;
+  
+  function Get_Base_Address_Of (The_Module : Win32.Winnt.HANDLE) return Win32.LPVOID;
+ 
+
+end Win32.Misc;

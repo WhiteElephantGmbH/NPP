@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2023 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -30,8 +30,8 @@ package body Os.Pipe is
   type ACL_Buffer is array (1 .. 1018) of Character;
 
   type Access_Control_List is record
-    Header : aliased Win32.Winnt.ACL;
-    Unused : ACL_Buffer;
+    Header        : aliased Win32.Winnt.ACL;
+    Unused_Buffer : ACL_Buffer;
   end record;
 
   type Named_Pipe (Name_Length : Positive;
@@ -244,30 +244,48 @@ package body Os.Pipe is
 
     use type System.Address;
 
+    Retry_Count : Natural := 0;
+    Max_Retries : constant Natural := 3;
+
   begin -- Create_Server_Connection
     if not Allow_Remote_Connections then
       Pipe_Mode := Pipe_Mode + Win32.Winbase.PIPE_REJECT_REMOTE_CLIENTS;
     end if;
     Create_Security_Attributes;
-    The_Pipe.Connection := Win32.Winbase.CreateNamedPipe (lpName               => Win32.Addr (Pipe_Name),
-                                                          dwOpenMode           => Pipe_Access_Mode,
-                                                          dwPipeMode           => Win32.DWORD(Pipe_Mode),
-                                                          nMaxInstances        => Win32.DWORD(1),
-                                                          nOutBufferSize       => The_Pipe.Size,
-                                                          nInBufferSize        => The_Pipe.Size,
-                                                          nDefaultTimeOut      => 0,
-                                                          lpSecurityAttributes => (if System.Address'size = 64 then
-                                                                                     null -- not yet working!!!
-                                                                                   else
-                                                                                     The_Pipe.Attributes'access));
-    if The_Pipe.Connection = Win32.Winbase.INVALID_HANDLE_VALUE then
-      declare
-        Error : constant Win32.DWORD := Win32.Winbase.GetLastError;
-      begin
-        The_Pipe.Item_Taken.Signal;
-        Handle_Error (Error);
-      end;
-    end if;
+    loop
+      The_Pipe.Connection := Win32.Winbase.CreateNamedPipe (lpName               => Win32.Addr (Pipe_Name),
+                                                            dwOpenMode           => Pipe_Access_Mode,
+                                                            dwPipeMode           => Win32.DWORD(Pipe_Mode),
+                                                            nMaxInstances        => Win32.DWORD(1),
+                                                            nOutBufferSize       => The_Pipe.Size,
+                                                            nInBufferSize        => The_Pipe.Size,
+                                                            nDefaultTimeOut      => 0,
+                                                            lpSecurityAttributes => (if System.Address'size = 64 then
+                                                                                       null -- not yet working!!!
+                                                                                     else
+                                                                                       The_Pipe.Attributes'access));
+      if The_Pipe.Connection /= Win32.Winbase.INVALID_HANDLE_VALUE then
+        exit;
+      else
+        declare
+          Error : constant Win32.DWORD := Win32.Winbase.GetLastError;
+          use type Win32.DWORD;
+          use type Win32.BOOL;
+        begin
+          if Error = Win32.Winerror.ERROR_PIPE_BUSY and then Retry_Count < Max_Retries then
+            if Win32.Winbase.WaitNamedPipe(Win32.Addr(Pipe_Name), 1000) = Win32.FALSE then
+              Log.Write("Os.Pipe - WaitNamedPipe failed, continuing retry");
+              delay 0.1; -- minimum wait time if WaitNamedPipe failed
+            end if;
+            Retry_Count := Retry_Count + 1;
+            Log.Write ("Os.Pipe - Pipe busy -> retry CreateNamedPipe");
+          else
+            The_Pipe.Item_Taken.Signal;
+            Handle_Error (Error);
+          end if;
+        end;
+      end if;
+    end loop;
   end Create_Server_Connection;
 
 

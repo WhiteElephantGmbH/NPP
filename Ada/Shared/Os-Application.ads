@@ -16,6 +16,7 @@
 pragma Style_White_Elephant;
 
 with Unsigned;
+with System;
 
 package Os.Application is
 
@@ -27,6 +28,11 @@ package Os.Application is
   -- Returns the folder name from which the executable was started
   -- NB: The folder name is terminated with a '\' or '/'
   --
+
+  function Base_Address return System.Address;
+  --
+  -- Returns the base address of the executable
+  No_Base_Address : exception;
 
   function Name return String;
 

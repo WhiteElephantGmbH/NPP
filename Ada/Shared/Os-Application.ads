@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2018 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -15,8 +15,8 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Unsigned;
 with System;
+with Unsigned;
 
 package Os.Application is
 
@@ -31,7 +31,7 @@ package Os.Application is
 
   function Base_Address return System.Address;
   --
-  -- Returns the base address of the executable
+  -- Returns the base address of the module
   No_Base_Address : exception;
 
   function Name return String;

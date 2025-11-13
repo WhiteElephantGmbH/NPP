@@ -18,7 +18,7 @@ pragma Style_White_Elephant;
 with Elephant_Interface;
 
 pragma Build (Description   => "Elephant Nodepad++ Plugin",
-              Version       => (45, 2, 0, 8),
+              Version       => (45, 3, 0, 0),
               Kind          => Dll,
               Use_Interface => Elephant_Interface,
               Resource      => "Bit_Maps",

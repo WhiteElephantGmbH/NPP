@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -247,7 +247,7 @@ package body Log is
       Io.Put_Line (The_File, Text.Bom_8 & Address_Size & Application.Name &" version " & Application.Version);
       Io.Put_Line (The_File, "Log created " & Date_And_Time);
       begin
-        Io.Put_Line (The_File, "Base address " & System.Address_Image (Os.Application.Base_Address));
+        Io.Put_Line (The_File, "Base address 0x" & System.Address_Image (Os.Application.Base_Address));
       exception
       when Os.Application.No_Base_Address =>
         Io.Put_Line (The_File, "Base address unknown");

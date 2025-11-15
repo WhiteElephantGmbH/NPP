@@ -320,7 +320,9 @@ package body Project is
   function Part_Of (Filename : String;
                     After    : String) return String is
   begin
-    if Filename(Filename'first .. Filename'first + After'length - 1) = After then
+    if After'length > Filename'length then
+      return "???";
+    elsif Filename(Filename'first .. Filename'first + After'length - 1) = After then
       return Filename(Filename'first + After'length .. Filename'last);
     end if;
     return "";

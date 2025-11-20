@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2019 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -48,8 +48,8 @@ package Os.Pipe is
                   Name                     :        String;
                   Kind                     :        Role;
                   Mode                     :        Access_Mode;
-                  Size                     :        Natural;              -- maximum data buffer size
-                  Wait_Time                :        Duration := Forever;  -- only Forever allowed for client
+                  Size                     :        Natural;     -- maximum data buffer size
+                  Wait_Time                :        Duration;
                   Get_Call                 :        Get_Callback := null;
                   Allow_Remote_Connections :        Boolean := False);
   -- opens or reopens a pipe

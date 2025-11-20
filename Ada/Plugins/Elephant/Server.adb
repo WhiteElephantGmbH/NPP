@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -122,7 +122,7 @@ package body Server is
     Language_Server : constant String := Language & "_Server.exe";
 
     Project_Not_Opened : constant String := "Project containing " & Name & " not opened - ";
-    Termination_Time   : constant Duration := 0.2;
+    Startup_Timeout    : constant Duration := 3.0;
 
   begin
     if Language = "" then
@@ -131,46 +131,40 @@ package body Server is
     end if;
     begin
       Os.Process.Create (Os.Application.Origin_Folder & '\' & Language_Server, Pipe_Name);
-      delay 0.5;  -- Wait for server to start
-      for Unused_Count in 1..3 loop
-        begin  -- Attempt to connect to server
-          Os.Pipe.Open (The_Pipe => The_Pipe,
-                        Name     => Pipe_Name,
-                        Kind     => Os.Pipe.Client,
-                        Mode     => Os.Pipe.Duplex,
-                        Size     => Server.Source_Buffer'length);
-          Send (Open_Project, Name);
-          if The_Length = 0 then
-            Set_Message (Project_Not_Opened & "protocol error (no Confirmation)");
+      begin
+        Os.Pipe.Open (The_Pipe  => The_Pipe,
+                      Name      => Pipe_Name,
+                      Kind      => Os.Pipe.Client,
+                      Mode      => Os.Pipe.Duplex,
+                      Size      => Server.Source_Buffer'length,
+                      Wait_Time => Startup_Timeout);
+        Send (Open_Project, Name);
+        if The_Length = 0 then
+          Set_Message (Project_Not_Opened & "protocol error (no Confirmation)");
+        else
+          Set_Message (The_Data(The_Data'first + 1 .. The_Data'first + The_Length - 1));
+          if The_Data(The_Data'first) = Confirmation then
+            Log.Write ("+ Project Opened using: " & Name);
+            Send (Get_Extensions);
+            return True;
+          elsif The_Data(The_Data'first) = Not_Confirmed then
+            Log.Write ("- Project not Opened using: " & Name);
+            return False;
           else
-            Set_Message (The_Data(The_Data'first + 1 .. The_Data'first + The_Length - 1));
-            if The_Data(The_Data'first) = Confirmation then
-              Log.Write ("+ Project Opened using: " & Name);
-              Send (Get_Extensions);
-              return True;
-            elsif The_Data(The_Data'first) = Not_Confirmed then
-              Log.Write ("- Project not Opened using: " & Name);
-              return False;
-            else
-              Set_Error (Project_Not_Opened & "protocol error (wrong Confirmation)");
-            end if;
+            Set_Error (Project_Not_Opened & "protocol error (wrong Confirmation)");
           end if;
-          exit;
-        exception
-        when Os.Pipe.No_Server =>
-          Log.Write ("Server.Project_Opened - retry for " & Language_Server);
-          delay 1.0;
-        end;
-      end loop;
-      delay Termination_Time;
-      Set_Error (Project_Not_Opened & Language_Server & " not connected!");
+        end if;
+      exception
+      when Os.Pipe.No_Server =>
+        Set_Error (Project_Not_Opened & Language_Server & " not connected!");
+      when Os.Pipe.Name_In_Use =>
+        Set_Error (Project_Not_Opened & Language_Server & " in use!");
+      when Os.Pipe.Broken =>
+        Set_Error (Project_Not_Opened & Language_Server & " broken!");
+      end;
     exception
     when Os.Process.Creation_Failure =>
       Set_Error (Project_Not_Opened & Language_Server & " missing!");
-    when Os.Pipe.Name_In_Use =>
-      Set_Error (Project_Not_Opened & Language_Server & " in use!");
-    when Os.Pipe.Broken =>
-      Set_Error (Project_Not_Opened & Language_Server & " broken!");
     when Occurence: others =>
       Set_Message (Project_Not_Opened & "internal error");
       Log.Write ("! " & Project_Not_Opened, Occurence);

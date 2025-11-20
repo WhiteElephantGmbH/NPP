@@ -85,6 +85,7 @@ package body Os.Pipe is
       Log.Write ("Os.Pipe - No_Data");
       raise No_Data;
     when Win32.Winerror.ERROR_PIPE_BUSY =>
+      Log.Write ("Os.Pipe - Busy");
       raise Name_In_Use;
     when Win32.Winerror.ERROR_BAD_PIPE =>
       raise Bad_Pipe;
@@ -128,47 +129,73 @@ package body Os.Pipe is
   end Pipe_Name_Of;
 
 
-  procedure Create_Client_Connection (The_Pipe : Handle) is
+  procedure Create_Client_Connection (The_Pipe  : Handle;
+                                      Wait_Time : Duration) is
 
     function Desired_Access return Win32.DWORD is
     begin
       case The_Pipe.Mode is
       when Duplex =>
-        return Win32.DWORD(Win32.Winnt.GENERIC_READ + Win32.Winnt.GENERIC_WRITE);
+        return Win32.DWORD (Win32.Winnt.GENERIC_READ + Win32.Winnt.GENERIC_WRITE);
       when Inbound =>
-        return Win32.DWORD(Win32.Winnt.GENERIC_WRITE);
+        return Win32.DWORD (Win32.Winnt.GENERIC_WRITE);
       when Outbound =>
-        return Win32.DWORD(Win32.Winnt.GENERIC_READ + Win32.Winnt.FILE_WRITE_ATTRIBUTES);
+        return Win32.DWORD (Win32.Winnt.GENERIC_READ + Win32.Winnt.FILE_WRITE_ATTRIBUTES);
       end case;
     end Desired_Access;
 
-    Share_Mode : constant Win32.DWORD := Win32.DWORD(Win32.Winnt.FILE_SHARE_READ +
-                                                     Win32.Winnt.FILE_SHARE_WRITE);
-    Pipe_Mode  : aliased Win32.DWORD;
+    Share_Mode : constant Win32.DWORD :=
+      Win32.DWORD (Win32.Winnt.FILE_SHARE_READ + Win32.Winnt.FILE_SHARE_WRITE);
+
+    Pipe_Mode : aliased Win32.DWORD;
 
     use type System.Address;
 
     Pipe_Name : aliased constant String := Pipe_Name_Of (The_Pipe) & Ascii.Nul;
 
-  begin
-    The_Pipe.Connection := Win32.Winbase.CreateFile
-                             (lpFileName            => Win32.Addr (Pipe_Name),
-                              dwDesiredAccess       => Desired_Access,
-                              dwShareMode           => Share_Mode,
-                              lpSecurityAttributes  => null,
-                              dwCreationDisposition => Win32.Winbase.OPEN_EXISTING,
-                              dwFlagsAndAttributes  => 0,
-                              hTemplateFile         => System.Null_Address);
-    if The_Pipe.Connection = Win32.Winbase.INVALID_HANDLE_VALUE then
-      Handle_Error (Win32.Winbase.GetLastError);
-    end if;
+    Retry_Count : Natural := 0;
+    Retry_Delay : constant Duration := 0.3;
+    Max_Retries : constant Natural := Natural(Wait_Time / Retry_Delay);
 
-    Pipe_Mode := Win32.DWORD(Win32.Winbase.PIPE_READMODE_MESSAGE + Win32.Winbase.PIPE_WAIT);
+  begin -- Create_Client_Connection
+    loop
+      The_Pipe.Connection := Win32.Winbase.CreateFile
+                               (lpFileName            => Win32.Addr (Pipe_Name),
+                                dwDesiredAccess       => Desired_Access,
+                                dwShareMode           => Share_Mode,
+                                lpSecurityAttributes  => null,
+                                dwCreationDisposition => Win32.Winbase.OPEN_EXISTING,
+                                dwFlagsAndAttributes  => 0,
+                                hTemplateFile         => System.Null_Address);
+
+      exit when The_Pipe.Connection /= Win32.Winbase.INVALID_HANDLE_VALUE;
+
+      declare
+        Error : constant Win32.DWORD := Win32.Winbase.GetLastError;
+      begin
+        case Error is
+        when Win32.Winerror.ERROR_FILE_NOT_FOUND |
+             Win32.Winerror.ERROR_PIPE_BUSY |
+             Win32.Winerror.ERROR_PIPE_NOT_CONNECTED
+        => --server not yet ready or pipe busy -> retry CreateFile
+          if Retry_Count >= Max_Retries then
+            raise No_Server;
+          end if;
+          Retry_Count := @ + 1;
+          delay Retry_Delay;
+        when others =>
+          Handle_Error (Error);
+        end case;
+      end;
+    end loop;
+
+    Pipe_Mode := Win32.DWORD (Win32.Winbase.PIPE_READMODE_MESSAGE + Win32.Winbase.PIPE_WAIT);
     Check (Win32.Winbase.SetNamedPipeHandleState
              (hNamedPipe           => The_Pipe.Connection,
               lpMode               => Pipe_Mode'unchecked_access,
               lpMaxCollectionCount => null,
-              lpCollectDataTimeout => null), The_Pipe);
+              lpCollectDataTimeout => null),
+           The_Pipe);
   end Create_Client_Connection;
 
 
@@ -341,14 +368,12 @@ package body Os.Pipe is
                   Kind                     :        Role;
                   Mode                     :        Access_Mode;
                   Size                     :        Natural;
-                  Wait_Time                :        Duration := Forever;
+                  Wait_Time                :        Duration;
                   Get_Call                 :        Get_Callback := null;
                   Allow_Remote_Connections :        Boolean := False) is
   begin
-    if Kind = Client then
-      if (Wait_Time /= Forever) or (Get_Call /= null) then
-        raise Not_Server;
-      end if;
+    if Kind = Client and then Get_Call /= null then
+      raise Not_Server;
     end if;
     Close (The_Pipe);
     The_Pipe := new Named_Pipe (Name'length, Kind);
@@ -381,7 +406,7 @@ package body Os.Pipe is
       Create_Server_Connection (The_Pipe, Allow_Remote_Connections);
       Connect (The_Pipe);
     else
-      Create_Client_Connection (The_Pipe);
+      Create_Client_Connection (The_Pipe, Wait_Time);
     end if;
   exception
   when others =>
@@ -401,8 +426,8 @@ package body Os.Pipe is
         if The_Pipe.Item /= null then
           Dispose (The_Pipe.Item);
         end if;
-        Dummy := Win32.Winbase.DisconnectNamedPipe (The_Pipe.Connection);
         if The_Pipe.Kind = Server then
+          Dummy := Win32.Winbase.DisconnectNamedPipe (The_Pipe.Connection);
           Dummy := Win32.Winbase.CloseHandle(hObject => The_Pipe.Connect_Overlapped.hEvent);
           Dummy := Win32.Winbase.CloseHandle(hObject => The_Pipe.Read_Overlapped.hEvent);
           Dummy := Win32.Winbase.CloseHandle(hObject => The_Pipe.Write_Overlapped.hEvent);
@@ -413,8 +438,8 @@ package body Os.Pipe is
           Dummy := Win32.Winbase.CloseHandle(hObject => The_Pipe.Connection);
         end if;
       exception
-      when others =>
-        null;
+      when Item: others =>
+        Log.Write ("Os.Pipe.Close", Item);
       end;
       Dispose (The_Pipe);
     end if;

@@ -148,11 +148,12 @@ package body Command is
     Is_Open : Boolean;
 
   begin -- Serve
-    Os.Pipe.Open (The_Pipe => The_Pipe,
-                  Name     => Pipe_Name,
-                  Kind     => Os.Pipe.Server,
-                  Mode     => Os.Pipe.Duplex,
-                  Size     => The_Data'length);
+    Os.Pipe.Open (The_Pipe  => The_Pipe,
+                  Name      => Pipe_Name,
+                  Kind      => Os.Pipe.Server,
+                  Mode      => Os.Pipe.Duplex,
+                  Size      => The_Data'length,
+                  Wait_Time => Os.Pipe.Forever);
     begin
       Log.Write ("&&& Server Open");
       case Read_Command is

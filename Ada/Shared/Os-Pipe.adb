@@ -178,10 +178,12 @@ package body Os.Pipe is
              Win32.Winerror.ERROR_PIPE_BUSY |
              Win32.Winerror.ERROR_PIPE_NOT_CONNECTED
         => --server not yet ready or pipe busy -> retry CreateFile
-          if Retry_Count >= Max_Retries then
-            raise No_Server;
+          if Wait_Time /= Forever then
+            if Retry_Count >= Max_Retries then
+              raise No_Server;
+            end if;
+            Retry_Count := @ + 1;
           end if;
-          Retry_Count := @ + 1;
           delay Retry_Delay;
         when others =>
           Handle_Error (Error);

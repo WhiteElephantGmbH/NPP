@@ -130,7 +130,7 @@ package body Os.Pipe is
 
 
   procedure Create_Client_Connection (The_Pipe  : Handle;
-                                      Wait_Time : Duration) is
+                                      Wait_Time : Timer) is
 
     function Desired_Access return Win32.DWORD is
     begin
@@ -351,7 +351,7 @@ package body Os.Pipe is
 
 
   procedure Set_Timeout_For (The_Pipe  : Handle;
-                             Wait_Time : Duration) is
+                             Wait_Time : Timer) is
   begin
     if Wait_Time = Forever then
       The_Pipe.Timeout := Win32.Winbase.NMPWAIT_WAIT_FOREVER;
@@ -370,7 +370,7 @@ package body Os.Pipe is
                   Kind                     :        Role;
                   Mode                     :        Access_Mode;
                   Size                     :        Natural;
-                  Wait_Time                :        Duration;
+                  Wait_Time                :        Timer := Forever;
                   Get_Call                 :        Get_Callback := null;
                   Allow_Remote_Connections :        Boolean := False) is
   begin
@@ -451,7 +451,7 @@ package body Os.Pipe is
   procedure Read (From_Pipe :     Handle;
                   Data      :     System.Address;
                   Length    : out Natural;
-                  Wait_Time :     Duration := Forever) is
+                  Wait_Time :     Timer := Forever) is
 
     Count : aliased Win32.DWORD;
 
@@ -601,4 +601,6 @@ package body Os.Pipe is
     To_Pipe.Item_Taken.Wait;
   end Put;
 
+begin
+  pragma Assert (Minimum_Timeout >= Timer'delta);
 end Os.Pipe;

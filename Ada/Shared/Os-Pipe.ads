@@ -41,17 +41,24 @@ package Os.Pipe is
 
   type Get_Callback is access procedure (Item : String);
 
-  Forever : constant Duration := 0.0;
+  Time_Delta : constant := 0.1;
+  type Timer is delta Time_Delta range Time_Delta .. 100.0 + Time_Delta with Small => Time_Delta;
 
+  Minimum_Timeout : constant Timer := Timer'first;
+  Maximum_Timeout : constant Timer := Timer'last - Time_Delta;
+  Forever         : constant Timer := Timer'last;
+
+  Maximum_Client_Wait_Time : constant Timer := 10.0;
 
   procedure Open (The_Pipe                 : in out Handle;
                   Name                     :        String;
                   Kind                     :        Role;
                   Mode                     :        Access_Mode;
                   Size                     :        Natural;     -- maximum data buffer size
-                  Wait_Time                :        Duration;
+                  Wait_Time                :        Timer := Forever;
                   Get_Call                 :        Get_Callback := null;
-                  Allow_Remote_Connections :        Boolean := False);
+                  Allow_Remote_Connections :        Boolean := False)
+  with Pre => Kind = Server or Wait_Time <= Maximum_Client_Wait_Time;
   -- opens or reopens a pipe
 
   procedure Close (The_Pipe : in out Handle);
@@ -60,7 +67,7 @@ package Os.Pipe is
   procedure Read (From_Pipe :     Handle;
                   Data      :     System.Address;
                   Length    : out Natural;
-                  Wait_Time :     Duration := Forever);
+                  Wait_Time :     Timer := Forever);
 
   procedure Write (To_Pipe : Handle;
                    Data    : System.Address;

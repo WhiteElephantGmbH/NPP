@@ -122,7 +122,7 @@ package body Server is
     Language_Server : constant String := Language & "_Server.exe";
 
     Project_Not_Opened : constant String := "Project containing " & Name & " not opened - ";
-    Startup_Timeout    : constant Duration := 3.0;
+    Startup_Timeout    : constant Os.Pipe.Timer := 3.0;
 
   begin
     if Language = "" then

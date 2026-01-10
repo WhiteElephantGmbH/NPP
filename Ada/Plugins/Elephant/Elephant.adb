@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -18,7 +18,7 @@ pragma Style_White_Elephant;
 with Elephant_Interface;
 
 pragma Build (Description   => "Elephant Nodepad++ Plugin",
-              Version       => (45, 3, 0, 2),
+              Version       => (45, 3, 0, 3),
               Kind          => Dll,
               Use_Interface => Elephant_Interface,
               Resource      => "Bit_Maps",

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -296,6 +296,7 @@ package body Client is
 
   procedure Termination is
   begin
+    Npp.Plugin.Show_Header;
     The_Control.Termination;
     The_Control := null;
   exception

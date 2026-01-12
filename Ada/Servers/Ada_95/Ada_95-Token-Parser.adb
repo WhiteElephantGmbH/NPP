@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -3123,6 +3123,9 @@ package body Ada_95.Token.Parser is
       The_Next    : Simple_Expression_Handle := (S_0, Unknown);
 
     begin -- Simple_Expression
+      if Token_Element in Lexical.Plus | Lexical.Minus then
+        The_Type := Within.Sub_Type; -- force result type if unary plus or minus
+      end if;
       loop
         The_Next := Next_Simple_Expression_Data (The_Next.State, Token_Element);
         --TEST----------------------------------------------------------------------------

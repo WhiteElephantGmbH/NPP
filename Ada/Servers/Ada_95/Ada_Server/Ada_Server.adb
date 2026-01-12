@@ -1,11 +1,11 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
 pragma Build (Description => "Ada Server for NP++ Elephant Plugin",
-              Version     => (45, 3, 0, 2),
+              Version     => (45, 3, 0, 3),
               Kind        => Windows,
               Compiler    => "GNATPRO\23.0");
 

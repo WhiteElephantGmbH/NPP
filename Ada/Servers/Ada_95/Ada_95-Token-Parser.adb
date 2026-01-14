@@ -2706,6 +2706,8 @@ package body Ada_95.Token.Parser is
 
     The_Statement_Count : Integer;
     Had_Raise_Statement : Boolean;
+    The_Target_Type     : Data_Handle;
+
 
     -- subprogram_body ::=
     --      subprogram_specification [aspect_specification] is
@@ -3660,6 +3662,7 @@ package body Ada_95.Token.Parser is
 
 
       procedure Unknown_Aggregate is
+        The_Within : Data.Context := Within;
       begin
         loop
           case Token_Element is
@@ -3676,7 +3679,10 @@ package body Ada_95.Token.Parser is
              | Lexical.Is_Abs
              | Lexical.Is_Not
           =>
-            The_Result_Type := Expression (Within);
+            if Token_Element = Lexical.Target_Name then
+              The_Within.Sub_Type := The_Target_Type;
+            end if;
+            The_Result_Type := Expression (The_Within);
             if Termination_Element = Lexical.Right_Bracket then
               if The_Result_Type /= null and then
                 Data.Base_Type_Of (The_Result_Type).all in Data.Discrete_Type'class
@@ -3781,8 +3787,12 @@ package body Ada_95.Token.Parser is
           declare
             Saved_Token : constant Lexical_Handle := The_Token;
             The_Type    : Data_Handle;
+            The_Within  : Data.Context := Within;
           begin
-            The_Type := Expression (Within); -- qualified expresssion
+            if Token_Element = Lexical.Target_Name then
+              The_Within.Sub_Type := The_Target_Type;
+            end if;
+            The_Type := Expression (The_Within); -- qualified expresssion
             if (The_Type /= null) and then Element_Is (Termination_Element) then
               --TEST--------------------------------------------------------------------------
               --Write_Log ("-> Qualified Expression");
@@ -3791,7 +3801,7 @@ package body Ada_95.Token.Parser is
               --------------------------------------------------------------------------------
               if Termination_Element = Lexical.Right_Bracket then
                 if Data.Base_Type_Of (The_Type).all in Data.Discrete_Type'class | Data.Access_Type'class then
-                  return Within.Sub_Type;
+                  return The_Within.Sub_Type;
                 end if;
               end if;
               return The_Type; -- qualified expresssion
@@ -4627,6 +4637,7 @@ package body Ada_95.Token.Parser is
       begin
         if Element_Is (Lexical.Assignment) then
           Has_Default := True;
+          The_Target_Type := The_Type;
           Dummy := Expression ((Scope, The_Type));
         end if;
         return Data.New_Parameter_List (Parameter_Names => Defining_Identifiers,
@@ -7242,8 +7253,8 @@ package body Ada_95.Token.Parser is
       --Increment_Log_Indent;
       ---------------------------------------------------------------------------------
       if Element_Is (Lexical.Target_Name) then
-        The_Declaration := Sub_Type;
-        Name_Continuation (Sub_Type, The_Instantiation);
+        The_Declaration := The_Target_Type;
+        Name_Continuation (The_Target_Type, The_Instantiation);
       else
         The_Item := Actual_Identifier;
         if The_Scope = null then
@@ -7351,6 +7362,7 @@ package body Ada_95.Token.Parser is
           if The_Type = null then
             Dummy := Expression (Within);
           else
+            The_Target_Type := The_Type;
             Dummy := Expression ((Within.Scope, The_Type));
           end if;
         end if;
@@ -7381,6 +7393,7 @@ package body Ada_95.Token.Parser is
       begin
         if Element_Is (Lexical.Assignment) then
           Has_Default := True;
+          The_Target_Type := The_Type;
           Dummy := Expression ((Scope, The_Type));
         end if;
         Data.New_Objects (Names         => Defining_Identifiers,
@@ -7543,6 +7556,7 @@ package body Ada_95.Token.Parser is
         begin
           if Element_Is (Lexical.Assignment) then
             Has_Default := True;
+            The_Target_Type := The_Type;
             Dummy := Expression ((Scope, The_Type));
           end if;
           return Data.New_Discriminant_List (Component_Names => Defining_Identifiers,
@@ -7636,6 +7650,7 @@ package body Ada_95.Token.Parser is
         The_Type := Subtype_Mark (Data.Unit_Handle(Parameters));
         if Element_Is (Lexical.Assignment) then
           Has_Default := True;
+          The_Target_Type := The_Type;
           Dummy := Expression ((Data.Unit_Handle(Parameters), The_Type));
         end if;
         Get_Element (Lexical.Semicolon);
@@ -9475,6 +9490,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Assignment =>
           Get_Next_Token;
           Has_Default := True;
+          The_Target_Type := The_Subtype;
           Dummy := Expression ((Scope, The_Subtype));
           if The_Subtype = null then
             The_Subtype := Dummy;
@@ -9770,12 +9786,14 @@ package body Ada_95.Token.Parser is
 
     begin
       if Element_Is (Lexical.Assignment) then
+        The_Target_Type := Sub_Type;
         The_Result_Type := Expression ((Scope, Sub_Type));
         if The_Result_Type /= null and then not Data."=" (The_Result_Type, Sub_Type) then
           The_Token := Actual_Token;
           The_Result_Type := Name_Of (Within            => (Scope, The_Result_Type),
                                       Procedure_Allowed => True);
           if Element_Is (Lexical.Assignment) then
+            The_Target_Type := Sub_Type;
             The_Result_Type := Expression ((Scope, Sub_Type));
           end if;
         end if;
@@ -10221,6 +10239,7 @@ package body Ada_95.Token.Parser is
             end if;
             if Is_Constant then
               Get_Element (Lexical.Assignment);
+              The_Target_Type := The_Subtype;
               Data.New_Constants (Names         => [Object_Id],
                                   Subtype_Mark  => Data.Root_Type_Of (Expression ((Return_Block, The_Subtype))),
                                   Is_Class_Wide => Is_Class_Wide_Type,
@@ -10228,6 +10247,7 @@ package body Ada_95.Token.Parser is
                                   Parent        => Return_Block);
             else
               if Element_Is (Lexical.Assignment) then
+                The_Target_Type := The_Subtype;
                 The_Subtype := Expression ((Return_Block, The_Subtype));
                 Has_Default := True;
               end if;

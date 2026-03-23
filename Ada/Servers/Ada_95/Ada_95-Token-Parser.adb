@@ -646,7 +646,8 @@ package body Ada_95.Token.Parser is
     --      delay_until_statement
     --    | delay_relative_statement
     --
-    procedure Delay_Statement (Scope : Data.Unit_Handle);
+    procedure Delay_Statement (Scope          : Data.Unit_Handle;
+                               Allow_Relative : Boolean := False);
 
 
     -- delay_until_statement ::=
@@ -9967,10 +9968,37 @@ package body Ada_95.Token.Parser is
     --    delay_relative_statement ::=
     --         delay delay_expression ;
     --
-    procedure Delay_Statement (Scope : Data.Unit_Handle) is
+    procedure Delay_Statement (Scope          : Data.Unit_Handle;
+                               Allow_Relative : Boolean := False) is
     begin
-      Get_Next_Conditional (Lexical.Is_Until);
-      Dummy := Expression ((Scope, null));
+      if not Next_Element_Is (Lexical.Is_Until) then
+        if not Allow_Relative then
+          Style_Error_If_Restricted (Error.Relative_Delay_Not_Allowed);
+        end if;
+      end if;
+      declare
+        Error_Token : constant Lexical_Handle := The_Token;
+        Timer_Type  : constant Data_Handle := Expression ((Scope, null));
+      begin
+        if Timer_Type /= null then
+          if Timer_Type.all in Data.Declaration_Type'class then
+            declare
+              Parent : constant Data.Unit_Handle := Data.Declaration_Handle(Timer_Type).Parent;
+              use type Data.Unit_Handle;
+            begin
+              if Parent /= null then
+                declare
+                  Timer_Unit : constant String := Parent.Location.Image_Of;
+                begin
+                  if Timer_Unit = "Calendar" then
+                    Style_Error_If_Restricted (Error.Calendar_Time_Not_Allowed, Error_Token);
+                  end if;
+                end;
+              end if;
+            end;
+          end if;
+        end if;
+      end;
       Get_Element (Lexical.Semicolon);
     end Delay_Statement;
 
@@ -10536,7 +10564,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Is_Requeue =>
           Requeue_Statement (Scope);
         when Lexical.Is_Delay =>
-          Delay_Statement (Scope);
+          Delay_Statement (Scope, Allow_Relative => True);
         when Lexical.Is_Raise =>
           The_Statement_Count := The_Statement_Count - 1;
           Raise_Statement (Scope);

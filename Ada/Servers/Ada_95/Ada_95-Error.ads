@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -41,11 +41,13 @@ package Ada_95.Error is
      Number_With_Double_Underscore,
      Real_Base_Not_Allowed,
 
-     Goto_Label_Not_Allowed, -- Incorrect_Style'first
+     Calendar_Time_Not_Allowed, -- Incorrect_Style'first
+     Goto_Label_Not_Allowed,
      Goto_Not_Allowed,
      Incorrect_Identifier,
      Missing_Exception_Handler,
      Obsolescent_Pragma_Call,
+     Relative_Delay_Not_Allowed,
      Suspicious_Form_Of_Entry_Call, --Incorrect_Style'last
 
      Ada_Project_Path_Missing, -- In_Semantic'first
@@ -79,7 +81,7 @@ package Ada_95.Error is
 
      Not_Implemented);
 
-  subtype Incorrect_Style is Kind range Goto_Label_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
+  subtype Incorrect_Style is Kind range Calendar_Time_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
 
   subtype In_Semantic is Kind range Ada_Project_Path_Missing .. Version_Number_Out_Of_Range;
 

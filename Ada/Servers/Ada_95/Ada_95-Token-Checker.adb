@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2010 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2010 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,7 +12,7 @@ package body Ada_95.Token.Checker is
                                       The_Style : Lexical.Style_Pragma) is
   begin
     case The_Style is
-    when Is_Style_Soudronic | Is_Style_White_Elephant =>
+    when Is_Style_Astronomy | Is_Style_Soudronic | Is_Style_White_Elephant =>
       null;
     when Is_Style_None | Is_Style_Unrestricted =>
       Unit.Is_Used := True;
@@ -23,7 +23,7 @@ package body Ada_95.Token.Checker is
   function Has_Style (The_Style : Lexical.Style_Pragma) return Boolean is
   begin
     case The_Style is
-    when Is_Style_Soudronic | Is_Style_White_Elephant =>
+    when Is_Style_Astronomy | Is_Style_Soudronic | Is_Style_White_Elephant =>
       return True;
     when Is_Style_Unrestricted | Is_Style_None =>
       return False;
@@ -49,10 +49,21 @@ package body Ada_95.Token.Checker is
   end Is_Ok;
 
 
+  function Is_Real_Time (The_Style : Lexical.Style_Pragma) return Boolean is
+  begin
+    case The_Style is
+    when Is_Style_Astronomy | Is_Style_Soudronic =>
+      return True;
+    when Is_Style_White_Elephant | Is_Style_Unrestricted | Is_Style_None =>
+      return False;
+    end case;
+  end Is_Real_Time;
+
+
   function Is_Restricted  (The_Style : Lexical.Style_Pragma) return Boolean is
   begin
     case The_Style is
-    when Is_Style_Soudronic | Is_Style_White_Elephant | Is_Style_None=>
+    when Is_Style_Astronomy | Is_Style_Soudronic | Is_Style_White_Elephant | Is_Style_None=>
       return True;
     when Is_Style_Unrestricted =>
       return False;

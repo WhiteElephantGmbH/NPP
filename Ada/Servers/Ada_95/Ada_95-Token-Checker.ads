@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2010 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2010 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -15,6 +15,8 @@ package Ada_95.Token.Checker is
 
   function Is_Ok (Item      : Identifier_Handle;
                   The_Style : Lexical.Style_Pragma) return Boolean with Inline;
+
+  function Is_Real_Time (The_Style : Lexical.Style_Pragma) return Boolean;
 
   function Is_Restricted  (The_Style : Lexical.Style_Pragma) return Boolean;
 

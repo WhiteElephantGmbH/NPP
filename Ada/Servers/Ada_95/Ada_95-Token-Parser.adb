@@ -646,8 +646,7 @@ package body Ada_95.Token.Parser is
     --      delay_until_statement
     --    | delay_relative_statement
     --
-    procedure Delay_Statement (Scope          : Data.Unit_Handle;
-                               Allow_Relative : Boolean := False);
+    procedure Delay_Statement (Scope : Data.Unit_Handle);
 
 
     -- delay_until_statement ::=
@@ -2215,6 +2214,14 @@ package body Ada_95.Token.Parser is
         Style_Error (The_Error, The_Error_Token);
       end if;
     end Conditional_Style_Error;
+
+    procedure Style_Error_If_Real_Time (The_Error       : Error.Incorrect_Style;
+                                        The_Error_Token : Lexical_Handle := The_Token) is
+    begin
+      if Checker.Is_Real_Time (The_Style) then
+        Style_Error (The_Error, The_Error_Token);
+      end if;
+    end Style_Error_If_Real_Time;
 
     procedure Style_Error_If_Restricted (The_Error       : Error.Incorrect_Style;
                                          The_Error_Token : Lexical_Handle := The_Token) is
@@ -4350,9 +4357,9 @@ package body Ada_95.Token.Parser is
           case The_Style is
           when Lexical.Is_Style_Soudronic =>
             Build.Define_Company ("Soudronic AG");
-          when Lexical.Is_Style_White_Elephant =>
+          when Lexical.Is_Style_Astronomy | Lexical.Is_Style_White_Elephant =>
             Build.Define_Company ("White Elephant GmbH");
-          when others =>
+          when Lexical.Is_Style_Unrestricted | Lexical.Is_Style_None =>
             null;
           end case;
         else
@@ -9968,13 +9975,10 @@ package body Ada_95.Token.Parser is
     --    delay_relative_statement ::=
     --         delay delay_expression ;
     --
-    procedure Delay_Statement (Scope          : Data.Unit_Handle;
-                               Allow_Relative : Boolean := False) is
+    procedure Delay_Statement (Scope : Data.Unit_Handle) is
     begin
       if not Next_Element_Is (Lexical.Is_Until) then
-        if not Allow_Relative then
-          Style_Error_If_Restricted (Error.Relative_Delay_Not_Allowed);
-        end if;
+        Style_Error_If_Real_Time (Error.Relative_Delay_Not_Allowed);
       end if;
       declare
         Error_Token : constant Lexical_Handle := The_Token;
@@ -9991,7 +9995,7 @@ package body Ada_95.Token.Parser is
                   Timer_Unit : constant String := Parent.Location.Image_Of;
                 begin
                   if Timer_Unit = "Calendar" then
-                    Style_Error_If_Restricted (Error.Calendar_Time_Not_Allowed, Error_Token);
+                    Style_Error_If_Real_Time (Error.Calendar_Time_Not_Allowed, Error_Token);
                   end if;
                 end;
               end if;
@@ -10564,7 +10568,7 @@ package body Ada_95.Token.Parser is
         when Lexical.Is_Requeue =>
           Requeue_Statement (Scope);
         when Lexical.Is_Delay =>
-          Delay_Statement (Scope, Allow_Relative => True);
+          Delay_Statement (Scope);
         when Lexical.Is_Raise =>
           The_Statement_Count := The_Statement_Count - 1;
           Raise_Statement (Scope);

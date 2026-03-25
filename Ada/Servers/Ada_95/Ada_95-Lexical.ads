@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2007 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2007 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -577,7 +577,8 @@ package Ada_95.Lexical is
     Is_Queueing_Policy,
     Is_Stream_Convert,
     Is_Style_Checks,
-    Is_Style_None, -- WE use as first in Style_Pragma
+    Is_Style_Astronomy, -- use as first in Style_Pragma
+    Is_Style_None,
     Is_Style_Soudronic,
     Is_Style_Unrestricted,
     Is_Style_White_Elephant, -- use as last in Style_Pragma
@@ -599,7 +600,7 @@ package Ada_95.Lexical is
 
   subtype Compound_Pragma is Pragma_Id range Is_Ada_05 .. Is_Weak_External;
 
-  subtype Style_Pragma is Pragma_Id range Is_Style_None .. Is_Style_White_Elephant;
+  subtype Style_Pragma is Pragma_Id range Is_Style_Astronomy .. Is_Style_White_Elephant;
 
   subtype User_Pragma is Style_Pragma;
 

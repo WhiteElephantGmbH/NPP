@@ -285,6 +285,15 @@ package body Ada_95.Token.Parser is
     function Array_Type_Definition (Scope : Data.Unit_Handle) return Data.Array_Definition_Handle;
 
 
+    -- aspect_clause ::=
+    --      attribute_definition_clause
+    --    | enumeration_representation_clause
+    --    | record_representation_clause
+    --    | at_clause
+    --
+    procedure Aspect_Clause (Scope : Data.Unit_Handle);
+
+
     -- assignment_statement ::=
     --      variable_name := expression ;
     --
@@ -342,10 +351,9 @@ package body Ada_95.Token.Parser is
 
 
     -- attribute_reference ::=
-    --      name ' attribute_designator
+    --      prefix ' attribute_designator
+    --    | reduction_attribute_reference
     --
-    -- coded in Name_Of
-
 
     -- basic_declaration ::=
     --      type_declaration
@@ -1787,13 +1795,22 @@ package body Ada_95.Token.Parser is
     -- coded in Declarative_Part
 
 
-    -- aspect_clause ::=
-    --      attribute_definition_clause
-    --    | enumeration_representation_clause
-    --    | record_representation_clause
-    --    | at_clause
+    -- reduction_attribute_reference ::=
+    --      value_sequence ' reduction_attribute_designator
+    --    | prefix ' reduction_attribute_designator
     --
-    procedure Aspect_Clause (Scope : Data.Unit_Handle);
+    -- value_Sequence ::=
+    --      [ [parallel [(chunk_specification)] [aspect_specification]] iterated_element_association ]
+    --
+    -- chunk_specification ::=
+    --      integer_simple_expression
+    --    | defining_identifier in descrete_subtype_definition
+    --
+    -- iterated_element_association ::=
+    --      for loop_parameter_specification [use key_expression] => expression
+    --    | for iterator_specification [use key_expression] => expression
+    --
+    function Reduction_Attribute_Reference (Within : Data.Context) return Data_Handle;
 
 
     -- requeue_statement ::=
@@ -3721,29 +3738,39 @@ package body Ada_95.Token.Parser is
           =>
             Get_Next_Token;
           when Lexical.Is_If =>
-            The_Result_Type := If_Expression (Within);
             --TEST----------------------------------------
             --Write_Log ("-> if Expression from unknown");
             ----------------------------------------------
+            The_Result_Type := If_Expression (Within);
             exit;
           when Lexical.Is_Case =>
-            The_Result_Type := Case_Expression (Within);
             --TEST------------------------------------------
             --Write_Log ("-> case Expression from unknown");
             ------------------------------------------------
+            The_Result_Type := Case_Expression (Within);
             exit;
           when Lexical.Is_For =>
+            --TEST------------------------------------------------
+            --Write_Log ("-> quantified expression from unknown");
+            ------------------------------------------------------
             The_Result_Type := Quantified_Expression (Within);
-            --TEST-----------------------------------
-            --Write_Log ("-> quantified expression");
-            -----------------------------------------
             exit;
           when Lexical.Is_Declare =>
+            --TEST---------------------------------------------
+            --Write_Log ("-> declare expression from unknown");
+            ---------------------------------------------------
             The_Result_Type := Declare_Expression (Within);
-            --TEST--------------------------------
-            --Write_Log ("-> declare expression");
-            --------------------------------------
             exit;
+          when Lexical.Left_Bracket =>
+            if Next_Element_Ahead_Is (Lexical.Is_For) then
+              Get_Next_Token;
+              --TEST----------------------------------------------
+              --Write_Log ("-> reduction attribute from unknown");
+              ----------------------------------------------------
+              The_Result_Type := Reduction_Attribute_Reference (Within);
+              exit;
+            end if;
+            Not_Implemented ("Unknown reduction aggregate");
           when others =>
             exit when Token_Element = Termination_Element;
             Not_Implemented ("Aggregate: " & Image_Of (The_Token.all));
@@ -3831,12 +3858,20 @@ package body Ada_95.Token.Parser is
           -----------------------------------
           return The_Result_Type;
         when Lexical.Is_For =>
-          The_Result_Type := Quantified_Expression (Within);
-          Get_Element (Lexical.Right_Parenthesis);
-          --TEST-----------------------------------
-          --Write_Log ("-> quantified expression");
-          -----------------------------------------
-          return The_Result_Type;
+          if Termination_Element = Lexical.Right_Bracket then
+            The_Result_Type := Reduction_Attribute_Reference (Within);
+            --TEST---------------------------------
+            --Write_Log ("-> reduction attribute");
+            ---------------------------------------
+            return The_Result_Type;
+          else
+            The_Result_Type := Quantified_Expression (Within);
+            Get_Element (Lexical.Right_Parenthesis);
+            --TEST-----------------------------------
+            --Write_Log ("-> quantified expression");
+            -----------------------------------------
+            return The_Result_Type;
+          end if;
         when Lexical.Is_Declare =>
           The_Result_Type := Declare_Expression (Within);
           Get_Element (Lexical.Right_Parenthesis);
@@ -3844,6 +3879,14 @@ package body Ada_95.Token.Parser is
           --Write_Log ("-> declare expression");
           -----------------------------------------
           return The_Result_Type;
+        when Lexical.Left_Bracket =>
+          if Next_Element_Ahead_Is (Lexical.Is_For) then
+            Get_Next_Token;
+            --TEST--------------------------------
+            --Write_Log ("-> reduction expression");
+            --------------------------------------
+            return The_Result_Type;
+          end if;
         when others =>
           null;
         end case;
@@ -10194,6 +10237,41 @@ package body Ada_95.Token.Parser is
       end if;
       Get_Element (Lexical.Semicolon);
     end Raise_Statement;
+
+
+    -- reduction_attribute_reference ::=
+    --      value_sequence ' reduction_attribute_designator
+    --    | prefix ' reduction_attribute_designator
+    --
+    -- value_Sequence ::=
+    --      [ [parallel [(chunk_specification)] [aspect_specification]] iterated_element_association ]
+    --
+    -- chunk_specification ::=
+    --      integer_simple_expression
+    --    | defining_identifier in descrete_subtype_definition
+    --
+    -- iterated_element_association ::=
+    --      for loop_parameter_specification [use key_expression] => expression
+    --    | for iterator_specification [use key_expression] => expression
+    --
+    function Reduction_Attribute_Reference (Within : Data.Context) return Data_Handle is
+      The_Predicate : Data_Handle;
+      use type Lexical.Attribute_Id;
+    begin
+      Get_Element (Lexical.Is_For);
+      For_Loop_Condition (Within.Scope);
+      Get_Element (Lexical.Association);
+      The_Predicate := Expression (Within);
+      Get_Element (Lexical.Right_Bracket);
+      if Token_Element = Lexical.Apostrophe then
+        if Next_Element_Ahead_Is (Lexical.Attribute) then
+          if Attribute_Designator (Within) /= Lexical.Is_Reduce then
+            Syntax_Error;
+          end if;
+        end if;
+      end if;
+      return The_Predicate;
+    end Reduction_Attribute_Reference;
 
 
     -- requeue_statement ::=

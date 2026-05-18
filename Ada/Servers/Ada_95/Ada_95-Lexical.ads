@@ -195,6 +195,7 @@ package Ada_95.Lexical is
     Is_Large,
     Is_Mantissa,
     Is_Old,
+    Is_Reduce,
     Is_Result,
 
     -- single attributes shared with aspects (must match Aspect_Id enumeration)

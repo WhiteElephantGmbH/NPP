@@ -1275,6 +1275,11 @@ package body Ada_95.Token.Parser is
     --
     -- coded in Loop_Statement
 
+    -- iterated_element_association ::=
+    --      for loop_parameter_specification [use key_expression] => expression
+    --    | for iterator_specification [use key_expression] => expression
+    --
+    function Iterated_Element_Association (Within : Data.Context) return Data_Handle;
 
     -- known_discriminant_part ::=
     --      ( discriminant_specification { ; discriminant_specification} )
@@ -3686,7 +3691,7 @@ package body Ada_95.Token.Parser is
       end Is_Extension_Aggregate;
 
 
-      procedure Unknown_Aggregate is
+      procedure Unknown_Aggregate (The_Expected_Type : Data_Handle := Within.Sub_Type) is
         The_Within : Data.Context := Within;
       begin
         loop
@@ -3723,12 +3728,12 @@ package body Ada_95.Token.Parser is
           when Lexical.Association =>
             Get_Next_Token;
             if not Element_Is (Lexical.Unconstrained) then
-              The_Result_Type := Expression (Within);
+              The_Result_Type := Expression ((Within.Scope, The_Expected_Type));
             end if;
           when Lexical.Is_Others =>
             Get_Next_Element (Lexical.Association);
             if not Element_Is (Lexical.Unconstrained) then
-              The_Result_Type := Expression (Within);
+              The_Result_Type := Expression ((Within.Scope, The_Expected_Type));
             end if;
             exit;
           when Lexical.Comma
@@ -3763,14 +3768,14 @@ package body Ada_95.Token.Parser is
             exit;
           when Lexical.Left_Bracket =>
             if Next_Element_Ahead_Is (Lexical.Is_For) then
-              Get_Next_Token;
-              --TEST----------------------------------------------
-              --Write_Log ("-> reduction attribute from unknown");
-              ----------------------------------------------------
-              The_Result_Type := Reduction_Attribute_Reference (Within);
+              --TEST-------------------------------------------------------
+              --Write_Log ("-> Iterated Element Association from unknown");
+              -------------------------------------------------------------
+              The_Result_Type := Iterated_Element_Association (Within);
+              Get_Element (Lexical.Right_Bracket);
               exit;
             end if;
-            Not_Implemented ("Unknown reduction aggregate");
+            Not_Implemented ("Aggregate Association: " & Image_Of (The_Token.all));
           when others =>
             exit when Token_Element = Termination_Element;
             Not_Implemented ("Aggregate: " & Image_Of (The_Token.all));
@@ -3778,7 +3783,8 @@ package body Ada_95.Token.Parser is
         end loop;
       end Unknown_Aggregate;
 
-      The_Base_Type : Data_Handle;
+      The_Base_Type    : Data_Handle;
+      The_Element_Type : Data_Handle;
 
     begin --Aggregate
       case Token_Element is
@@ -3875,16 +3881,19 @@ package body Ada_95.Token.Parser is
         when Lexical.Is_Declare =>
           The_Result_Type := Declare_Expression (Within);
           Get_Element (Lexical.Right_Parenthesis);
-          --TEST-----------------------------------
+          --TEST--------------------------------
           --Write_Log ("-> declare expression");
-          -----------------------------------------
+          --------------------------------------
           return The_Result_Type;
         when Lexical.Left_Bracket =>
           if Next_Element_Ahead_Is (Lexical.Is_For) then
-            Get_Next_Token;
-            --TEST--------------------------------
+            The_Result_Type := Reduction_Attribute_Reference (Within);
+            --TEST----------------------------------
             --Write_Log ("-> reduction expression");
-            --------------------------------------
+            ----------------------------------------
+            if Termination_Element = Lexical.Right_Parenthesis then
+              Get_Element (Lexical.Right_Parenthesis);
+            end if;
             return The_Result_Type;
           end if;
         when others =>
@@ -3894,9 +3903,21 @@ package body Ada_95.Token.Parser is
         if The_Base_Type.all in Data.Instantiated_Item'class then
           The_Instantiation := Data.Item_Instantiation(The_Base_Type).Instantiation;
           The_Base_Type := Data.Item_Instantiation(The_Base_Type).Item;
-          --TEST-------------------------------------------------------------------------
-          --Write_Log ("  INSTANTIATION = " & Image_Of (The_Instantiation.Location.all));
-          -------------------------------------------------------------------------------
+          --TEST-----------------------------------------------------------------------
+          --Write_Log ("INSTANTIATION = " & Image_Of (The_Instantiation.Location.all));
+          -----------------------------------------------------------------------------
+          declare
+            Iterable_Type : constant Data_Handle := Data.Iterable_Type_Of (The_Base_Type);
+          begin
+            if Iterable_Type /= null then
+              if Iterable_Type.all in Data.Formal_Type'class then
+                The_Element_Type := Data.Actual_Type_Of (Data.Formal_Handle(Iterable_Type), The_Instantiation);
+                --TEST-------------------------------------------------------------------------
+                --Write_Log ("ITERABLE Element Type: " & Data.Full_Name_Of (The_Element_Type));
+                -------------------------------------------------------------------------------
+              end if;
+            end if;
+          end;
         end if;
         The_Base_Type := Data.Base_Type_Of (The_Base_Type);
         if The_Base_Type = null then
@@ -3933,7 +3954,18 @@ package body Ada_95.Token.Parser is
               Enumeration_Aggregate (The_Base_Type);
             when Is_Record_Type =>
               if not Is_Extension_Aggregate (Data.Record_Handle(The_Base_Type)) then
-                Record_Component_Association_List (Data.Record_Handle(The_Base_Type));
+                declare
+                  Saved_Token : constant Lexical_Handle := The_Token;
+                begin
+                  Record_Component_Association_List (Data.Record_Handle(The_Base_Type));
+                  if Element_Is (Lexical.Association) then
+                    The_Token := Saved_Token;
+                    --TEST-----------------------------------------
+                    --Write_Log ("-> AGGREGATE OF CONTAINER TYPE");
+                    -----------------------------------------------
+                    Unknown_Aggregate (The_Element_Type);
+                  end if;
+                end;
               end if;
             when Is_Object =>
               Not_Implemented ("Aggregate of private OBJECT: " & Image_Of (The_Token.all));
@@ -3955,6 +3987,12 @@ package body Ada_95.Token.Parser is
         --TEST----------------------------------------------
         --Write_Log ("-> AGGREGATE OF UNKNOWN AFTER RANGE");
         ----------------------------------------------------
+        Unknown_Aggregate;
+      end if;
+      if Element_Is (Lexical.Association) then
+        --TEST-----------------------------------------
+        --Write_Log ("-> UNKNOWN CONTAINER AGGREGATE");
+        -----------------------------------------------
         Unknown_Aggregate;
       end if;
       Get_Element (Termination_Element);
@@ -7186,7 +7224,7 @@ package body Ada_95.Token.Parser is
             --TEST-----------------------------------------
             --Write_Log ("%%% SKIP quantified expression");
             -----------------------------------------------
-           Dummy := Quantified_Expression (Within);
+            Dummy := Quantified_Expression (Within);
             The_Expected_Type := Separator;
             The_Count := The_Count - 1;
             exit when (The_Count = 0);
@@ -10239,6 +10277,24 @@ package body Ada_95.Token.Parser is
     end Raise_Statement;
 
 
+    -- iterated_element_association ::=
+    --      for loop_parameter_specification [use key_expression] => expression
+    --    | for iterator_specification [use key_expression] => expression
+    --
+    function Iterated_Element_Association (Within : Data.Context) return Data_Handle is
+      The_Predicate : Data_Handle;
+    begin
+      Get_Element (Lexical.Is_For);
+      For_Loop_Condition (Within.Scope);
+      if Element_Is (Lexical.Is_Use) then
+        Dummy := Expression (Within);
+      end if;
+      Get_Element (Lexical.Association);
+      The_Predicate := Expression (Within);
+      return The_Predicate;
+    end Iterated_Element_Association;
+
+
     -- reduction_attribute_reference ::=
     --      value_sequence ' reduction_attribute_designator
     --    | prefix ' reduction_attribute_designator
@@ -10249,19 +10305,11 @@ package body Ada_95.Token.Parser is
     -- chunk_specification ::=
     --      integer_simple_expression
     --    | defining_identifier in descrete_subtype_definition
-    --
-    -- iterated_element_association ::=
-    --      for loop_parameter_specification [use key_expression] => expression
-    --    | for iterator_specification [use key_expression] => expression
-    --
     function Reduction_Attribute_Reference (Within : Data.Context) return Data_Handle is
       The_Predicate : Data_Handle;
       use type Lexical.Attribute_Id;
     begin
-      Get_Element (Lexical.Is_For);
-      For_Loop_Condition (Within.Scope);
-      Get_Element (Lexical.Association);
-      The_Predicate := Expression (Within);
+      The_Predicate := Iterated_Element_Association (Within);
       Get_Element (Lexical.Right_Bracket);
       if Token_Element = Lexical.Apostrophe then
         if Next_Element_Ahead_Is (Lexical.Attribute) then

@@ -55,6 +55,8 @@ package Project is
 
   function Folder return String;
 
+  function Gpr_Source_Folder return String;
+
   function Directory return String;
 
   function Ada_Version return String;

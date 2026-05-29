@@ -147,6 +147,8 @@ package body Project is
 
   function Folder return String is (Directory & Files.Separator);
 
+  function Gpr_Source_Folder return String is (Directory & Compiler_Area & Files.Separator);
+
   function Actual return String is (+The_Actual_Project);
 
   function Name return String is (+The_Project_Name);

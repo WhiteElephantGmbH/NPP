@@ -34,7 +34,7 @@ package body Project.Gpr is
 
     Product_Is_Dll : constant Boolean := Project.Is_Dll;
 
-    Source       : constant String := Folder & Gpr_Name;
+    Source       : constant String := Gpr_Source_Folder & Gpr_Name;
     Gpr_Filename : constant String := Created_Target_Folder & Gpr_Name;
 
     The_File : Ada.Text_IO.File_Type;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -8,6 +8,8 @@ with Ada.Containers.Indefinite_Ordered_Maps;
 with Text;
 
 package Project is
+
+  use type Text.String;
 
   type Case_Modification is (No_Change, Keywords, Change_All);
 
@@ -73,7 +75,7 @@ package Project is
 
   function Language_Folder return String;
 
-  function Has_New_Resource return Boolean;
+  function Generate_New_Resource return Boolean;
 
   function Promotion_Areas return String;
 
@@ -105,7 +107,13 @@ private
 
   Object_Area : constant String := "objects";
 
+  Ali_Area : constant String := "ali";
+
+  function Object_Directory return String;
+
   function Object_Folder return String;
+
+  function Ali_Directory return String;
 
   function Program_Unit_Name return String;
 
@@ -120,6 +128,8 @@ private
   function Product_Version return String;
 
   function Legacy_Interface_Name return String;
+
+  function Is_Legacy_Compiler return Boolean;
 
   procedure Set_Error (Message : String) with No_Return;
 

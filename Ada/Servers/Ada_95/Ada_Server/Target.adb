@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -18,6 +18,8 @@ with Server;
 with Text;
 
 package body Target is
+
+  use type Text.String;
 
   procedure Log_Execution (Item : String) is
   begin
@@ -57,11 +59,9 @@ package body Target is
 
     Windres : constant String := Project.Tools_Folder & "windres.exe";
 
-    The_Resource_Name : Text.String := [Project.Name];
+    The_Resource_Name : Text.String := +Project.Name;
 
-    The_Source_Directory : Text.String := [Project.Directory];
-
-    use type Text.String;
+    The_Source_Directory : Text.String := +Project.Directory;
 
     function Resource_Name return String is
     begin
@@ -100,8 +100,8 @@ package body Target is
           return False;
         end if;
       end if;
-      The_Source_Directory := [Parent_Directory];
-      The_Resource_Name := [Files.Name_Of (Source_Directory)];
+      The_Source_Directory := +Parent_Directory;
+      The_Resource_Name := +Files.Name_Of (Source_Directory);
       return False;
     end Changed_To_Parent_Resource;
 
@@ -316,11 +316,10 @@ package body Target is
     procedure Promote is
     begin
       if Project.Is_Program_Unit (Filename) then
-        if Project.Has_New_Resource then
+        if Project.Generate_New_Resource then
           Generate_Resource_Object;
-        else
-          Project.Define_Environment;
         end if;
+        Project.Define_Environment;
         Build (Filename);
         Modifier_Handling;
         Installation_Handling;

@@ -18,10 +18,9 @@ pragma Style_White_Elephant;
 with Elephant_Interface;
 
 pragma Build (Description   => "Elephant Nodepad++ Plugin",
-              Version       => (45, 3, 0, 3),
+              Version       => (46, 0, 0, 5),
               Kind          => Dll,
               Use_Interface => Elephant_Interface,
-              Resource      => "Bit_Maps",
               Compiler      => "GNATPRO\23.0");
 
 procedure Elephant is

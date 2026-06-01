@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                        (c) 2002 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                         *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -425,6 +425,9 @@ package body Text is
   end To_Elements_Access;
 
 
+  function Empty_String return String is (Empty);
+
+
   function Is_Null (Item : String) return Boolean is
 
   begin
@@ -444,12 +447,12 @@ package body Text is
   end Last;
 
 
-  function String_Of (Item : Standard.String) return String is
+  function "+" (Item : Standard.String) return String is
     The_String : String;
   begin
     The_String.Append (Item);
     return The_String;
-  end String_Of;
+  end "+";
 
 
   function To_String (Item : String) return Standard.String is
@@ -534,18 +537,22 @@ package body Text is
   procedure Make_Lowercase (Item : in out String) is
     Elements : constant Elements_Access := Item.To_Elements_Access;
   begin
-    for The_Character of Elements.Data loop
-      The_Character := Lowercase_Of (The_Character);
-    end loop;
+    if Elements /= null then
+      for The_Character of Elements.Data loop
+        The_Character := Lowercase_Of (The_Character);
+      end loop;
+    end if;
   end Make_Lowercase;
 
 
   procedure Make_Uppercase (Item : in out String) is
     Elements : constant Elements_Access := Item.To_Elements_Access;
   begin
-    for The_Character of Elements.Data loop
-      The_Character := Uppercase_Of (The_Character);
-    end loop;
+    if Elements /= null then
+      for The_Character of Elements.Data loop
+        The_Character := Uppercase_Of (The_Character);
+      end loop;
+    end if;
   end Make_Uppercase;
 
 
@@ -554,7 +561,13 @@ package body Text is
                   To   : Natural) return Standard.String is
     Elements : constant Elements_Access := Item.To_Elements_Access;
   begin
-    return Elements.Data(From .. To);
+    if Elements /= null then
+      return Elements.Data(From .. To);
+    elsif To + 1 - From = 0 then
+      return "";
+    else
+      raise Constraint_Error;
+    end if;
   end Slice;
 
 
@@ -563,9 +576,11 @@ package body Text is
     The_First : Positive;
     The_Last  : Natural;
   begin
-    Get_Trim_Range (Elements.Data, The_First, The_Last);
-    Item.Delete (Index => The_Last, Count => Count_Type(Item.Count - The_Last));
-    Item.Delete (Index => Start_Of_String, Count => Count_Type(The_First - Start_Of_String));
+    if Elements /= null then
+      Get_Trim_Range (Elements.Data, The_First, The_Last);
+      Item.Delete (Index => The_Last, Count => Count_Type(Item.Count - The_Last));
+      Item.Delete (Index => Start_Of_String, Count => Count_Type(The_First - Start_Of_String));
+    end if;
   end Trim;
 
 
@@ -588,7 +603,7 @@ package body Text is
   end Truncation_Of;
 
 
-   procedure Update (Item : in out String;
+  procedure Update (Item : in out String;
                     From :        Positive;
                     By   :        Standard.String) is
     The_Cursor : Cursor := Item.To_Cursor (From);
@@ -610,6 +625,8 @@ package body Text is
   --*******************************************************************************************************************
   --**  List of Strings                                                                                              **
   --*******************************************************************************************************************
+
+  function Empty_List return List is ((Linked_Strings.Empty_List with null record));
 
   function "+" (Left  : List;
                 Right : Standard.String) return List is
@@ -769,6 +786,9 @@ package body Text is
   --**  Vector of Strings                                                                                            **
   --*******************************************************************************************************************
 
+  function Empty_Vector return Vector is ((String_Array.Empty_Vector with null record));
+
+
   procedure Put_Vector_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
                               V : Vector) is
   begin
@@ -821,6 +841,9 @@ package body Text is
   --*******************************************************************************************************************
   --**  Strings                                                                                                      **
   --*******************************************************************************************************************
+
+  function None return Strings is ((Count => 0, Length => 0, others => <>));
+
 
   procedure Append (Item : in out Strings;
                     Data :        Standard.String) is
@@ -1012,6 +1035,36 @@ package body Text is
     end if;
     return The_Strings;
   end Strings_Of;
+
+
+  function Split_Of (Item       : Standard.String;
+                     Separators : Standard.String;
+                     Do_Trim    : Boolean := True) return Strings is
+    The_Strings : Strings;
+    The_First   : Natural := Item'first;
+
+    function Conditional_Trimmed (Image : Standard.String) return Standard.String is
+      (if Do_Trim then Trimmed(Image) else Image);
+
+  begin -- Split_Of
+    for Index in Item'range loop
+      declare
+        function Part return Standard.String is (Conditional_Trimmed (Item(The_First .. Index - 1)));
+      begin
+        if Found (Item(Index), Separators) then
+          if Index /= The_First then
+            The_Strings.Append (Part);
+          end if;
+          The_First := Index + 1;
+          exit;
+        end if;
+      end;
+    end loop;
+    if The_First <= Item'last then
+      The_Strings.Append (Conditional_Trimmed (Item(The_First .. Item'last)));
+    end if;
+    return The_Strings;
+  end Split_Of;
 
 
   function Part (Item  : Strings;

@@ -33,6 +33,8 @@ with Win;
 
 package body Client is
 
+  use type Text.String;
+
   subtype Column_Range is Server.Column_Range;
   subtype Line_Number  is Server.Line_Number;
 
@@ -279,7 +281,7 @@ package body Client is
     loop
       select
         accept Promotion (Message : String) do
-          The_Message := [Message];
+          The_Message := +Message;
         end Promotion;
         Promoting (The_Message.To_String);
       or
@@ -504,7 +506,6 @@ package body Client is
             At_Position   : constant Natural := Line'first + Positive(The_Location.Cursor.Column) - 1;
             At_Line       : constant String := Text.Trimmed (The_Location.Cursor.Line'image);
             Last_Position : Natural := Line'last;
-            use type Text.String;
             use type Server.Line_Counter;
           begin
             if Index /= The_Locations'last then
@@ -519,7 +520,7 @@ package body Client is
               end;
             end if;
             if Text.Is_Null (The_Line) then
-              The_Line := [At_Line & ' ' & Text.Trimmed (Line(Line'first .. At_Position - 1))];
+              The_Line := +(At_Line & ' ' & Text.Trimmed (Line(Line'first .. At_Position - 1)));
             end if;
             The_Line.Append (Cursor_Mark & Line(At_Position .. Last_Position));
             if Last_Position = Line'last then
@@ -581,7 +582,7 @@ package body Client is
     Project_Is_Open := Server.Project_Opened (Buffer_Name);
     if Project_Is_Open then
       Show (Server.Message);
-      The_Known_Extensions := [Server.Known_Extensions];
+      The_Known_Extensions := +Server.Known_Extensions;
       declare
         Editor : Scintilla.Object;
       begin

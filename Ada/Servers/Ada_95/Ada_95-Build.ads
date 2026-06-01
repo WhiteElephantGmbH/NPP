@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -92,7 +92,7 @@ package Ada_95.Build is
   procedure Define_Company (Item : String);
 
   function Actual_Company return String;
-  
+
   function Has_Style return Boolean;
 
   function Check_Of (Library : String) return Library_Check_Completion;

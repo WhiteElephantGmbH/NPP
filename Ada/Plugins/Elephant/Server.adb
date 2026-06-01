@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -25,6 +25,8 @@ with Os.Process;
 
 package body Server is
 
+  use type Text.String;
+
   The_Pipe : Os.Pipe.Handle;
 
   The_Length : Natural;
@@ -32,8 +34,6 @@ package body Server is
   for The_Data'alignment use 4;
 
   The_Message : Text.String;
-
-  use type Text.String;
 
 
   procedure Read_Data is
@@ -83,7 +83,7 @@ package body Server is
 
   procedure Set_Message (Item : String) is
   begin
-    The_Message := [Item];
+    The_Message := +Item;
   end Set_Message;
 
 
@@ -240,7 +240,7 @@ package body Server is
   procedure Read_Filename is
   begin
     Send (Get_Filename);
-    The_Actual_Filename := [Data_String];
+    The_Actual_Filename := +Data_String;
   end Read_Filename;
 
 

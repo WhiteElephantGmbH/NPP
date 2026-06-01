@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -14,7 +14,6 @@ with Text;
 package body Promotion is
 
   use type Text.String;
-
 
   task type Handler is
     entry Start (Name : String;
@@ -158,7 +157,7 @@ package body Promotion is
                   Kind : Server.Promotion_Kind)
     do
       The_Kind := Kind;
-      The_Name := [Name];
+      The_Name := +Name;
       Control.Start;
     end Start;
     case The_Kind is
@@ -211,7 +210,7 @@ package body Promotion is
 
     procedure Set_Message_Text (Item : String) is
     begin
-      The_Message :=[Item];
+      The_Message := +Item;
       New_Message := True;
     end Set_Message_Text;
 
@@ -221,8 +220,8 @@ package body Promotion is
                               At_Line   : Server.Line_Number := Server.Line_Number'first;
                               At_Column : Server.Column_Range := Server.Column_Range'first) is
     begin
-      The_Message := [Item];
-      The_Filename := [File];
+      The_Message := +Item;
+      The_Filename := +File;
       The_Line := At_Line;
       The_Column := At_Column;
       New_Message := False;

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2014 .. 2022 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2014 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -18,10 +18,9 @@ pragma Style_White_Elephant;
 with Hello_Interface;
 
 pragma Build (Description   => "Hello Nodepad++ Plugin",
-              Version       => (2, 1, 0, 2),
+              Version       => (2, 1, 0, 3),
               Kind          => Dll,
               Use_Interface => Hello_Interface,
-              Resource      => "Bitmap",
               Compiler      => "GNATPRO\23.0");
 
 procedure Hello is

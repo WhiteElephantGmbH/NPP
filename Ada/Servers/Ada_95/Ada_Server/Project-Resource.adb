@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -13,9 +13,11 @@ with Log;
 
 package body Project.Resource is
 
-  Copyright : constant String := "© ";
+  Copyright : constant String := [Character'val(16#A9#), ' '];
 
   Object_Name : constant String := "resources.o";
+  
+  Common_Object_Extension : constant String := ".coff";
 
 
   function Filename return String is
@@ -32,6 +34,8 @@ package body Project.Resource is
     end if;
   end Filename;
 
+
+  function Common_Object_File return String is (Object_Folder & Name & Common_Object_Extension);
 
   function Object return String is (Object_Folder & Object_Name);
 

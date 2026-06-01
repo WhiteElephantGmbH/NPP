@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                   (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                              *
+-- *                   (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                              *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -10,6 +10,8 @@ with Files;
 with Log;
 
 package body Ada_95.Build is
+
+  use type Text.String;
 
   type Tools_Kind is (Size_32, Size_64);
 
@@ -33,15 +35,13 @@ package body Ada_95.Build is
   The_Interface              : Text.List;
   Library_Check              : Library_Check_Function;
 
-  use type Text.String;
-
 
   procedure Initialize (Filename   : String;
                         Check      : Library_Check_Function;
                         Is_Startup : Boolean) is
   begin
     Library_Check := Check;
-    The_Project_Folder := [Files.Normalized_Folder(Files.Directory_Of (Filename))];
+    The_Project_Folder := +Files.Normalized_Folder(Files.Directory_Of (Filename));
     Build_Defined := False;
     Use_Icon := True;
     The_Kind := Windows_Application;
@@ -128,7 +128,7 @@ package body Ada_95.Build is
 
   procedure Define_Company (Item : String) is
   begin
-    The_Company := [Item];
+    The_Company := +Item;
   end Define_Company;
 
   function Actual_Company return String is (+The_Company);
@@ -139,7 +139,7 @@ package body Ada_95.Build is
 
   procedure Define_Description (Item : String) is
   begin
-    The_Description := [Item];
+    The_Description := +Item;
   end Define_Description;
 
   function Actual_Description return String is (+The_Description);
@@ -229,7 +229,7 @@ package body Ada_95.Build is
     end if;
     if Text.Is_Null (The_Tools_Directories(The_Tools_Kind)) then
       Log.Write ("||| Tools Directory " & Directories_Area & " : " & Location);
-      The_Tools_Directories(The_Tools_Kind) := [Location];
+      The_Tools_Directories(The_Tools_Kind) := +Location;
       return True;
     else
       Log.Write ("!!! Tools Directory " & Directories_Area & " already set");
@@ -276,7 +276,7 @@ package body Ada_95.Build is
     Original_Name : constant String := Files.Original_Name_Of (Item);
   begin
     Log.Write ("||| Global Tools Directory: " & Original_Name);
-    The_Global_Tools_Directory := [Original_Name];
+    The_Global_Tools_Directory := +Original_Name;
   end Define_Global_Tools_Directory;
 
 
@@ -286,7 +286,7 @@ package body Ada_95.Build is
   procedure Define_Tools_Directory (Item : String) is
   begin
     Log.Write ("||| Tools Directory: " & Item);
-    The_Tools_Directory := [File.Normalized (Item)];
+    The_Tools_Directory := +File.Normalized (Item);
   end Define_Tools_Directory;
 
 
@@ -389,7 +389,7 @@ package body Ada_95.Build is
     Filename : constant String := Project_Folder & Item & ".rc";
   begin
     if Files.Exists (Filename) then
-      The_Resource := [Filename];
+      The_Resource := +Filename;
       return True;
     end if;
     return False;

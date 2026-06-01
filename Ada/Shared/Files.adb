@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -20,6 +20,8 @@ with Win32.Winreg;
 package body Files is
 
   pragma Linker_Options ("-lmpr");
+
+  use type Text.String;
 
   function Is_On_Network (Drive : Character) return Boolean is
     Name   : aliased constant String := Drive & ":" & Ascii.Nul;
@@ -465,7 +467,7 @@ package body Files is
             Part : constant String := Name(The_Index + 1 .. Index - 1);
           begin
             if Part = Area then
-              The_Directory := [Normalized (Name(Name'first .. Index - 1))];
+              The_Directory := +Normalized (Name(Name'first .. Index - 1));
               The_Index := Name'last;
               for Inner_Index in reverse Index .. Name'last loop
                 if Name(Inner_Index) = Separator or Name(Inner_Index) = Other_Separator then

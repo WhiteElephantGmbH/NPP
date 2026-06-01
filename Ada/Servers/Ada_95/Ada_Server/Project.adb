@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2013 .. 2025 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2013 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -87,8 +87,6 @@ package body Project is
 
   Ada_Project_Path : constant String := "ADA_PROJECT_PATH";
 
-  use type Text.String;
-
 
   procedure Set_Project_Undefined is
   begin
@@ -167,6 +165,8 @@ package body Project is
 
   function Legacy_Interface_Name return String is (Name & "_Interface");
 
+  function Is_Legacy_Compiler return Boolean is (Product_Version = Legacy_Product_Version);
+
   function Modifier_Tool return String is (+The_Modifier_Tool);
 
 
@@ -197,11 +197,11 @@ package body Project is
   begin
     return +The_Modifier_Message;
   end Modifier_Success;
-
+    
 
   function Ada_Version return String is
   begin
-    if Product_Version = Legacy_Product_Version then
+    if Is_Legacy_Compiler then
       return Legacy_Ada_Version;
     else
       return +The_Ada_Version;
@@ -378,6 +378,12 @@ package body Project is
   end Object_Folder;
 
 
+  function Ali_Directory return String is
+  begin
+    return Object_Folder & Ali_Area;
+  end Ali_Directory;
+
+
   type Phase is (Unknown, Initializing, Promoting);
 
   The_Phase : Phase := Unknown;
@@ -433,6 +439,15 @@ package body Project is
   end Check_Icon;
 
 
+  procedure Create_Object_Directories is
+  begin
+    Files.Create_Folder (Ali_Directory);
+  exception
+  when others =>
+    null;
+  end Create_Object_Directories;
+
+
   procedure Define_Environment is
 
     function Filename return String is
@@ -445,6 +460,7 @@ package body Project is
     end Filename;
 
   begin -- Define_Environment
+    Create_Object_Directories;
     if Build.Is_Defined then
       The_Libraries := Build.Actual_Libraries;
     else
@@ -477,15 +493,7 @@ package body Project is
   end Define_Environment;
 
 
-  function Has_New_Resource return Boolean is
-
-    procedure Create_Object_Path is
-    begin
-      Files.Create_Folder (Object_Directory);
-    exception
-    when others =>
-      null;
-    end Create_Object_Path;
+  function Generate_New_Resource return Boolean is
 
     procedure Delete_Target_Directory is
     begin
@@ -508,36 +516,25 @@ package body Project is
         if not File.Exists (Resource_Filename) or else File.Is_Newer (Program_Unit, Resource_Filename) then
           if Tools_Defined then
             Delete_Target_Directory;
-            Create_Object_Path;
+            Create_Object_Directories;
             Resource.Generate;
-            Define_Environment;
-            The_Phase := Unknown;
-            return True;
-          else
-            Create_Object_Path;
-            The_Phase := Unknown;
-            return False;
           end if;
-        else
-          The_Phase := Unknown;
-          return not File.Exists (Resource.Object) or else File.Is_Newer (Resource_Filename, Resource.Object);
         end if;
+        The_Phase := Unknown;
+        return False;
       else
         if File.Exists (Resource_Filename) then
           if not File.Exists (Resource.Object) or else File.Is_Newer (Resource_Filename, Resource.Object) then
-            Define_Environment;
             Delete_Target_Directory;
-            Create_Object_Path;
             The_Phase := Unknown;
             return True;
           end if;
         end if;
-        Create_Object_Path;
         The_Phase := Unknown;
         return False;
       end if;
     end;
-  end Has_New_Resource;
+  end Generate_New_Resource;
 
 
   procedure Create_Work_Area_For (Project_Parts :     Text.Vector;
@@ -566,7 +563,7 @@ package body Project is
             return;
           end if;
         end loop;
-        The_Project_Directory := [Path];
+        The_Project_Directory := +Path;
         The_Source_Directories.Prepend (Path);
         The_Work_Path.Prepend (Folder);
       end;
@@ -574,7 +571,7 @@ package body Project is
     for Area of The_Implied_Areas loop
       The_Source_Directories.Append (Source_Folder & Area);
     end loop;
-    The_Project_Name := [Part_Of (Project_Parts.Count - 1)];
+    The_Project_Name := +Part_Of (Project_Parts.Count - 1);
     Text.Clear (The_Product_Sub_Path);
     for Index in Text.First_Index .. Project_Parts.Count - 2 loop
       declare
@@ -588,7 +585,7 @@ package body Project is
             The_Text : constant String := The_Items.To_List.To_Data (Separator => "\");
           begin
             if The_Text /= "" then
-              The_Product_Sub_Path := [Ada_95.File.Normalized_Folder ("\" & The_Text)];
+              The_Product_Sub_Path := +Ada_95.File.Normalized_Folder ("\" & The_Text);
             end if;
           end;
         end if;
@@ -660,7 +657,7 @@ package body Project is
       if not File.Directory_Exists (The_Directory) then
         Ini_Error (Application & " " & Key & " <" & The_Directory & "> unknown");
       end if;
-      The_Item := [Ada_95.File.Normalized (Location)];
+      The_Item := +Ada_95.File.Normalized (Location);
     end Define_Location;
 
 
@@ -670,9 +667,9 @@ package body Project is
 
     begin
      if The_Version = "" then
-       The_Ada_Version := [Default_Ada_Version];
+       The_Ada_Version := +Default_Ada_Version;
      else
-       The_Ada_Version := [Text.Lowercase_Of (The_Version)];
+       The_Ada_Version := +Text.Lowercase_Of (The_Version);
        if not (Ada_Version in "gnat83" | "gnat95" | "gnat05" | "gnat2005" | "gnat12" | "gnat2012" | "gnat2022") then
          Ini_Error ("Ada version " & The_Version & " unknown - latest supported version: gnat2022");
        end if;
@@ -698,14 +695,14 @@ package body Project is
       elsif not File.Exists (Tool) then
         Ini_Error ("Product Modifier <" & Tool & "> unknown");
       end if;
-      The_Modifier_Tool := [Tool];
+      The_Modifier_Tool := +Tool;
       Log.Write ("||| Modifier - Tool       : " & Modifier_Tool);
       if Items.Count >= 2 then
-        The_Modifier_Parameters := [Parameter];
+        The_Modifier_Parameters := +Parameter;
         Log.Write ("|||          - Parameters : " & The_Modifier_Parameters);
       end if;
       if Items.Count = 3 then
-        The_Modifier_Message := [Message];
+        The_Modifier_Message := +Message;
         Log.Write ("|||          - Message : " & The_Modifier_Message);
       end if;
     end Define_Modifier;
@@ -802,11 +799,11 @@ package body Project is
               else
                 case The_State  is
                 when Get_Destination =>
-                  The_Destination := [Token];
+                  The_Destination := +Token;
                   The_State := Destination_Defined;
                 when Destination_Defined =>
                   Append_Destination;
-                  The_Destination := [Token];
+                  The_Destination := +Token;
                 when Get_Constraint =>
                   Install_Error (Syntax);
                 end case;
@@ -965,7 +962,7 @@ package body Project is
 
   begin -- Initialized
     Log.Write ("||| Project.Initialize: " & Filename);
-    The_Actual_Project := [Project_Name];
+    The_Actual_Project := +Project_Name;
     The_Phase := Initializing;
     Build.Initialize (Project_Name, Library_Check'access, Is_Startup => True);
     if The_Configuration_Handle = null then -- only first time because language directory does not change
@@ -1277,7 +1274,7 @@ package body Project is
     for The_Project of The_Promotion_List loop
       Log.Write ("||| Project: " & The_Project);
     end loop;
-    The_Promotion_Areas := [Ada_95.File.Normalized (Area_List)];
+    The_Promotion_Areas := +Ada_95.File.Normalized (Area_List);
     return The_Promotion_List;
   end Promotion_List;
 

@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -76,6 +76,8 @@ package body Project.Gpr is
     Put ("      for Casing use ""mixedcase"";");
     Put ("   end Naming;");
     Put ("");
+    Put ("   for Languages use (""Ada"", ""Winres"");");
+    Put ("");
     if Product_Is_Dll then
       Put ("   for Library_Name use """ & Project_Name & """;");
       Put ("   for Shared_Library_Prefix use """";");
@@ -84,23 +86,22 @@ package body Project.Gpr is
     for The_Directory of Source_Directories loop
       if The_Directory = Source_Directories.First_Element then
         Put ("   for Source_Dirs use (""" & The_Directory & """,");
-      elsif The_Directory = Source_Directories.Last_Element then
-        Put ("                        """ & The_Directory & """);");
       else
         Put ("                        """ & The_Directory & """,");
       end if;
     end loop;
+    Put ("                        """ & Target_Directory & """);");
     Put ("");
     if Product_Is_Dll then
       Put ("   for Library_Interface use (" & Interface_Name & ");");
       Put ("");
     end if;
-    Put ("   for Object_Dir use """ & Object_Area & """;");
+    Put ("   for Object_Dir use """ & Object_Directory & """;");
     Put ("");
     if Product_Is_Dll then
-      Put ("   for Library_Options use (""-L" & Product_Directory & """, ""resources.o"");");
+      Put ("   for Library_Options use (""-L" & Product_Directory & """);");
       Put ("   for Library_Dir use """ & Product_Directory & Product_Sub_Path & """;");
-      Put ("   for Library_Ali_Dir use """ & Target_Directory & """;");
+      Put ("   for Library_Ali_Dir use """ & Ali_Directory & """;");
       Put ("   for Library_Kind use ""dynamic"";");
       Put ("   for Library_Standalone use ""encapsulated"";");
     else
@@ -137,7 +138,10 @@ package body Project.Gpr is
       Put ("      for Linker_Options use ();");
       Put ("      for Default_Switches (""ada"") use");
       Put ("         (""-g"", ""-L" & Product_Directory & """,");
-      Put ("          """ & Resource.Object & """,""-m" & Build.Application_Kind_Image &""");");
+      if Is_Legacy_Compiler then
+        Put ("          """ & Resource.Common_Object_File & """,");
+      end if;
+      Put ("          ""-m" & Build.Application_Kind_Image & """);");
       Put ("   end Linker;");
       Put ("");
     end if;
@@ -186,18 +190,18 @@ package body Project.Gpr is
         begin
           exit when Token = "";
           if (Token = "library" and then Next_Token = "project") or Token = "project" then
-            The_Gpr.Project_Name := [Next_Token];
+            The_Gpr.Project_Name := +Next_Token;
           elsif Token = "for" and then Next_Token = "Source_Dirs" and then
             Next_Token = "use" and then Next_Token = "("
           then
             declare
               Source_Path : constant String := Text.Trimmed (Next_Token, '"');
             begin
-              The_Gpr.Source_Path := [File.Full_Name_Of (Name_Or_Directory => Source_Path,
-                                                         Current_Directory => Gpr_Directory)];
+              The_Gpr.Source_Path := +File.Full_Name_Of (Name_Or_Directory => Source_Path,
+                                                         Current_Directory => Gpr_Directory);
             exception
             when others =>
-              The_Gpr.Source_Path := [Source_Path]; -- use original to show in error message
+              The_Gpr.Source_Path := +Source_Path; -- use original to show in error message
             end;
             exit;
           end if;

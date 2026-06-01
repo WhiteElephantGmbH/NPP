@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,6 +12,8 @@ with Project;
 with Text;
 
 package body Build_Parser is
+
+  use type Text.String;
 
   procedure Evaluate is
 
@@ -127,7 +129,6 @@ package body Build_Parser is
           The_Name    : Text.String;
 
           function Actual_Name return String is
-            use type Text.String;
           begin
             if Text.Is_Null (The_Name) then
               return Next_Token;
@@ -206,7 +207,7 @@ package body Build_Parser is
                       if Token = "+" then
                         The_Interface.Append (Next_Token);
                       else
-                        The_Name := [Token];
+                        The_Name := +Token;
                         exit;
                       end if;
                     end;

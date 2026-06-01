@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2002 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                        (c) 2002 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                         *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -161,13 +161,13 @@ package Text is
     Aggregate => (Empty       => Empty_String,
                   Add_Unnamed => Append);
 
-  Empty_String : constant String;
+  function Empty_String return String with Inline;
 
   function Count (Item : String) return Natural is (Natural(Character_Array.Length(Character_Array.Vector(Item))));
 
   function Is_Null (Item : String) return Boolean with Inline; -- same as Is_Empty or Count = 0
 
-  function String_Of (Item : Standard.String) return String with Inline;
+  function "+" (Item : Standard.String) return String with Inline;
 
   function To_String (Item : String) return Standard.String with Inline;
 
@@ -218,10 +218,10 @@ package Text is
 --              Right : String) return String; -- inherited
 
   function "&" (Left  : String;
-                Right : Standard.String) return String is (Left & String_Of (Right));
+                Right : Standard.String) return String is (Left & (+Right));
 
   function "&" (Left  : Standard.String;
-                Right : String) return String is (String_Of (Left) & Right);
+                Right : String) return String is ((+Left) & Right);
 
   function "&" (Left  : Standard.String;
                 Right : String) return Standard.String is (Left & Right.To_String);
@@ -291,7 +291,7 @@ package Text is
     Aggregate => (Empty       => Empty_List,
                   Add_Unnamed => Append);
 
-  Empty_List : constant List;
+  function Empty_List return List with Inline;
 
   function "+" (Left  : List;
                 Right : Standard.String) return List;
@@ -340,7 +340,7 @@ package Text is
     Aggregate => (Empty       => Empty_Vector,
                   Add_Unnamed => Append);
 
-  Empty_Vector : constant Vector;
+  function Empty_Vector return Vector with Inline;
 
   function Count (Item : Vector) return Natural is (Natural(Length (Item))) with Inline;
 
@@ -383,7 +383,7 @@ package Text is
     Iterator_Element  => Standard.String,
     Relaxed_Initialization;
 
-  None : constant Strings;
+  function None return Strings with Inline;
 
   procedure Append (Item : in out Strings;
                     Data :        Standard.String)
@@ -430,6 +430,13 @@ package Text is
   --   Example: Data = "," and Separator = ',' and Purge = False results in two empty strings.
   -- Per default (Purge = True) empty strings are removed and (Do_Trim = True) strings are trimmed.
   -- Symbols are added to the result.
+
+  function Split_Of (Item       : Standard.String;
+                     Separators : Standard.String;
+                     Do_Trim    : Boolean := True) return Strings;
+  -- Returns two strings splitted at the first occurence of a separator (one of the characters in Separators).
+  -- The separator is not in the returned strings;
+  -- If there is no separator in the Item, one string is returned;
 
   function "+" (Data : Standard.String) return Strings is (Strings_Of (Data, '|'));
 
@@ -525,8 +532,6 @@ private
   procedure Put_String_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
                               V :        String);
 
-  Empty_String : constant String := Empty;
-
   Null_String : constant String := (Character_Array.Empty_Vector with null record);
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -537,8 +542,6 @@ private
   procedure Put_List_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
                             V :        List);
 
-  Empty_List : constant List := (Linked_Strings.Empty_List with null record);
-
 ------------------------------------------------------------------------------------------------------------------------
 
   type Vector is new String_Array.Vector with null record
@@ -546,8 +549,6 @@ private
 
   procedure Put_Vector_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
                               V :        Vector);
-
-  Empty_Vector : constant Vector := (String_Array.Empty_Vector with null record);
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -567,8 +568,6 @@ private
 
   procedure Put_Strings_Image (S : in out Ada.Strings.Text_Buffers.Root_Buffer_Type'class;
                                V :        Strings);
-
-  None : constant Strings := (Count => 0, Length => 0, others => <>);
 
   function Count (Item : Strings) return Natural is (Item.Count);
 

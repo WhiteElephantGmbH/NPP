@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2008 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2008 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *                                                                                                                   *
 -- *    This program is free software; you can redistribute it and/or modify it under the terms of the GNU General     *
@@ -24,6 +24,8 @@ with Unsigned;
 with Os.Pipe;
 
 package body Command is
+
+  use type Text.String;
 
   The_Data : Server.Source_Buffer;
 
@@ -122,7 +124,6 @@ package body Command is
     end Write;
 
     procedure Write (Item : Text.String) is
-      use type Text.String;
     begin
       Write (String'(+Item));
     end Write;
@@ -136,7 +137,7 @@ package body Command is
       Reference : aliased constant Server.Location := (Column => Server.Column,
                                                        Line   => Server.Line);
     begin
-      The_Filename := [Server.Filename];
+      The_Filename := +Server.Filename;
       Os.Pipe.Write (The_Pipe, Reference'address, Server.Location'size / Unsigned.Byte'size);
     end Write_Reference;
 
@@ -232,14 +233,14 @@ package body Command is
                           Kind => Server.Run);
         when Server.Has_Promotion_Message =>
           if Server.Has_Promotion_Message then
-            The_Message := [Server.Message];
+            The_Message := +Server.Message;
           else
             The_Message := [];
           end if;
           Write (The_Message);
         when Server.Has_Promotion_Error =>
           if Server.Has_Promotion_Error then
-            The_Message := [Server.Message];
+            The_Message := +Server.Message;
             Write_Reference;
           else
             The_Message := [];

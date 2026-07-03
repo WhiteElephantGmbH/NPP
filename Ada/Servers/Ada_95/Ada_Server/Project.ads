@@ -136,8 +136,13 @@ private
   package Names is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
                                                                Element_Type => String);
   The_Library_Directories : Names.Map;
-  The_Library_Names       : Names.Map;
-  The_Library_Sources     : Names.Map;
+
+  use type Text.Vector;
+
+  package Vectors is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
+                                                                 Element_Type => Text.Vector);
+  The_Library_Names   : Vectors.Map;
+  The_Library_Sources : Vectors.Map;
 
   The_Libraries : Text.List;
 

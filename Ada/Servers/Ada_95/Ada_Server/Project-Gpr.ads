@@ -13,8 +13,8 @@ package Project.Gpr is
   function Filename return String;
 
   type Information is record
-    Project_Name : Text.String;
-    Source_Path  : Text.String;
+    Project_Names : Text.Vector;
+    Source_Path   : Text.Vector;
   end record;
 
   function Information_Of (The_Filename : String) return Information;

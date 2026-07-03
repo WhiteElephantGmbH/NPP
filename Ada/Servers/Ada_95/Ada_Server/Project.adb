@@ -197,7 +197,7 @@ package body Project is
   begin
     return +The_Modifier_Message;
   end Modifier_Success;
-    
+
 
   function Ada_Version return String is
   begin
@@ -601,10 +601,12 @@ package body Project is
 
     for Library of The_Libraries loop
       declare
-        Source_Directory : constant String := The_Library_Sources.Element(Library);
+        Library_Sources : constant Text.Vector := The_Library_Sources.Element (Library);
       begin
-        The_Reference_Areas.Append (Source_Directory);
-        The_Work_Path.Append (Source_Directory & Files.Separator);
+        for Source_Directory of Library_Sources loop
+          The_Reference_Areas.Append (Source_Directory);
+          The_Work_Path.Append (Source_Directory & Files.Separator);
+        end loop;
       end;
     end loop;
   end Create_Work_Area_For;
@@ -902,34 +904,38 @@ package body Project is
                 Ini_Error ("File " & Gpr_File & " not found for " & Library);
               end if;
               declare
-                Gpr_Info         : constant Gpr.Information := Gpr.Information_Of (Gpr_File);
-                Gpr_Directory    : constant String := File.Containing_Directory_Of (Gpr_File);
-                Gpr_Project_Name : constant String := +Gpr_Info.Project_Name;
-                Gpr_Source_Path  : constant String := +Gpr_Info.Source_Path;
+                Gpr_Info          : constant Gpr.Information := Gpr.Information_Of (Gpr_File);
+                Gpr_Directory     : constant String := File.Containing_Directory_Of (Gpr_File);
+                Gpr_Project_Names : constant Text.Vector := Gpr_Info.Project_Names;
+                Gpr_Source_Path   : constant Text.Vector := Gpr_Info.Source_Path;
               begin
-                if Gpr_Project_Name = "" then
+                if Gpr_Project_Names.Is_Empty then
                   Ini_Error ("Library project name for " & Library & " not found in " & Gpr_File);
                 end if;
-                if Gpr_Source_Path = "" then
-                  Ini_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
-                elsif not File.Directory_Exists (Gpr_Source_Path) then
-                  Ini_Error (Gpr_Source_Path & " for " & Library & " not found in " & Gpr_File);
-                end if;
+                for Source_Path of Gpr_Source_Path loop
+                  if Source_Path = "" then
+                    Ini_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
+                  elsif not File.Directory_Exists (Source_Path) then
+                    Ini_Error (Source_Path & " for " & Library & " not found in " & Gpr_File);
+                  end if;
+                end loop;
                 if The_Library_Names.Contains (Library) then
                   Ini_Error ("Library " & Library & " defined twice in " & Definition_File);
                 end if;
-                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Project_Name);
+                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Project_Names);
                 The_Library_Directories.Insert (Key => Library, New_Item => Gpr_Directory);
                 The_Library_Sources.Insert (Key => Library, New_Item => Gpr_Source_Path);
-                Log.Write ("||| Library " & Library & " - Location: " & Gpr_Directory
-                                                    & " - Name: " & Gpr_Project_Name
-                                                    & " - Source: " & Gpr_Source_Path);
+                Log.Write ("||| Library " & Library);
+                Log.Write ("|||  - Location : " & Gpr_Directory);
+                Log.Write ("|||  - Name     : " & Gpr_Project_Names'image);
+                Log.Write ("|||  - Source   : " & Gpr_Source_Path'image);
               end;
             end;
           end loop;
         end;
       end if;
     end Define_Libraries;
+
 
     function Project_Filename_Of (Actual_Name : String) return String is
     begin

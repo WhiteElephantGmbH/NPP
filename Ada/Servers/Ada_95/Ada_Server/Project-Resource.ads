@@ -12,12 +12,6 @@ package Project.Resource is
 
   function Common_Object_File return String;
 
-  function Object return String;
-
-  function Information return String;
-
   procedure Generate;
-
-  procedure Evaluate_Legacy;
 
 end Project.Resource;

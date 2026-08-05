@@ -596,7 +596,7 @@ package body Server is
 
       procedure Get_For (Used_Module : Ada_95.Library.Handle) is
       begin
-        if not Project.Is_In_Reference_Area (Ada_95.Token.Data.Resource(Used_Module.all).Attributes.Handle.Id) then
+        if not Project.Is_In_Library_Area (Ada_95.Token.Data.Resource(Used_Module.all).Attributes.Handle.Id) then
           Get_Unused_For (Unit => Used_Module);
         end if;
       end Get_For;

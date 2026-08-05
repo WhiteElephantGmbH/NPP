@@ -21,7 +21,7 @@ pragma Build (Description   => "Hello Nodepad++ Plugin",
               Version       => (2, 1, 0, 3),
               Kind          => Dll,
               Use_Interface => Hello_Interface,
-              Compiler      => "GNATPRO\23.0");
+              Compiler      => "GNAT\14.2");
 
 procedure Hello is
 begin

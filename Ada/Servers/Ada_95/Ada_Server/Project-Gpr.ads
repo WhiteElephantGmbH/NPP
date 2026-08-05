@@ -1,5 +1,5 @@
 -- *********************************************************************************************************************
--- *                       (c) 2021 .. 2024 by White Elephant GmbH, Schaffhausen, Switzerland                          *
+-- *                       (c) 2021 .. 2026 by White Elephant GmbH, Schaffhausen, Switzerland                          *
 -- *                                               www.white-elephant.ch                                               *
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
@@ -12,11 +12,12 @@ package Project.Gpr is
 
   function Filename return String;
 
-  type Information is record
-    Project_Names : Text.Vector;
-    Source_Path   : Text.Vector;
-  end record;
+  procedure Define_Information_For (Tools_Directory : String;
+                                    Libraries       : Text.List);
 
-  function Information_Of (The_Filename : String) return Information;
+  function Contains_For (Tools_Directory : String;
+                         The_Library     : String) return Boolean;
+
+  function Library_Path return Text.String;
 
 end Project.Gpr;

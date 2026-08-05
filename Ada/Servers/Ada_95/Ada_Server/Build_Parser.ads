@@ -6,6 +6,6 @@ pragma Style_White_Elephant;
 
 package Build_Parser is
 
-  procedure Evaluate;
+  function Evaluated return Boolean;
 
 end Build_Parser;

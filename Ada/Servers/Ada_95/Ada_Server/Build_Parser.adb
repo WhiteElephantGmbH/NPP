@@ -15,7 +15,7 @@ package body Build_Parser is
 
   use type Text.String;
 
-  procedure Evaluate is
+  function Evaluated return Boolean is
 
     End_Detected : exception;
 
@@ -113,7 +113,8 @@ package body Build_Parser is
 
     Filename : constant String := Project.Program_Unit;
 
-  begin -- Evaluate
+  begin -- Evaluated
+    Build.Clear;
     Log.Write ("||| Evaluate build information from " & Filename);
     if File.Exists (Filename) then
       begin
@@ -121,7 +122,7 @@ package body Build_Parser is
       exception
       when Item: others =>
         Log.Write (Item);
-        return;
+        return False;
       end;
       while Found ("pragma") loop
         declare
@@ -274,11 +275,12 @@ package body Build_Parser is
           end if;
         end;
       end loop;
-      Ada.Text_IO.Close (The_File);
     end if;
+    return Build.Is_Defined;
   exception
   when End_Detected =>
     Ada.Text_IO.Close (The_File);
-  end Evaluate;
+    return Build.Is_Defined;
+  end Evaluated;
 
 end Build_Parser;

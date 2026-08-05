@@ -50,15 +50,13 @@ package Ada_95.Error is
      Relative_Delay_Not_Allowed,
      Suspicious_Form_Of_Entry_Call, --Incorrect_Style'last
 
-     Ada_Project_Path_Missing, -- In_Semantic'first
-     Already_Defined,
+     Already_Defined, -- In_Semantic'first
      Compiler_Not_Defined,
      Icon_Not_Allowed_For_Dlls,
      Interface_Not_Defined,
      Interface_Specification_Expected,
      Kind_Not_Defined,
      Library_Not_Found,
-     Library_Id_Not_Found,
      Only_For_Dlls,
      Parent_Unit_Name_Error,
      Resource_File_Not_Found,
@@ -83,7 +81,7 @@ package Ada_95.Error is
 
   subtype Incorrect_Style is Kind range Calendar_Time_Not_Allowed .. Suspicious_Form_Of_Entry_Call;
 
-  subtype In_Semantic is Kind range Ada_Project_Path_Missing .. Version_Number_Out_Of_Range;
+  subtype In_Semantic is Kind range Already_Defined .. Version_Number_Out_Of_Range;
 
 
   procedure Add (Message  : Kind;

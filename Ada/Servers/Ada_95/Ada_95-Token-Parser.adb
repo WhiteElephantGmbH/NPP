@@ -4028,10 +4028,8 @@ package body Ada_95.Token.Parser is
     end Aspect_Mark;
 
 
-    Console_Application_Token        : Lexical_Handle;
-    Console_Application_Kind_Defined : Boolean;
-    Build_Parameters_Defined         : Boolean;
-    Special_Comment_Detected         : Boolean;
+    Build_Parameters_Defined : Boolean;
+    Special_Comment_Detected : Boolean;
 
     -- pragma ::=
     --    pragma identifier [ ( pragma_argument_association {, pragma_argument_association} ) ] ;
@@ -4211,9 +4209,6 @@ package body Ada_95.Token.Parser is
           if not Build.Defined_Compiler (String_Element (Compilers_Defined)) then
             Report_Error (Error.Unknown_Tools_Directory, String_Token);
           end if;
-          if Build.Global_Tools_Used then
-            Identifier_Handle(Argument_Handle).Data := null;
-          end if;
         end Define_Compiler;
 
         procedure Define_Compilers is
@@ -4246,9 +4241,6 @@ package body Ada_95.Token.Parser is
                                                             Second => "");
 
             end if;
-            if Build.Global_Tools_Used then
-              Identifier_Handle(Argument_Handle).Data := null;
-            end if;
           end;
           Get_Element (Lexical.Right_Parenthesis);
         end Define_Compilers;
@@ -4260,8 +4252,8 @@ package body Ada_95.Token.Parser is
 
         package Library_List is new Indefinite_Doubly_Linked_Lists (Library_Info);
 
-        The_Library_List   : Library_List.Item;
-        The_Libraries      : Text.List;
+        The_Library_List : Library_List.Item;
+        The_Libraries    : Text.List;
 
         procedure Parse_Libraries is
         begin
@@ -4284,37 +4276,33 @@ package body Ada_95.Token.Parser is
           Libraries_Defined := True;
         end Parse_Libraries;
 
-        procedure Check_Libraries_For (Size_Image : String) is
+        procedure Check_Libraries is
         begin
           for The_Info of The_Library_List loop
             declare
-              Library : constant String := The_Info.Name & Size_Image;
+              Library : constant String := The_Info.Name;
             begin
               case Build.Check_Of (Library) is
-              when Build.Library_Ok | Build.Library_Id_Ok =>
+              when Build.Library_Ok =>
                 null;
-              when Build.Ada_Project_Path_Missing =>
-                Report_Error (Error.Ada_Project_Path_Missing, The_Info.Error_Token);
               when Build.Library_Not_Found =>
                 Report_Error (Error.Library_Not_Found, The_Info.Error_Token);
-              when Build.Library_Id_Not_Found =>
-                Report_Error (Error.Library_Id_Not_Found, The_Info.Error_Token);
               end case;
             end;
           end loop;
-        end Check_Libraries_For;
+        end Check_Libraries;
 
         procedure Define_Library is
         begin
-          Check_Libraries_For ("");
+          Check_Libraries;
           Build.Define_Libraries (The_Libraries);
         end Define_Library;
 
         procedure Define_Libraries is
         begin
-          Check_Libraries_For (Build.Directories_Area);
+          Check_Libraries;
           if Build.Has_Second_Tools_Directory then
-            Check_Libraries_For (Build.Directories_Area);
+            Check_Libraries;
             Build.Set_Back_To_First;
           end if;
           Build.Define_Libraries (The_Libraries);
@@ -4368,9 +4356,7 @@ package body Ada_95.Token.Parser is
         end Define_Resource;
 
       begin -- Handle_Build_Parameters
-        if Console_Application_Kind_Defined then
-          Report_Error (Error.Obsolescent_Pragma_Call, Console_Application_Token);
-        elsif Build_Parameters_Defined then
+        if Build_Parameters_Defined then
           Report_Error (Error.Already_Defined, The_Token);
         end if;
         The_Handle.Is_Used := True;
@@ -4449,14 +4435,7 @@ package body Ada_95.Token.Parser is
         The_Handle.Is_Used := True;
         Get_Next_Token;
       when Lexical.Is_Console_Application =>
-        Console_Application_Token := The_Token;
-        if Build_Parameters_Defined then
-          Report_Error (Error.Obsolescent_Pragma_Call, Console_Application_Token);
-        end if;
-        Build.Set_Console_Application;
-        The_Handle.Is_Used := True;
-        Get_Next_Token;
-        Console_Application_Kind_Defined := True;
+        Report_Error (Error.Obsolescent_Pragma_Call, The_Token);
       when Lexical.Is_Build =>
         Handle_Build_Parameters;
       when Lexical.Obsolescent_Single_Pragma | Lexical.Obsolescent_Compound_Pragma =>
@@ -11116,7 +11095,6 @@ package body Ada_95.Token.Parser is
     begin -- Compilation_Unit
       The_Style := Next_Style (Resource.Tokens.First, Special_Comment_Detected);
       Build_Parameters_Defined := False;
-      Console_Application_Kind_Defined := False;
       The_Token := Lexical_After (Resource.Tokens.First);
       Data.Add_Unit (Unit);
       Unused_Id := Style_Checked (Unit.Location);

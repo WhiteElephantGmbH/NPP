@@ -4,7 +4,6 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
-with Ada.Containers.Indefinite_Ordered_Maps;
 with Text;
 
 package Project is
@@ -35,7 +34,7 @@ package Project is
 
   function Product return String;
 
-  function Is_In_Reference_Area (Filename : String) return Boolean;
+  function Is_In_Library_Area (Filename : String) return Boolean;
 
   function Run return Boolean;
 
@@ -75,7 +74,9 @@ package Project is
 
   function Language_Folder return String;
 
-  function Generate_New_Resource return Boolean;
+  function Environment_Defined (Second_Compilation : Boolean := False) return Boolean;
+
+  procedure Generate_New_Resource;
 
   function Promotion_Areas return String;
 
@@ -97,9 +98,7 @@ package Project is
 
   function Is_Maching (Filename : String) return Boolean;
 
-  procedure Define_Environment;
-
-  function Environment return String;
+  function Environment_Variables return String;
 
 private
 
@@ -127,23 +126,11 @@ private
 
   function Product_Version return String;
 
-  function Legacy_Interface_Name return String;
-
   function Is_Legacy_Compiler return Boolean;
 
   procedure Set_Error (Message : String) with No_Return;
 
-  package Names is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
-                                                               Element_Type => String);
-  The_Library_Directories : Names.Map;
-
-  use type Text.Vector;
-
-  package Vectors is new Ada.Containers.Indefinite_Ordered_Maps (Key_Type     => String,
-                                                                 Element_Type => Text.Vector);
-  The_Library_Names   : Vectors.Map;
-  The_Library_Sources : Vectors.Map;
-
-  The_Libraries : Text.List;
+  The_Library_Names   : Text.List;
+  The_Library_Sources : Text.List;
 
 end Project;

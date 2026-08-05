@@ -26,15 +26,15 @@ package Ada_95.Build is
     Revision : Version_Number := 255;
   end record;
 
-  type Library_Check_Completion is
-    (Library_Ok, Library_Id_Ok, Ada_Project_Path_Missing, Library_Not_Found, Library_Id_Not_Found);
+  type Library_Check_Completion is (Library_Ok, Library_Not_Found);
 
   type Library_Check_Function is access function (Library : String) return Library_Check_Completion;
 
 
-  procedure Initialize (Filename   : String;
-                        Check      : Library_Check_Function;
-                        Is_Startup : Boolean);
+  procedure Initialize (Filename : String;
+                        Check    : Library_Check_Function);
+
+  procedure Clear;
 
   procedure Define;
 
@@ -64,10 +64,6 @@ package Ada_95.Build is
                               Second : String) return Boolean;
 
   function Tools_Defined return Boolean;
-
-  procedure Define_Global_Tools_Directory (Item : String);
-
-  function Global_Tools_Used return Boolean;
 
   procedure Define_Tools_Directory (Item : String);
 
@@ -99,7 +95,7 @@ package Ada_95.Build is
 
   procedure Define_Libraries (Item : Text.List);
 
-  function Actual_Libraries return Text.List;
+  function Libraries return Text.List;
 
   function Defined_Resource (Item : String) return Boolean;
 

@@ -6,31 +6,20 @@ pragma Style_White_Elephant;
 
 with Ada_95.Project;
 with Ada_95.Token;
-with Build;
 with File;
-with Files;
 with Log;
 with Os.Process;
 with Project.Gpr;
-with Project.Resource;
 with Promotion;
 with Server;
 with Text;
 
 package body Target is
 
-  use type Text.String;
-
   procedure Log_Execution (Item : String) is
   begin
     Log.Write ("    -> " & Item);
   end Log_Execution;
-
-
-  procedure Log_Error (Item : String) is
-  begin
-    Log.Write ("   ERROR OUTPUT: <" & Item & ">");
-  end Log_Error;
 
 
   procedure Check_For_Parser_Errors_In (Filename : String) is
@@ -53,87 +42,6 @@ package body Target is
                            At_Column => Ada_95.Token.Column_Position_Of (The_Error_Token));
     end if;
   end Check_For_Parser_Errors_In;
-
-
-  procedure Generate_Resource_Object is
-
-    Windres : constant String := Project.Tools_Folder & "windres.exe";
-
-    The_Resource_Name : Text.String := +Project.Name;
-
-    The_Source_Directory : Text.String := +Project.Directory;
-
-    function Resource_Name return String is
-    begin
-      return +The_Resource_Name;
-    end Resource_Name;
-
-    function Source_Directory return String is
-    begin
-      return +The_Source_Directory;
-    end Source_Directory;
-
-    function Resource_Filename return String is
-    begin
-      if Build.Is_Defined then
-        return Project.Resource.Filename;
-      else
-        return Source_Directory & Files.Separator & Resource_Name & Project.Resource.Extension;
-      end if;
-    end Resource_Filename;
-
-    function Parameters return String is
-    begin
-      return "-i " & Resource_Filename & " --codepage=65001 --output-format=coff -o " & Project.Resource.Object;
-    end Parameters;
-
-    function Changed_To_Parent_Resource return Boolean is
-      Parent_Directory : constant String := Files.Directory_Of (Source_Directory);
-    begin
-      if Text.Matches (Parent_Directory, Project.Language_Directory) or else
-        not File.Directory_Exists (Parent_Directory)
-      then
-        if Project.Gpr.File_Is_Generated then
-          Log.Write ("Target.Generate_Resource_Object - no shared resource <" & Resource_Filename & ">");
-          Promotion.Set_Error ("Unknown Resource File");
-        else
-          return False;
-        end if;
-      end if;
-      The_Source_Directory := +Parent_Directory;
-      The_Resource_Name := +Files.Name_Of (Source_Directory);
-      return False;
-    end Changed_To_Parent_Resource;
-
-  begin -- Generate_Resource_Object
-    if not Build.Is_Defined then
-      while not File.Exists (Resource_Filename) loop
-        if not Changed_To_Parent_Resource then
-          return;
-        end if;
-      end loop;
-    end if;
-    Log_Execution (Windres & " " & Parameters);
-    declare
-      Result : constant String := Os.Process.Execution_Of (Executable     => Windres,
-                                                           Parameters     => Parameters,
-                                                           Current_Folder => Source_Directory);
-      Error_Text : constant String := Text.Trimmed (Result);
-    begin
-      if Error_Text /= "" then
-        Log_Error (Error_Text);
-        Promotion.Set_Error (Error_Text);
-      end if;
-    end;
-  exception
-  when Promotion.Error =>
-    raise;
-  when Os.Process.Execution_Failed =>
-    Promotion.Set_Error ("Resource generation not executed");
-  when Item: others =>
-    Log.Write ("Target.Generate_Resource_Object", Item);
-    Promotion.Set_Error ("Resource generation failed");
-  end Generate_Resource_Object;
 
 
   procedure Gpr_Execute (Parameters : String) is
@@ -159,7 +67,7 @@ package body Target is
     declare
       Result : constant String := Os.Process.Execution_Of (Executable     => Gpr_Build,
                                                            Parameters     => Gpr_Parameters,
-                                                           Environment    => Project.Environment,
+                                                           Environment    => Project.Environment_Variables,
                                                            Current_Folder => Project.Created_Target_Folder);
       Result_Text : constant String := Text.Trimmed (Result);
     begin
@@ -313,16 +221,17 @@ package body Target is
 
   procedure Promote (Filename : String) is
 
-    procedure Promote is
+    procedure Promote (Is_Second_Compilation : Boolean := False) is
     begin
       if Project.Is_Program_Unit (Filename) then
-        if Project.Generate_New_Resource then
-          Generate_Resource_Object;
+        if Project.Environment_Defined (Is_Second_Compilation) then
+          Project.Generate_New_Resource;
+          Build (Filename);
+          Modifier_Handling;
+          Installation_Handling;
+        else
+          Promotion.Set_Error ("Build pragma undefined!", Filename);
         end if;
-        Project.Define_Environment;
-        Build (Filename);
-        Modifier_Handling;
-        Installation_Handling;
       else
         if Project.Is_Maching (Filename) then
           Compile (Filename);
@@ -336,7 +245,7 @@ package body Target is
     --------------------------------------
     Promote;
     if Project.Has_Second_Compiler then
-      Promote;
+      Promote (Is_Second_Compilation => True);
       Project.Set_Back_To_First_Compiler;
     end if;
     if Project.Is_Program_Unit (Filename) then

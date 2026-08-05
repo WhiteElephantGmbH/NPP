@@ -4,6 +4,7 @@
 -- *********************************************************************************************************************
 pragma Style_White_Elephant;
 
+with Ada.Containers.Indefinite_Ordered_Maps;
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada_95.File;
@@ -77,6 +78,7 @@ package body Project is
   The_Ignore_Areas       : Text.List;
   The_Implied_Areas      : Text.List;
   The_Reference_Areas    : Text.List;
+  The_Library_Areas      : Text.List;
   The_Base_Path          : Text.List;
   The_Promotion_List     : Text.List;
 
@@ -107,12 +109,11 @@ package body Project is
     Text.Clear (The_Actual_Tools_Directory);
     The_Ignore_Areas.Clear;
     The_Implied_Areas.Clear;
+    The_Library_Areas.Clear;
     The_Reference_Areas.Clear;
-    The_Libraries.Clear;
     The_Base_Path.Clear;
     The_Source_Directories.Clear;
     The_Promotion_List.Clear;
-    The_Library_Directories.Clear;
     The_Library_Names.Clear;
     The_Library_Sources.Clear;
     The_Installation_Map.Clear;
@@ -162,8 +163,6 @@ package body Project is
   function Product_Extension return String is (if Is_Dll then ".dll" else ".exe");
 
   function Product return String is (Product_Directory & Product_Sub_Path & Files.Separator & Name & Product_Extension);
-
-  function Legacy_Interface_Name return String is (Name & "_Interface");
 
   function Is_Legacy_Compiler return Boolean is (Product_Version = Legacy_Product_Version);
 
@@ -231,37 +230,17 @@ package body Project is
   end Product_Version;
 
 
-  function Has_Legacy_Interface_In (The_Path : String) return Boolean is
-    Interface_Source     : constant String := The_Path & Files.Separator & Legacy_Interface_Name & ".ads";
-    Containing_Directory : constant String := File.Containing_Directory_Of (The_Path);
-  begin
-    if Containing_Directory /= Language_Directory then
-      if File.Exists (Interface_Source) then
-        return True;
-      end if;
-      return Has_Legacy_Interface_In (Containing_Directory);
-    end if;
-    return False;
-  end Has_Legacy_Interface_In;
-
-
   function Is_Dll return Boolean is
   begin
-    if Build.Is_Defined then
-      return Build.Is_Dll;
-    else
-      return Has_Legacy_Interface_In (Folder);
-    end if;
+    pragma Assert (Build.Is_Defined);
+    return Build.Is_Dll;
   end Is_Dll;
 
 
   function Has_Style return Boolean is
   begin
-    if Build.Is_Defined then
-      return Build.Has_Style;
-    else
-      return False;
-    end if;
+    pragma Assert (Build.Is_Defined);
+    return Build.Has_Style;
   end Has_Style;
 
 
@@ -298,6 +277,11 @@ package body Project is
         return True;
       end if;
     end loop;
+    for Area of The_Library_Areas loop
+      if Item = Area then
+        return True;
+      end if;
+    end loop;
     return False;
   end Is_Base_Area;
 
@@ -311,12 +295,6 @@ package body Project is
     end loop;
     return False;
   end Is_To_Ignore;
-
-
-  function Reference_Areas return Text.List is
-  begin
-    return The_Reference_Areas;
-  end Reference_Areas;
 
 
   function Part_Of (Filename : String;
@@ -405,35 +383,19 @@ package body Project is
 
 
   function Library_Check (Item : String) return Build.Library_Check_Completion is
-    Gpr_File : constant String := Item & Gpr.File_Extension;
   begin
-    if The_Library_Names.Is_Empty then
-      if not Ada.Environment_Variables.Exists (Ada_Project_Path) then
-        return Build.Ada_Project_Path_Missing;
-      end if;
-      declare
-        Path_Value : constant String := Ada.Environment_Variables.Value (Ada_Project_Path);
-        Path_List  : constant Text.Strings := Text.Strings_Of (Path_Value, Separator => ';');
-      begin
-        for Path of Path_List loop
-          if File.Exists (Path & Files.Separator & Gpr_File) then
-            return Build.Library_Ok;
-          end if;
-        end loop;
-        return Build.Library_Not_Found;
-      end;
-    elsif not The_Library_Names.Contains (Item) then
-      return Build.Library_Id_Not_Found;
-    else
-      return Build.Library_Id_Ok;
+    if Gpr.Contains_For (Build.Tools_Directory, Item) then
+      return Build.Library_Ok;
     end if;
+    return Build.Library_Not_Found;
   end Library_Check;
 
 
   procedure Check_Icon is
     Icon_File : constant String := Folder & Name & ".ico";
   begin
-    if Build.Is_Defined and then Build.Has_Icon and then not File.Exists (Icon_File) then
+    pragma Assert (Build.Is_Defined);
+    if Build.Has_Icon and then not File.Exists (Icon_File) then
       Set_Error ("Icon file <" & Icon_File & "> not found");
     end if;
   end Check_Icon;
@@ -448,52 +410,21 @@ package body Project is
   end Create_Object_Directories;
 
 
-  procedure Define_Environment is
-
-    function Filename return String is
-    begin
-      if Build.Is_Defined then
-        return "Build pragma";
-      else
-        return Resource.Filename;
-      end if;
-    end Filename;
-
-  begin -- Define_Environment
-    Create_Object_Directories;
-    if Build.Is_Defined then
-      The_Libraries := Build.Actual_Libraries;
+  function Environment_Defined (Second_Compilation : Boolean := False) return Boolean is
+  begin
+    The_Phase := Promoting;
+    if Second_Compilation or else Build_Parser.Evaluated then
+      Create_Object_Directories;
+      Gpr.Define_Information_For (Build.Tools_Directory, Build.Libraries);
+      The_Library_Path := Gpr.Library_Path;
+      return True;
     else
-      Resource.Evaluate_Legacy;
+      return False;
     end if;
-    Text.Clear (The_Library_Path);
-    for Library of The_Libraries loop
-      declare
-        Gpr_File : constant String := Library & Gpr.File_Extension;
-      begin
-        case Library_Check (Library) is
-        when Build.Ada_Project_Path_Missing =>
-          Set_Error (Ada_Project_Path & " missing for " & Gpr_File & Resource.Information);
-        when Build.Library_Not_Found =>
-          declare
-            Path_Value : constant String := Ada.Environment_Variables.Value (Ada_Project_Path);
-          begin
-            Set_Error (Gpr_File & " not found in " & Ada_Project_Path & "=" & Path_Value & Resource.Information);
-          end;
-        when Build.Library_Id_Not_Found =>
-          Set_Error ("Library id <" & Library & "> from " & Filename & " not found in " & Definition_File);
-        when Build.Library_Id_Ok =>
-          Text.Append (The_Library_Path, The_Library_Directories.Element(Library) & ";");
-        when Build.Library_Ok =>
-          null;
-        end case;
-      end;
-      Log.Write ("||| Library Id: " & Library);
-    end loop;
-  end Define_Environment;
+  end Environment_Defined;
 
 
-  function Generate_New_Resource return Boolean is
+  procedure Generate_New_Resource is
 
     procedure Delete_Target_Directory is
     begin
@@ -504,35 +435,18 @@ package body Project is
     end Delete_Target_Directory;
 
   begin -- Has_New_Resource
-    The_Phase := Promoting;
-    if not Build.Is_Defined then
-      Build_Parser.Evaluate;
-    end if;
     Check_Icon;
     declare
       Resource_Filename : constant String := Resource.Filename;
     begin
-      if Build.Is_Defined then
-        if not File.Exists (Resource_Filename) or else File.Is_Newer (Program_Unit, Resource_Filename) then
-          if Tools_Defined then
-            Delete_Target_Directory;
-            Create_Object_Directories;
-            Resource.Generate;
-          end if;
+      if not File.Exists (Resource_Filename) or else File.Is_Newer (Program_Unit, Resource_Filename) then
+        if Tools_Defined then
+          Delete_Target_Directory;
+          Create_Object_Directories;
+          Resource.Generate;
         end if;
-        The_Phase := Unknown;
-        return False;
-      else
-        if File.Exists (Resource_Filename) then
-          if not File.Exists (Resource.Object) or else File.Is_Newer (Resource_Filename, Resource.Object) then
-            Delete_Target_Directory;
-            The_Phase := Unknown;
-            return True;
-          end if;
-        end if;
-        The_Phase := Unknown;
-        return False;
       end if;
+      The_Phase := Unknown;
     end;
   end Generate_New_Resource;
 
@@ -558,7 +472,7 @@ package body Project is
             return;
           end if;
         end loop;
-        for System_Path of reverse Reference_Areas loop
+        for System_Path of reverse The_Reference_Areas loop
           if Path = Source_Folder & System_Path then
             return;
           end if;
@@ -591,24 +505,21 @@ package body Project is
         end if;
       end;
     end loop;
-    Build_Parser.Evaluate;
-    Check_Icon;
-    Define_Environment;
 
-    if File.Directory_Exists (Project_Subdirectory) then
-      The_Work_Path.Prepend (Project_Subdirectory & Files.Separator);
+    if Environment_Defined then
+      Check_Icon;
+      if File.Directory_Exists (Project_Subdirectory) then
+        The_Work_Path.Prepend (Project_Subdirectory & Files.Separator);
+      end if;
+      The_Library_Areas.Clear;
+      for Source_Directory of The_Library_Sources loop
+        The_Library_Areas.Append (Source_Directory);
+        The_Work_Path.Append (Source_Directory & Files.Separator);
+      end loop;
+      for Area of The_Library_Areas loop
+        Log.Write ("||| Library: " & Area);
+      end loop;
     end if;
-
-    for Library of The_Libraries loop
-      declare
-        Library_Sources : constant Text.Vector := The_Library_Sources.Element (Library);
-      begin
-        for Source_Directory of Library_Sources loop
-          The_Reference_Areas.Append (Source_Directory);
-          The_Work_Path.Append (Source_Directory & Files.Separator);
-        end loop;
-      end;
-    end loop;
   end Create_Work_Area_For;
 
 
@@ -848,20 +759,6 @@ package body Project is
     end Define_Installations;
 
 
-    procedure Define_Global_Tools is
-
-      The_Directory : constant String := Text.Trimmed (Element_For (Application => "Tools", Key => "Directory"));
-
-    begin
-     if The_Directory /= "" then
-       if not File.Directory_Exists (The_Directory) then
-         Ini_Error ("Tools Directory <" & The_Directory & "> Unknown");
-       end if;
-       Build.Define_Global_Tools_Directory (The_Directory);
-     end if;
-    end Define_Global_Tools;
-
-
     procedure Define_Source_Path (Path_Name  :        String;
                                   The_Areas  : out    Text.List;
                                   The_Path   : in out Text.List;
@@ -886,55 +783,6 @@ package body Project is
         end;
       end loop;
     end Define_Source_Path;
-
-
-    procedure Define_Libraries is
-      List : constant String := Element_Of (Application => "Library", Key => "List", Must_Exist => False);
-    begin
-      if List /= "" then
-        declare
-          Library_Ids : constant Text.Strings := Text.Strings_Of (Text.Purge_Of (List), Separator => ',');
-        begin
-          for Library of Library_Ids loop
-            declare
-              Gpr_Name : constant String := Element_Of (Application => "Library", Key => Library, Must_Exist => True);
-              Gpr_File : constant String := File.Name_Of (Gpr_Name, Gpr.File_Extension);
-            begin
-              if not File.Exists(Gpr_File) then
-                Ini_Error ("File " & Gpr_File & " not found for " & Library);
-              end if;
-              declare
-                Gpr_Info          : constant Gpr.Information := Gpr.Information_Of (Gpr_File);
-                Gpr_Directory     : constant String := File.Containing_Directory_Of (Gpr_File);
-                Gpr_Project_Names : constant Text.Vector := Gpr_Info.Project_Names;
-                Gpr_Source_Path   : constant Text.Vector := Gpr_Info.Source_Path;
-              begin
-                if Gpr_Project_Names.Is_Empty then
-                  Ini_Error ("Library project name for " & Library & " not found in " & Gpr_File);
-                end if;
-                for Source_Path of Gpr_Source_Path loop
-                  if Source_Path = "" then
-                    Ini_Error ("Library project source directory for " & Library & " not found in " & Gpr_File);
-                  elsif not File.Directory_Exists (Source_Path) then
-                    Ini_Error (Source_Path & " for " & Library & " not found in " & Gpr_File);
-                  end if;
-                end loop;
-                if The_Library_Names.Contains (Library) then
-                  Ini_Error ("Library " & Library & " defined twice in " & Definition_File);
-                end if;
-                The_Library_Names.Insert (Key => Library, New_Item => Gpr_Project_Names);
-                The_Library_Directories.Insert (Key => Library, New_Item => Gpr_Directory);
-                The_Library_Sources.Insert (Key => Library, New_Item => Gpr_Source_Path);
-                Log.Write ("||| Library " & Library);
-                Log.Write ("|||  - Location : " & Gpr_Directory);
-                Log.Write ("|||  - Name     : " & Gpr_Project_Names'image);
-                Log.Write ("|||  - Source   : " & Gpr_Source_Path'image);
-              end;
-            end;
-          end loop;
-        end;
-      end if;
-    end Define_Libraries;
 
 
     function Project_Filename_Of (Actual_Name : String) return String is
@@ -970,7 +818,7 @@ package body Project is
     Log.Write ("||| Project.Initialize: " & Filename);
     The_Actual_Project := +Project_Name;
     The_Phase := Initializing;
-    Build.Initialize (Project_Name, Library_Check'access, Is_Startup => True);
+    Build.Initialize (Project_Name, Library_Check'access);
     if The_Configuration_Handle = null then -- only first time because language directory does not change
       The_Configuration_Handle := new Configuration.File_Handle'(Configuration.Handle_For (Definition_File));
     end if;
@@ -997,8 +845,6 @@ package body Project is
     Define_Source_Path ("Ignore", The_Ignore_Areas, The_Path => The_Base_Path, Must_Exist => False);
     Define_Source_Path ("Path", The_Implied_Areas, The_Path => The_Base_Path);
     Define_Source_Path ("Reference", The_Reference_Areas, The_Path => The_Base_Path);
-    Define_Global_Tools;
-    Define_Libraries;
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     Define_Location (The_Binary_Root, Key => "Root", Application => "Binary");
     Define_Location (The_Product_Directory, Key => "Location", Application => "Product");
@@ -1057,7 +903,7 @@ package body Project is
       raise Program_Error;
     end if;
     The_Phase := Promoting;
-    Build.Initialize (Filename, Library_Check'access, Is_Startup => False);
+    Build.Initialize (Filename, Library_Check'access);
     Create_Work_Area_For (Project_Parts, The_Work_Path);
     -----------------------------------------------
     Log.Write ("||| Project.Change_To: " & Filename);
@@ -1080,18 +926,21 @@ package body Project is
   end Is_Source;
 
 
-  function Is_In_Reference_Area (Filename : String) return Boolean is
+  function Is_In_Library_Area (Filename : String) return Boolean is
     The_Directory : constant String := Files.Directory_Of (Filename);
   begin
-    for Area of Reference_Areas loop
+    for Area of The_Reference_Areas loop
       if Text.Matches (The_Directory, Source_Folder & Area) then
         return True;
-      elsif Text.Matches (The_Directory, Area) then
+      end if;
+    end loop;
+    for Area of The_Library_Areas loop
+      if Text.Matches (The_Directory, Area) then
         return True;
       end if;
     end loop;
     return False;
-  end Is_In_Reference_Area;
+  end Is_In_Library_Area;
 
 
   function Program_Unit_Name return String is (Name & Body_Extension);
@@ -1109,7 +958,7 @@ package body Project is
   function Case_Handling_Style return Case_Modification is (The_Case_Handling_Style);
 
 
-  function Environment return String is
+  function Environment_Variables return String is
 
     The_Environment : Text.String;
 
@@ -1134,18 +983,18 @@ package body Project is
       end if;
     end Add;
 
-  begin -- Environment
+  begin -- Environment_Variables
     Ada.Environment_Variables.Iterate (Add'access);
     if not Text.Is_Null (The_Library_Path) then
       declare
         Ada_Path : constant String := Ada_Project_Path & "=" & The_Library_Path;
       begin
-        Log.Write ("||| Environment: " & Ada_Path);
+        Log.Write ("||| Environment Variables: " & Ada_Path);
         Text.Append (The_Environment, Ada_Path & Ascii.Nul);
       end;
     end if;
     return +The_Environment;
-  end Environment;
+  end Environment_Variables;
 
 
   function Full_Name_Of (Filename : String) return String  is

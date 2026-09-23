@@ -384,6 +384,7 @@ package Ada_95.Lexical is
     Is_Abstract_State, -- use as Compound_Aspect'first
     Is_Add_Named,
     Is_Add_Unnamed,
+    Is_Always_Terminates,
     Is_Assign_Indexed,
     Is_Async_Readers,
     Is_Async_Writers,

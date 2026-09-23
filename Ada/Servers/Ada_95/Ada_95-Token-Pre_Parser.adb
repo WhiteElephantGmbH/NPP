@@ -466,9 +466,6 @@ package body Ada_95.Token.Pre_Parser is
         exit;
       when Lexical.Is_Pragma =>
         Pragma_Call;
-      when Lexical.Is_With =>
-        Get_Next_Token;
-        Get_Unit_Names;
       when Lexical.Is_Use =>
         Get_Next_Token;
         if Element_Is (Lexical.Is_Type) then
@@ -476,6 +473,9 @@ package body Ada_95.Token.Pre_Parser is
         else
           Get_Unit_Names;
         end if;
+      when Lexical.Is_With =>
+        Get_Next_Token;
+        Get_Unit_Names;
       when others =>
         Syntax_Error;
       end case;

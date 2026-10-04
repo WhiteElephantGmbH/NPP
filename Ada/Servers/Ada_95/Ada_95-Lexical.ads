@@ -400,6 +400,7 @@ package Ada_95.Lexical is
     Is_Dynamic_Predicate,
     Is_Effective_Reads,
     Is_Effective_Writes,
+    Is_Exceptional_Cases,
     Is_Exclusive_Functions,
     Is_Extensions_Visible,
     Is_External_Name,

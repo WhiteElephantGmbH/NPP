@@ -2646,6 +2646,7 @@ package body Ada_95.Token.Parser is
           when Lexical.Is_Abstract_State
              | Lexical.Is_Annotate
              | Lexical.Is_Default_Initial_Condition
+             | Lexical.Is_Exceptional_Cases
              | Lexical.Is_Global
              | Lexical.Is_Initializes
              | Lexical.Is_Initial_Condition
@@ -3740,6 +3741,7 @@ package body Ada_95.Token.Parser is
              | Lexical.Equal
              | Lexical.Is_New
              | Lexical.Is_With
+             | Lexical.Vertical_Line
           =>
             Get_Next_Token;
           when Lexical.Is_If =>

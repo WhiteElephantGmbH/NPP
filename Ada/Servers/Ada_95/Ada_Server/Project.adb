@@ -412,7 +412,6 @@ package body Project is
 
   function Environment_Defined (Second_Compilation : Boolean := False) return Boolean is
   begin
-    The_Phase := Promoting;
     if Second_Compilation or else Build_Parser.Evaluated then
       Create_Object_Directories;
       Gpr.Define_Information_For (Build.Tools_Directory, Build.Libraries);
@@ -435,6 +434,7 @@ package body Project is
     end Delete_Target_Directory;
 
   begin -- Has_New_Resource
+    The_Phase := Promoting;
     Check_Icon;
     declare
       Resource_Filename : constant String := Resource.Filename;
